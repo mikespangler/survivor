@@ -1,0 +1,90 @@
+// model Season {
+    //   id          String       @id @default(cuid())
+    //   number      Int
+    //   name        String       // "Survivor 45"
+    //   status      SeasonStatus
+    //   castaways   Castaway[]
+    //   episodes    Episode[]
+    // }
+    
+    // model Castaway {
+    //   id        String   @id @default(cuid())
+    //   name      String
+    //   seasonId  String
+    //   season    Season   @relation(fields: [seasonId], references: [id])
+    //   status    String   // "active", "eliminated", "jury"
+    //   events    Event[]
+    // }
+    
+    // model TeamCastaways {
+    //  teamId String
+    //  castawayId String
+    // }
+
+    // model SeasonTeam {
+    //  seasonId String
+    //  teamId String
+    // }
+    
+    // model League {
+    //   id           String  @id @default(cuid())
+    //   name         String
+    //   seasonId     String
+    //   teams        Team[]
+    //   scoringRules Json    // your custom scoring system
+    //   draftDate    DateTime
+    //   maxTeamSize  Int
+    // }
+    
+    // model Team {
+    //   id          String       @id @default(cuid())
+    //   name        String
+    //   leagueId    String
+    //   league      League       @relation(fields: [leagueId], references: [id])
+    //   ownerId     String
+    //   owner       User         @relation(fields: [ownerId], references: [id])
+    //   castaways   Castaway[]
+    //   weeklyScores WeeklyScore[]
+    // }
+    
+    // model Episode {
+    //   id          String   @id @default(cuid())
+    //   seasonId    String
+    //   season      Season   @relation(fields: [seasonId], references: [id])
+    //   episodeNum  Int
+    //   airDate     DateTime
+    //   events      Event[]
+    //   processed   Boolean  @default(false)
+    // }
+    
+    // model Event {
+    //   id            String     @id @default(cuid())
+    //   episodeId     String
+    //   episode       Episode    @relation(fields: [episodeId], references: [id])
+    //   contestantId  String
+    //   contestant    Contestant @relation(fields: [contestantId], references: [id])
+    //   eventType     String  // enum: IMMUNITY_WIN, VOTE_RECEIVED, ELIMINATED, etc.
+    //   metadata      Json?      // extra context (e.g., "received 3 votes")
+    // }
+
+    //  type EventType {
+    //   INDIVIDUAL_IMMUNITY
+    //   TEAM_IMMUNITY
+    //   REWARD_WIN
+    //   IDOL_FOUND
+    //   ADVANTAGE_FOUND
+    //   VOTE_RECEIVED
+    //   ELIMINATED
+    //   JURY_VOTE
+    //   CONFESSIONAL
+    // }
+    
+    
+    
+    // oauth and magic link email
+    // login/logout
+    // security levels
+    //  - god mode / admin
+    //  - commissioner
+    //  - member
+    
