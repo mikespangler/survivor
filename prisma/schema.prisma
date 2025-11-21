@@ -40,12 +40,14 @@ model League {
 }
 
 model LeagueSeason {
-  id           String      @id @default(cuid())
+  id           String                @id @default(cuid())
   leagueId     String
-  league       League      @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  league       League                @relation(fields: [leagueId], references: [id], onDelete: Cascade)
   seasonId     String
-  season       Season      @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  season       Season                @relation(fields: [seasonId], references: [id], onDelete: Cascade)
   teams        Team[]
+  settings     LeagueSeasonSettings?
+  draftConfigs DraftConfig[]
   
   @@unique([leagueId, seasonId]) // each league plays each season once
 }
@@ -100,4 +102,28 @@ model Episode {
   title     String?
   
   @@unique([seasonId, number])
+}
+
+model LeagueSeasonSettings {
+  id             String       @id @default(cuid())
+  leagueSeasonId String       @unique
+  leagueSeason   LeagueSeason @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
+  settings       Json?        // General league settings (scoring rules, etc.)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model DraftConfig {
+  id              String       @id @default(cuid())
+  leagueSeasonId String
+  leagueSeason    LeagueSeason @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
+  roundNumber     Int          @default(1)
+  castawaysPerTeam Int
+  draftDate       DateTime?
+  status          String       @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@unique([leagueSeasonId, roundNumber])
+  @@index([leagueSeasonId])
 }

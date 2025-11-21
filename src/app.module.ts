@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
+import { LeagueModule } from './league/league.module';
 import { AuthGuard } from './auth/auth.guard';
 
 @Module({
@@ -16,6 +17,7 @@ import { AuthGuard } from './auth/auth.guard';
     PrismaModule,
     UserModule,
     AuthModule,
+    LeagueModule,
   ],
   controllers: [AppController],
   providers: [

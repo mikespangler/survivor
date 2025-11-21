@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Box, 
   Flex, 
@@ -15,7 +15,12 @@ import { SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { isSignedIn, user } = useUser();
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   const onToggle = () => setIsOpen(!isOpen);
 
@@ -54,7 +59,10 @@ export const Navigation = () => {
 
           {/* Auth Buttons */}
           <HStack gap={4} display={{ base: 'none', md: 'flex' }}>
-            {isSignedIn ? (
+            {!mounted ? (
+              // Render placeholder during SSR/initial mount to avoid hydration mismatch
+              <Box w="200px" h="32px" />
+            ) : isSignedIn ? (
               <>
                 <Box fontSize="sm" color="gray.700">
                   {user?.firstName || user?.emailAddresses[0]?.emailAddress}
@@ -115,7 +123,10 @@ export const Navigation = () => {
                 </Box>
               </Link>
               <VStack gap={2} px={4} pt={2}>
-                {isSignedIn ? (
+                {!mounted ? (
+                  // Render placeholder during SSR/initial mount to avoid hydration mismatch
+                  <Box w="full" h="80px" />
+                ) : isSignedIn ? (
                   <HStack w="full" justifyContent="space-between">
                     <Box fontSize="sm" color="gray.700">
                       {user?.firstName || user?.emailAddresses[0]?.emailAddress}

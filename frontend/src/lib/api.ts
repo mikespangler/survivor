@@ -12,6 +12,10 @@ import type {
   CreateLeagueDto,
   CreateSeasonDto,
   CreateTeamDto,
+  LeagueSeasonSettings,
+  DraftConfig,
+  UpdateLeagueSeasonSettingsDto,
+  UpdateDraftConfigDto,
 } from '@/types/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -54,6 +58,10 @@ class ApiClient {
         if (response.status === 401) {
           // Handle unauthorized - could redirect to sign-in
           throw new Error('Unauthorized. Please sign in.');
+        }
+        if (response.status === 403) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.message || 'You do not have permission to perform this action.');
         }
         const error = await response.json().catch(() => ({}));
         throw new Error(error.message || `API Error: ${response.statusText}`);
@@ -162,6 +170,56 @@ class ApiClient {
 
   async getEpisode(id: string): Promise<Episode> {
     return this.request<Episode>(`/episodes/${id}`);
+  }
+
+  // League Season Settings endpoints
+  async getLeagueSeasonSettings(
+    leagueId: string,
+    seasonId: string,
+  ): Promise<LeagueSeasonSettings | null> {
+    return this.request<LeagueSeasonSettings | null>(
+      `/leagues/${leagueId}/seasons/${seasonId}/settings`,
+    );
+  }
+
+  async updateLeagueSeasonSettings(
+    leagueId: string,
+    seasonId: string,
+    data: UpdateLeagueSeasonSettingsDto,
+  ): Promise<LeagueSeasonSettings> {
+    return this.request<LeagueSeasonSettings>(
+      `/leagues/${leagueId}/seasons/${seasonId}/settings`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
+  // Draft Config endpoints
+  async getDraftConfig(
+    leagueId: string,
+    seasonId: string,
+    roundNumber?: number,
+  ): Promise<DraftConfig | null> {
+    const query = roundNumber ? `?roundNumber=${roundNumber}` : '';
+    return this.request<DraftConfig | null>(
+      `/leagues/${leagueId}/seasons/${seasonId}/draft-config${query}`,
+    );
+  }
+
+  async updateDraftConfig(
+    leagueId: string,
+    seasonId: string,
+    data: UpdateDraftConfigDto,
+  ): Promise<DraftConfig> {
+    return this.request<DraftConfig>(
+      `/leagues/${leagueId}/seasons/${seasonId}/draft-config`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      },
+    );
   }
 }
 

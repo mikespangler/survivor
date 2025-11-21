@@ -37,6 +37,27 @@ export interface LeagueSeason {
   seasonId: string;
   season?: Season;
   teams?: Team[];
+  settings?: LeagueSeasonSettings;
+  draftConfigs?: DraftConfig[];
+}
+
+export interface LeagueSeasonSettings {
+  id: string;
+  leagueSeasonId: string;
+  settings?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DraftConfig {
+  id: string;
+  leagueSeasonId: string;
+  roundNumber: number;
+  castawaysPerTeam: number;
+  draftDate?: string;
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Team {
@@ -90,6 +111,7 @@ export interface UpdateUserDto {
 export interface CreateLeagueDto {
   name: string;
   description?: string;
+  inviteEmails?: string[];
 }
 
 export interface CreateSeasonDto {
@@ -102,5 +124,16 @@ export interface CreateSeasonDto {
 export interface CreateTeamDto {
   name: string;
   leagueSeasonId: string;
+}
+
+export interface UpdateLeagueSeasonSettingsDto {
+  settings?: Record<string, any>;
+}
+
+export interface UpdateDraftConfigDto {
+  roundNumber?: number;
+  castawaysPerTeam?: number;
+  draftDate?: string;
+  status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
 }
 
