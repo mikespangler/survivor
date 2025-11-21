@@ -7,13 +7,14 @@ async function main() {
 
   // Clean up any existing test user
   await prisma.user.deleteMany({
-    where: { email: 'timestamp-test@example.com' },
+    where: { clerkId: 'test_clerk_id_timestamp' },
   });
 
   // 1. Create a user - createdAt and updatedAt should be set automatically
   console.log('1️⃣  Creating user...');
   const createdUser = await prisma.user.create({
     data: {
+      clerkId: 'test_clerk_id_timestamp',
       email: 'timestamp-test@example.com',
       name: 'Test User',
     },

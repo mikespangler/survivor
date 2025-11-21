@@ -49,5 +49,41 @@ export class UserService {
       where: { id },
     });
   }
+
+  async findByClerkId(clerkId: string) {
+    return this.prisma.user.findUnique({
+      where: { clerkId },
+    });
+  }
+
+  async upsertFromClerk(clerkUser: {
+    clerkId: string;
+    email: string | null;
+    name: string | null;
+  }) {
+    // Try to find existing user by clerkId
+    const existingUser = await this.findByClerkId(clerkUser.clerkId);
+
+    if (existingUser) {
+      // Update existing user with latest info from Clerk
+      return this.prisma.user.update({
+        where: { clerkId: clerkUser.clerkId },
+        data: {
+          email: clerkUser.email,
+          name: clerkUser.name,
+        },
+      });
+    }
+
+    // Create new user (Just-in-Time sync)
+    return this.prisma.user.create({
+      data: {
+        clerkId: clerkUser.clerkId,
+        email: clerkUser.email,
+        name: clerkUser.name,
+        systemRole: 'user', // Default role for new users
+      },
+    });
+  }
 }
 

@@ -1,29 +1,20 @@
-// model Season {
+
+    
+
+
+    // model SeasonTeam {
+    //  seasonId String
+    //  teamId String
+    //  name
+    // }
+
+    // model Season {
     //   id          String       @id @default(cuid())
     //   number      Int
     //   name        String       // "Survivor 45"
     //   status      SeasonStatus
     //   castaways   Castaway[]
     //   episodes    Episode[]
-    // }
-    
-    // model Castaway {
-    //   id        String   @id @default(cuid())
-    //   name      String
-    //   seasonId  String
-    //   season    Season   @relation(fields: [seasonId], references: [id])
-    //   status    String   // "active", "eliminated", "jury"
-    //   events    Event[]
-    // }
-    
-    // model TeamCastaways {
-    //  teamId String
-    //  castawayId String
-    // }
-
-    // model SeasonTeam {
-    //  seasonId String
-    //  teamId String
     // }
     
     // model League {
@@ -88,3 +79,70 @@
     //  - commissioner
     //  - member
     
+    model League {
+        id              String         @id @default(cuid())
+        name            String         // "Mike's Friend Group"
+        description     String?
+        ownerId         String         // commissioner
+        owner           User           @relation(fields: [ownerId], references: [id])
+        members         User[]         @relation("LeagueMembers") // persistent members
+        leagueSeasons   LeagueSeason[]
+        createdAt       DateTime       @default(now())
+      }
+      
+      model LeagueSeason {
+        id           String      @id @default(cuid())
+        leagueId     String
+        league       League      @relation(fields: [leagueId], references: [id])
+        seasonId     String
+        season       Season      @relation(fields: [seasonId], references: [id])
+        teams        Team[]
+        
+        @@unique([leagueId, seasonId]) // each league plays each season once
+      }
+      
+      model Team {
+        id             String        @id @default(cuid())
+        name           String
+        leagueSeasonId String
+        leagueSeason   LeagueSeason  @relation(fields: [leagueSeasonId], references: [id])
+        ownerId        String
+        owner          User          @relation(fields: [ownerId], references: [id])
+        roster         TeamCastaway[]
+        totalPoints    Int           @default(0)
+      }
+      
+      model Season {
+        id            String         @id @default(cuid())
+        number        Int            @unique
+        name          String         // "Survivor 45: Worlds Apart"
+        status        SeasonStatus
+        startDate     DateTime?
+        castaways     Castaway[]
+        episodes      Episode[]
+        leagueSeasons LeagueSeason[]
+      }
+
+    model Castaway {
+      id        String   @id @default(cuid())
+      name      String
+      seasonId  String
+      season    Season   @relation(fields: [seasonId], references: [id])
+      status    String   // "active", "eliminated", "jury"
+    }
+    
+    id          String   @id @default(cuid())
+    teamId      String
+    team        Team     @relation(fields: [teamId], references: [id])
+    castawayId  String
+    castaway    Castaway @relation(fields: [castawayId], references: [id])
+    
+    @@unique([teamId, castawayId])
+  }
+
+      
+      type SeasonStatus {
+        UPCOMING
+        ACTIVE
+        COMPLETED
+      }

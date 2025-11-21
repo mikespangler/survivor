@@ -1,251 +1,213 @@
-# Survivor - NestJS API
+# Survivor Fantasy League
 
-A NestJS application with PostgreSQL database using Prisma ORM.
-
-## Description
-
-This is a RESTful API built with NestJS, PostgreSQL, and Prisma. It includes a User module with full CRUD operations, global validation, and Docker setup for local development.
+A full-stack fantasy league application for Survivor fans. Build leagues, draft castaways, and compete with friends while watching your favorite reality show.
 
 ## Tech Stack
 
-- **NestJS** - Progressive Node.js framework
-- **PostgreSQL** - Relational database
-- **Prisma** - Modern database ORM
-- **Docker** - Containerization for local development
-- **TypeScript** - Type-safe development
-- **class-validator** - Request validation
-- **class-transformer** - Object transformation
+### Backend
+- **NestJS** - Node.js framework
+- **Prisma** - Database ORM
+- **PostgreSQL** - Database
+- **TypeScript** - Type safety
 
-## Prerequisites
+### Frontend
+- **Next.js 14** - React framework with App Router
+- **React 19** - UI library
+- **Chakra UI** - Component library
+- **TypeScript** - Type safety
 
-- Node.js (v18 or higher)
-- Docker and Docker Compose
+## Project Structure
+
+```
+survivor/
+├── src/                 # NestJS backend source
+├── prisma/             # Database schema and migrations
+├── frontend/           # Next.js frontend application
+├── test/               # Backend tests
+└── dist/               # Compiled backend code
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 20.9.0 or higher (recommended)
+- PostgreSQL database
 - npm or yarn
 
-## Project Setup
+### Installation
 
-1. **Install dependencies**
+1. Clone the repository:
+
+```bash
+git clone <your-repo-url>
+cd survivor
+```
+
+2. Install backend dependencies:
 
 ```bash
 npm install
 ```
 
-2. **Set up environment variables**
-
-Copy the example environment file and update if needed:
+3. Install frontend dependencies:
 
 ```bash
-cp .env.example .env
+cd frontend
+npm install
+cd ..
 ```
 
-The default configuration connects to the PostgreSQL container defined in `docker-compose.yml`.
+4. Set up environment variables:
 
-3. **Start the PostgreSQL database**
+Create a `.env` file in the root directory:
 
-```bash
-docker-compose up -d
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/survivor"
 ```
 
-This will start a PostgreSQL 16 container on port 5432.
+Create a `frontend/.env.local` file (copy from `.env.example`):
 
-4. **Run database migrations**
-
-```bash
-npx prisma migrate dev --name init
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 
-This creates the database schema based on `prisma/schema.prisma`.
-
-5. **Generate Prisma Client**
+5. Set up the database:
 
 ```bash
-npx prisma generate
+npx prisma migrate dev
 ```
 
-## Running the Application
+### Development
+
+Run both frontend and backend together:
 
 ```bash
-# development mode
-npm run start
-
-# watch mode (recommended for development)
-npm run start:dev
-
-# production mode
-npm run start:prod
+npm run dev
 ```
 
-The API will be available at `http://localhost:3000`
+This will start:
+- Backend API on http://localhost:3001
+- Frontend on http://localhost:3000
 
-## API Endpoints
+#### Run services individually:
 
-### Users
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/users` | Create a new user |
-| GET | `/users` | Get all users |
-| GET | `/users/:id` | Get a user by ID |
-| PATCH | `/users/:id` | Update a user |
-| DELETE | `/users/:id` | Delete a user |
-
-### Example Requests
-
-**Create User**
+Backend only:
 ```bash
-curl -X POST http://localhost:3000/users \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","name":"John Doe"}'
+npm run dev:backend
 ```
 
-**Get All Users**
+Frontend only:
 ```bash
-curl http://localhost:3000/users
+npm run dev:frontend
 ```
 
-**Get User by ID**
+### Building for Production
+
+Build both applications:
+
 ```bash
-curl http://localhost:3000/users/{id}
+npm run build
 ```
 
-**Update User**
+Build individually:
+
 ```bash
-curl -X PATCH http://localhost:3000/users/{id} \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Jane Doe"}'
+npm run build:backend
+npm run build:frontend
 ```
 
-**Delete User**
+## Available Scripts
+
+### Root Directory (Backend + Frontend)
+
+- `npm run dev` - Run both frontend and backend concurrently
+- `npm run dev:backend` - Run backend in watch mode
+- `npm run dev:frontend` - Run frontend dev server
+- `npm run build` - Build both applications
+- `npm run build:backend` - Build backend only
+- `npm run build:frontend` - Build frontend only
+- `npm run start:prod` - Start backend in production mode
+- `npm run test` - Run backend tests
+- `npm run lint` - Lint backend code
+
+### Frontend Directory
+
+See `frontend/README.md` for frontend-specific commands.
+
+## Database
+
+The application uses PostgreSQL with Prisma ORM. Key models include:
+
+- **User** - Application users
+- **League** - Fantasy leagues created by users
+- **Season** - Survivor seasons
+- **LeagueSeason** - Join table linking leagues to seasons
+- **Team** - User teams within a league season
+- **Castaway** - Survivor contestants
+- **Episode** - Season episodes
+
+### Database Commands
+
 ```bash
-curl -X DELETE http://localhost:3000/users/{id}
-```
+# Create a new migration
+npx prisma migrate dev --name description
 
-## Database Management
+# Apply migrations
+npx prisma migrate deploy
 
-### View Database with Prisma Studio
-
-```bash
+# Open Prisma Studio (database GUI)
 npx prisma studio
-```
 
-This opens a visual database browser at `http://localhost:5555`
-
-### Create a New Migration
-
-```bash
-npx prisma migrate dev --name your_migration_name
-```
-
-### Reset Database
-
-```bash
+# Reset database (development only)
 npx prisma migrate reset
 ```
 
-### Apply Migrations in Production
+## API Documentation
 
-```bash
-npx prisma migrate deploy
-```
+The backend API runs on port 3001 by default. Key endpoints:
 
-## Testing
+- `GET /user` - List all users
+- `POST /user` - Create a new user
+- `GET /user/:id` - Get user by ID
+- `PATCH /user/:id` - Update user
+- `DELETE /user/:id` - Delete user
 
-```bash
-# unit tests
-npm run test
+Additional endpoints for leagues, seasons, teams, and castaways will be added as features are developed.
 
-# e2e tests
-npm run test:e2e
+## Deployment
 
-# test coverage
-npm run test:cov
-```
+### Backend
 
-## Project Structure
+The NestJS backend can be deployed to any Node.js hosting platform:
+- Railway
+- Render
+- Heroku
+- AWS/GCP/Azure
 
-```
-src/
-├── main.ts                 # Application entry point with global pipes
-├── app.module.ts           # Root module
-├── app.controller.ts       # Root controller
-├── app.service.ts          # Root service
-├── prisma/
-│   ├── prisma.module.ts    # Prisma module (global)
-│   └── prisma.service.ts   # Prisma service with lifecycle hooks
-└── user/
-    ├── user.module.ts      # User module
-    ├── user.controller.ts  # User REST endpoints
-    ├── user.service.ts     # User business logic
-    └── dto/
-        ├── create-user.dto.ts  # User creation DTO with validation
-        └── update-user.dto.ts  # User update DTO (partial)
-```
+### Frontend
 
-## Docker Commands
+The Next.js frontend is optimized for Vercel deployment:
 
-```bash
-# Start PostgreSQL container
-docker-compose up -d
+1. Push your code to GitHub
+2. Import project in Vercel
+3. Configure build settings to point to `frontend` directory
+4. Set environment variables
+5. Deploy!
 
-# Stop PostgreSQL container
-docker-compose down
+See `vercel.json` for deployment configuration.
 
-# View container logs
-docker-compose logs -f postgres
+## Authentication
 
-# Access PostgreSQL CLI
-docker exec -it survivor-postgres psql -U postgres -d survivor
-```
+Authentication will be implemented using [Clerk](https://clerk.com/) in a future update.
 
-## Environment Variables
+## Contributing
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:postgres@localhost:5432/survivor?schema=public` |
-| `POSTGRES_USER` | Database user | `postgres` |
-| `POSTGRES_PASSWORD` | Database password | `postgres` |
-| `POSTGRES_DB` | Database name | `survivor` |
-| `POSTGRES_PORT` | Database port | `5432` |
-| `PORT` | Application port | `3000` |
-| `NODE_ENV` | Environment | `development` |
-
-## Features
-
-- **Global Validation**: Automatic request validation using class-validator
-- **Error Handling**: Standardized error responses
-- **Type Safety**: Full TypeScript support with Prisma
-- **Database Migrations**: Version-controlled database schema
-- **Docker Support**: Easy local development setup
-- **Module Architecture**: Scalable and maintainable code organization
-- **Automatic Timestamps**: All models include createdAt and updatedAt fields
-
-## Database Conventions
-
-### Timestamp Fields
-
-**All Prisma models must include automatic timestamp fields:**
-
-```prisma
-model YourModel {
-  id        String   @id @default(uuid())
-  // ... your fields here ...
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-```
-
-- `createdAt DateTime @default(now())` - Automatically set when a record is created
-- `updatedAt DateTime @updatedAt` - Automatically updated whenever a record is modified
-
-This convention ensures consistent audit trails across all database entities.
-
-## Development Tips
-
-1. **Auto-reload**: Use `npm run start:dev` for automatic restart on file changes
-2. **Database GUI**: Use `npx prisma studio` to visually inspect and edit data
-3. **Type Generation**: Run `npx prisma generate` after schema changes
-4. **Linting**: Run `npm run lint` to check code quality
+1. Create a feature branch
+2. Make your changes
+3. Run tests and linting
+4. Submit a pull request
 
 ## License
 
-This project is [MIT licensed](LICENSE).
+UNLICENSED - Private project
