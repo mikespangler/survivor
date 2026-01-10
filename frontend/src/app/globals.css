@@ -1,5 +1,21 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════
+   Survivor Fantasy League - Custom Fonts
+   ═══════════════════════════════════════════════════════════ */
+
+@font-face {
+  font-family: 'Survivant';
+  src: url('/fonts/survivant.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Base Styles
+   ═══════════════════════════════════════════════════════════ */
+
 * {
   margin: 0;
   padding: 0;
@@ -11,7 +27,48 @@ html {
 }
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Gradient Text Utility Classes
+   ═══════════════════════════════════════════════════════════ */
+
+.text-gradient-orange-purple {
+  background: linear-gradient(-85deg, #F06542 1%, #6B7ECB 82%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-orange-yellow {
+  background: linear-gradient(128deg, #F06542 0%, #F9C31F 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Ambient Glow Effects
+   ═══════════════════════════════════════════════════════════ */
+
+.glow-orange {
+  position: absolute;
+  width: 256px;
+  height: 256px;
+  background: rgba(240, 101, 66, 0.1);
+  border-radius: 9999px;
+  filter: blur(100px);
+  pointer-events: none;
+}
+
+.glow-purple {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  background: rgba(62, 88, 193, 0.2);
+  border-radius: 9999px;
+  filter: blur(100px);
+  pointer-events: none;
 }
