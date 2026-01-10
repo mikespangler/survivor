@@ -8,6 +8,9 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { LeagueModule } from './league/league.module';
 import { AuthGuard } from './auth/auth.guard';
+import { SeasonModule } from './season/season.module';
+import { CastawayModule } from './castaway/castaway.module';
+import { TeamModule } from './team/team.module';
 
 @Module({
   imports: [
@@ -18,6 +21,9 @@ import { AuthGuard } from './auth/auth.guard';
     UserModule,
     AuthModule,
     LeagueModule,
+    SeasonModule,
+    CastawayModule,
+    TeamModule,
   ],
   controllers: [AppController],
   providers: [

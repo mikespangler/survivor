@@ -17,4 +17,3 @@ export class CreateUserDto {
   @IsOptional()
   systemRole?: string;
 }
-

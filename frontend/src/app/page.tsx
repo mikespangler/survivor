@@ -8,28 +8,69 @@ import { api } from '@/lib/api';
 import type { League } from '@/types/api';
 
 export default function Home() {
-  const { isSignedIn, user } = useUser();
+  const { isSignedIn, isLoaded, user } = useUser();
   const [mounted, setMounted] = useState(false);
   const [leagues, setLeagues] = useState<League[]>([]);
   const [loadingLeagues, setLoadingLeagues] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loadingAdmin, setLoadingAdmin] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (mounted && isSignedIn) {
-      loadLeagues();
+    // Wait for both mounted and Clerk to finish loading
+    if (!mounted || !isLoaded) {
+      return;
     }
-  }, [mounted, isSignedIn]);
+
+    // Only make API calls if user is signed in
+    if (isSignedIn) {
+      loadLeagues();
+      checkAdminStatus();
+    } else {
+      // Reset state when user signs out
+      setLeagues([]);
+      setIsAdmin(false);
+    }
+  }, [mounted, isSignedIn, isLoaded]);
+
+  const checkAdminStatus = async () => {
+    // Double check - don't make call if not signed in
+    if (!isSignedIn || !isLoaded) {
+      setIsAdmin(false);
+      return;
+    }
+    try {
+      setLoadingAdmin(true);
+      const currentUser = await api.getCurrentUser();
+      setIsAdmin(currentUser.systemRole === 'admin');
+    } catch (error) {
+      // Only log if user should be signed in
+      if (isSignedIn) {
+        console.error('Failed to check admin status:', error);
+      }
+      setIsAdmin(false);
+    } finally {
+      setLoadingAdmin(false);
+    }
+  };
 
   const loadLeagues = async () => {
+    // Double check - don't make call if not signed in
+    if (!isSignedIn || !isLoaded) {
+      return;
+    }
     try {
       setLoadingLeagues(true);
       const userLeagues = await api.getLeagues();
       setLeagues(userLeagues);
     } catch (error) {
-      console.error('Failed to load leagues:', error);
+      // Only log if user should be signed in
+      if (isSignedIn) {
+        console.error('Failed to load leagues:', error);
+      }
       // Don't show error to user, just silently fail
     } finally {
       setLoadingLeagues(false);
@@ -126,14 +167,6 @@ export default function Home() {
                             </Link>
                           </VStack>
                         </Box>
-                      </HStack>
-                    </>
-                  ) : (
-                    <>
-                      <Text fontSize="lg" color="gray.600">
-                        Get started by creating a league or joining an existing one.
-                      </Text>
-                      <HStack gap={6} mt={4} flexWrap="wrap" justify="center">
                         <Box
                           maxW="sm"
                           w="full"
@@ -142,40 +175,122 @@ export default function Home() {
                           borderRadius="md"
                           shadow="md"
                           borderWidth="1px"
-                        >
-                          <VStack gap={4} align="stretch">
-                            <Heading size="md">Create a League</Heading>
-                            <Text fontSize="sm" color="gray.600">
-                              Start your own fantasy league and invite friends to compete.
-                            </Text>
-                            <Link href="/leagues/create" style={{ width: '100%' }}>
-                              <Button colorScheme="orange" w="full">
-                                Create League
-                              </Button>
-                            </Link>
-                          </VStack>
-                        </Box>
-                        <Box
-                          maxW="sm"
-                          w="full"
-                          bg="white"
-                          p={6}
-                          borderRadius="md"
-                          shadow="md"
-                          borderWidth="1px"
-                          opacity={0.6}
                         >
                           <VStack gap={4} align="stretch">
                             <Heading size="md">Join a League</Heading>
                             <Text fontSize="sm" color="gray.600">
-                              Join an existing league with an invitation code.
+                              Join an existing league with a league ID.
                             </Text>
-                            <Button colorScheme="orange" w="full" isDisabled>
-                              Coming Soon
-                            </Button>
+                            <Link href="/leagues/join" style={{ width: '100%' }}>
+                              <Button colorScheme="orange" w="full" variant="outline">
+                                Join League
+                              </Button>
+                            </Link>
                           </VStack>
                         </Box>
+                        {isAdmin && (
+                          <Box
+                            maxW="sm"
+                            w="full"
+                            bg="purple.50"
+                            p={6}
+                            borderRadius="md"
+                            shadow="md"
+                            borderWidth="2px"
+                            borderColor="purple.200"
+                          >
+                            <VStack gap={4} align="stretch">
+                              <Heading size="md" color="purple.700">
+                                Admin Dashboard
+                              </Heading>
+                              <Text fontSize="sm" color="gray.600">
+                                Manage seasons and castaways for the platform.
+                              </Text>
+                              <Link href="/admin" style={{ width: '100%' }}>
+                                <Button colorScheme="purple" w="full">
+                                  Go to Admin
+                                </Button>
+                              </Link>
+                            </VStack>
+                          </Box>
+                        )}
                       </HStack>
+                    </>
+                  ) : (
+                <>
+                  <Text fontSize="lg" color="gray.600">
+                    Get started by creating a league or joining an existing one.
+                  </Text>
+                  <HStack gap={6} mt={4} flexWrap="wrap" justify="center">
+                    <Box
+                      maxW="sm"
+                      w="full"
+                      bg="white"
+                      p={6}
+                      borderRadius="md"
+                      shadow="md"
+                      borderWidth="1px"
+                    >
+                      <VStack gap={4} align="stretch">
+                        <Heading size="md">Create a League</Heading>
+                        <Text fontSize="sm" color="gray.600">
+                          Start your own fantasy league and invite friends to compete.
+                        </Text>
+                        <Link href="/leagues/create" style={{ width: '100%' }}>
+                          <Button colorScheme="orange" w="full">
+                            Create League
+                          </Button>
+                        </Link>
+                      </VStack>
+                    </Box>
+                    <Box
+                      maxW="sm"
+                      w="full"
+                      bg="white"
+                      p={6}
+                      borderRadius="md"
+                      shadow="md"
+                      borderWidth="1px"
+                    >
+                      <VStack gap={4} align="stretch">
+                        <Heading size="md">Join a League</Heading>
+                        <Text fontSize="sm" color="gray.600">
+                              Join an existing league with a league ID.
+                        </Text>
+                            <Link href="/leagues/join" style={{ width: '100%' }}>
+                              <Button colorScheme="orange" w="full">
+                                Join League
+                        </Button>
+                            </Link>
+                      </VStack>
+                    </Box>
+                    {isAdmin && (
+                      <Box
+                        maxW="sm"
+                        w="full"
+                        bg="purple.50"
+                        p={6}
+                        borderRadius="md"
+                        shadow="md"
+                        borderWidth="2px"
+                        borderColor="purple.200"
+                      >
+                        <VStack gap={4} align="stretch">
+                          <Heading size="md" color="purple.700">
+                            Admin Dashboard
+                          </Heading>
+                          <Text fontSize="sm" color="gray.600">
+                            Manage seasons and castaways for the platform.
+                          </Text>
+                          <Link href="/admin" style={{ width: '100%' }}>
+                            <Button colorScheme="purple" w="full">
+                              Go to Admin
+                            </Button>
+                          </Link>
+                        </VStack>
+                      </Box>
+                    )}
+                  </HStack>
                     </>
                   )}
                 </>

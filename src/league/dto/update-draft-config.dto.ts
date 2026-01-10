@@ -1,4 +1,10 @@
-import { IsInt, IsOptional, IsString, Min, IsDateString } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+  IsDateString,
+} from 'class-validator';
 
 export class UpdateDraftConfigDto {
   @IsOptional()
@@ -19,4 +25,3 @@ export class UpdateDraftConfigDto {
   @IsString()
   status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
 }
-

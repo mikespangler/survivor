@@ -46,4 +46,3 @@ export class TeamOwnerOrAdminGuard implements CanActivate {
     return true;
   }
 }
-

@@ -20,4 +20,3 @@ export class SystemAdminGuard implements CanActivate {
     return true;
   }
 }
-

@@ -1,8 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateLeagueSeasonSettingsDto } from './dto/update-league-season-settings.dto';
 import { UpdateDraftConfigDto } from './dto/update-draft-config.dto';
 import { CreateLeagueDto } from './dto/create-league.dto';
+import { JoinLeagueDto } from './dto/join-league.dto';
 
 @Injectable()
 export class LeagueService {
@@ -11,10 +17,7 @@ export class LeagueService {
   async getLeagues(userId: string) {
     return this.prisma.league.findMany({
       where: {
-        OR: [
-          { ownerId: userId },
-          { members: { some: { id: userId } } },
-        ],
+        OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
       },
       include: {
         owner: true,
@@ -40,10 +43,7 @@ export class LeagueService {
     const league = await this.prisma.league.findFirst({
       where: {
         id: leagueId,
-        OR: [
-          { ownerId: userId },
-          { members: { some: { id: userId } } },
-        ],
+        OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
       },
       include: {
         owner: true,
@@ -82,20 +82,93 @@ export class LeagueService {
   }
 
   async createLeague(userId: string, createDto: CreateLeagueDto) {
-    // Create league with the user as owner
-    // Note: inviteEmails are stubbed - not processed yet
-    const league = await this.prisma.league.create({
-      data: {
-        name: createDto.name,
-        description: createDto.description,
-        ownerId: userId,
+    // Find active or upcoming season
+    const activeSeason = await this.prisma.season.findFirst({
+      where: {
+        status: {
+          in: ['ACTIVE', 'UPCOMING'],
+        },
       },
-      include: {
-        owner: true,
+      orderBy: {
+        number: 'desc',
       },
     });
 
-    return league;
+    if (!activeSeason) {
+      throw new NotFoundException(
+        'No active or upcoming season found. Please create a season first.',
+      );
+    }
+
+    // Get user info for team name
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Generate generic team name
+    const teamName = user.name
+      ? `${user.name}'s Team`
+      : user.email
+        ? `${user.email.split('@')[0]}'s Team`
+        : 'Team';
+
+    // Use transaction to ensure atomicity
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Create league with the user as owner
+      // Note: inviteEmails are stubbed - not processed yet
+      const league = await tx.league.create({
+        data: {
+          name: createDto.name,
+          description: createDto.description,
+          ownerId: userId,
+        },
+        include: {
+          owner: true,
+        },
+      });
+
+      // 2. Create LeagueSeason for the active season
+      const leagueSeason = await tx.leagueSeason.create({
+        data: {
+          leagueId: league.id,
+          seasonId: activeSeason.id,
+        },
+      });
+
+      // 3. Create team for the owner
+      await tx.team.create({
+        data: {
+          name: teamName,
+          leagueSeasonId: leagueSeason.id,
+          ownerId: userId,
+          totalPoints: 0,
+        },
+      });
+
+      // Return league with all related data
+      return tx.league.findUnique({
+        where: { id: league.id },
+        include: {
+          owner: true,
+          members: true,
+          leagueSeasons: {
+            include: {
+              season: true,
+              teams: {
+                include: {
+                  owner: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    });
   }
 
   async getLeagueSeasonSettings(leagueId: string, seasonId: string) {
@@ -249,5 +322,150 @@ export class LeagueService {
       update: updateData,
     });
   }
-}
 
+  async joinLeague(userId: string, joinDto: JoinLeagueDto) {
+    const { leagueId } = joinDto;
+
+    // Verify league exists
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+      include: {
+        owner: true,
+        members: true,
+      },
+    });
+
+    if (!league) {
+      throw new NotFoundException(`League with ID ${leagueId} not found`);
+    }
+
+    // Check if user is already the owner
+    if (league.ownerId === userId) {
+      throw new BadRequestException('You are already the owner of this league');
+    }
+
+    // Check if user is already a member
+    const isAlreadyMember = league.members.some(
+      (member) => member.id === userId,
+    );
+    if (isAlreadyMember) {
+      throw new ConflictException('You are already a member of this league');
+    }
+
+    // Find active or upcoming season
+    const activeSeason = await this.prisma.season.findFirst({
+      where: {
+        status: {
+          in: ['ACTIVE', 'UPCOMING'],
+        },
+      },
+      orderBy: {
+        number: 'desc',
+      },
+    });
+
+    if (!activeSeason) {
+      throw new NotFoundException('No active or upcoming season found');
+    }
+
+    // Get user info for team name
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Generate generic team name
+    const teamName = user.name
+      ? `${user.name}'s Team`
+      : user.email
+        ? `${user.email.split('@')[0]}'s Team`
+        : 'Team';
+
+    // Use transaction to ensure atomicity
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Add user to league members
+      await tx.league.update({
+        where: { id: leagueId },
+        data: {
+          members: {
+            connect: { id: userId },
+          },
+        },
+      });
+
+      // 2. Find or create LeagueSeason
+      let leagueSeason = await tx.leagueSeason.findUnique({
+        where: {
+          leagueId_seasonId: {
+            leagueId,
+            seasonId: activeSeason.id,
+          },
+        },
+      });
+
+      if (!leagueSeason) {
+        leagueSeason = await tx.leagueSeason.create({
+          data: {
+            leagueId,
+            seasonId: activeSeason.id,
+          },
+        });
+      }
+
+      // 3. Check if user already has a team in this leagueSeason
+      const existingTeam = await tx.team.findFirst({
+        where: {
+          leagueSeasonId: leagueSeason.id,
+          ownerId: userId,
+        },
+      });
+
+      if (existingTeam) {
+        throw new ConflictException(
+          'You already have a team in this league season',
+        );
+      }
+
+      // 4. Create team
+      await tx.team.create({
+        data: {
+          name: teamName,
+          leagueSeasonId: leagueSeason.id,
+          ownerId: userId,
+          totalPoints: 0,
+        },
+        include: {
+          owner: true,
+          leagueSeason: {
+            include: {
+              season: true,
+            },
+          },
+        },
+      });
+
+      // Return the league with updated members
+      return tx.league.findUnique({
+        where: { id: leagueId },
+        include: {
+          owner: true,
+          members: true,
+          leagueSeasons: {
+            include: {
+              season: true,
+              teams: {
+                include: {
+                  owner: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+  }
+}

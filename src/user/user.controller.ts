@@ -12,6 +12,7 @@ import {
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('users')
 export class UserController {
@@ -26,6 +27,11 @@ export class UserController {
   @Get()
   findAll() {
     return this.userService.findAll();
+  }
+
+  @Get('me')
+  getCurrentUser(@CurrentUser() user: any) {
+    return user;
   }
 
   @Get(':id')
@@ -44,4 +50,3 @@ export class UserController {
     return this.userService.remove(id);
   }
 }
-

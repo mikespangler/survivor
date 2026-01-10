@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -22,108 +16,111 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   ownedLeagues   League[]
-  memberLeagues  League[] @relation("LeagueMembers")
   teams          Team[]
+  memberLeagues  League[] @relation("LeagueMembers")
 
   @@index([clerkId])
 }
 
 model League {
-  id              String         @id @default(cuid())
-  name            String         // "Mike's Friend Group"
-  description     String?
-  ownerId         String         // commissioner
-  owner           User           @relation(fields: [ownerId], references: [id])
-  members         User[]         @relation("LeagueMembers") // persistent members
-  leagueSeasons   LeagueSeason[]
-  createdAt       DateTime       @default(now())
+  id            String         @id @default(cuid())
+  name          String
+  description   String?
+  ownerId       String
+  createdAt     DateTime       @default(now())
+  owner         User           @relation(fields: [ownerId], references: [id])
+  leagueSeasons LeagueSeason[]
+  members       User[]         @relation("LeagueMembers")
 }
 
 model LeagueSeason {
   id           String                @id @default(cuid())
   leagueId     String
-  league       League                @relation(fields: [leagueId], references: [id], onDelete: Cascade)
   seasonId     String
-  season       Season                @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  teams        Team[]
-  settings     LeagueSeasonSettings?
   draftConfigs DraftConfig[]
-  
-  @@unique([leagueId, seasonId]) // each league plays each season once
+  league       League                @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  season       Season                @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  settings     LeagueSeasonSettings?
+  teams        Team[]
+
+  @@unique([leagueId, seasonId])
 }
 
 model Team {
-  id             String        @id @default(cuid())
+  id             String         @id @default(cuid())
   name           String
   leagueSeasonId String
-  leagueSeason   LeagueSeason  @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
   ownerId        String
-  owner          User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  totalPoints    Int            @default(0)
+  leagueSeason   LeagueSeason   @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
+  owner          User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   roster         TeamCastaway[]
-  totalPoints    Int           @default(0)
 }
 
 model Season {
   id            String         @id @default(cuid())
   number        Int            @unique
-  name          String         // "Survivor 45: Worlds Apart"
-  status        String         // SeasonStatus: UPCOMING, ACTIVE, COMPLETED
+  name          String
+  status        String
   startDate     DateTime?
+  activeEpisode Int            @default(1)
   castaways     Castaway[]
   episodes      Episode[]
   leagueSeasons LeagueSeason[]
 }
 
 model Castaway {
-  id        String         @id @default(cuid())
-  name      String
-  seasonId  String
-  season    Season         @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  status    String         // "active", "eliminated", "jury"
-  teams     TeamCastaway[]
+  id       String         @id @default(cuid())
+  name     String
+  seasonId String
+  status   String
+  season   Season         @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  teams    TeamCastaway[]
 }
 
 model TeamCastaway {
-  id          String   @id @default(cuid())
-  teamId      String
-  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  castawayId  String
-  castaway    Castaway @relation(fields: [castawayId], references: [id], onDelete: Cascade)
-  
-  @@unique([teamId, castawayId])
+  id           String   @id @default(cuid())
+  teamId       String
+  castawayId   String
+  startEpisode Int
+  endEpisode   Int?
+  castaway     Castaway @relation(fields: [castawayId], references: [id], onDelete: Cascade)
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, castawayId, startEpisode])
 }
 
 model Episode {
-  id        String   @id @default(cuid())
-  seasonId  String
-  season    Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  number    Int
-  airDate   DateTime?
-  title     String?
-  
+  id       String    @id @default(cuid())
+  seasonId String
+  number   Int
+  airDate  DateTime?
+  title    String?
+  season   Season    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+
   @@unique([seasonId, number])
 }
 
 model LeagueSeasonSettings {
   id             String       @id @default(cuid())
   leagueSeasonId String       @unique
-  leagueSeason   LeagueSeason @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
-  settings       Json?        // General league settings (scoring rules, etc.)
+  settings       Json?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+  leagueSeason   LeagueSeason @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
 }
 
 model DraftConfig {
-  id              String       @id @default(cuid())
-  leagueSeasonId String
-  leagueSeason    LeagueSeason @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
-  roundNumber     Int          @default(1)
+  id               String       @id @default(cuid())
+  leagueSeasonId   String
+  roundNumber      Int          @default(1)
   castawaysPerTeam Int
-  draftDate       DateTime?
-  status          String       @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  
+  draftDate        DateTime?
+  status           String       @default("PENDING")
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  leagueSeason     LeagueSeason @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
+
   @@unique([leagueSeasonId, roundNumber])
   @@index([leagueSeasonId])
 }

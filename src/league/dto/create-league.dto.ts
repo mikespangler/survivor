@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsArray, IsEmail, MinLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  IsEmail,
+  MinLength,
+} from 'class-validator';
 
 export class CreateLeagueDto {
   @IsString()
@@ -14,4 +20,3 @@ export class CreateLeagueDto {
   @IsEmail({}, { each: true })
   inviteEmails?: string[];
 }
-

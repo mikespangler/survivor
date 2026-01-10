@@ -5,4 +5,3 @@ export class UpdateLeagueSeasonSettingsDto {
   @IsObject()
   settings?: Record<string, any>;
 }
-

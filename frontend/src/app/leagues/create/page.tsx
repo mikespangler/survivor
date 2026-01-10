@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -30,9 +30,15 @@ export default function CreateLeaguePage() {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Redirect if not signed in
-  if (!isSignedIn) {
+  // Redirect if not signed in (client-side only)
+  useEffect(() => {
+    if (isSignedIn === false) {
     router.push('/');
+    }
+  }, [isSignedIn, router]);
+
+  // Don't render form until we know auth status
+  if (isSignedIn === false || isSignedIn === undefined) {
     return null;
   }
 

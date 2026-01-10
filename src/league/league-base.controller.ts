@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { LeagueService } from './league.service';
 import { CreateLeagueDto } from './dto/create-league.dto';
+import { JoinLeagueDto } from './dto/join-league.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('leagues')
@@ -33,5 +34,10 @@ export class LeagueBaseController {
   ) {
     return this.leagueService.createLeague(user.id, createDto);
   }
-}
 
+  @Post('join')
+  @HttpCode(HttpStatus.OK)
+  async joinLeague(@CurrentUser() user: any, @Body() joinDto: JoinLeagueDto) {
+    return this.leagueService.joinLeague(user.id, joinDto);
+  }
+}

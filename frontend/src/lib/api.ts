@@ -10,8 +10,12 @@ import type {
   CreateUserDto,
   UpdateUserDto,
   CreateLeagueDto,
+  JoinLeagueDto,
   CreateSeasonDto,
+  UpdateSeasonDto,
   CreateTeamDto,
+  CreateCastawayDto,
+  UpdateCastawayDto,
   LeagueSeasonSettings,
   DraftConfig,
   UpdateLeagueSeasonSettingsDto,
@@ -40,16 +44,44 @@ class ApiClient {
     const url = `${this.baseUrl}${endpoint}`;
     
     // Get the JWT token from Clerk
-    const token = this.getToken ? await this.getToken() : null;
+    let token: string | null = null;
+    if (this.getToken) {
+      try {
+        token = await this.getToken();
+        if (!token) {
+          console.warn('⚠️ No token available for API request to:', endpoint);
+          console.warn('Token getter exists but returned null. User may not be authenticated.');
+        } else {
+          console.log('✅ Token retrieved successfully for:', endpoint);
+        }
+      } catch (error) {
+        console.error('❌ Error getting token:', error);
+      }
+    } else {
+      console.warn('⚠️ No token getter configured. API requests will be unauthenticated.');
+    }
     
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options?.headers,
+    };
+
+    if (!token) {
+      console.warn('⚠️ Making unauthenticated request to:', endpoint);
+    }
+
     const config: RequestInit = {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...options?.headers,
-      },
+      headers,
     };
+
+    console.log('📤 API Request:', {
+      url,
+      method: options?.method || 'GET',
+      hasToken: !!token,
+      headers: Object.keys(headers),
+    });
 
     try {
       const response = await fetch(url, config);
@@ -76,29 +108,33 @@ class ApiClient {
 
   // User endpoints
   async getUsers(): Promise<User[]> {
-    return this.request<User[]>('/user');
+    return this.request<User[]>('/users');
   }
 
   async getUser(id: string): Promise<User> {
-    return this.request<User>(`/user/${id}`);
+    return this.request<User>(`/users/${id}`);
+  }
+
+  async getCurrentUser(): Promise<User> {
+    return this.request<User>('/users/me');
   }
 
   async createUser(data: CreateUserDto): Promise<User> {
-    return this.request<User>('/user', {
+    return this.request<User>('/users', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async updateUser(id: string, data: UpdateUserDto): Promise<User> {
-    return this.request<User>(`/user/${id}`, {
+    return this.request<User>(`/users/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
   }
 
   async deleteUser(id: string): Promise<void> {
-    return this.request<void>(`/user/${id}`, {
+    return this.request<void>(`/users/${id}`, {
       method: 'DELETE',
     });
   }
@@ -114,6 +150,13 @@ class ApiClient {
 
   async createLeague(data: CreateLeagueDto): Promise<League> {
     return this.request<League>('/leagues', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async joinLeague(data: JoinLeagueDto): Promise<League> {
+    return this.request<League>('/leagues/join', {
       method: 'POST',
       body: JSON.stringify(data),
     });
@@ -135,6 +178,19 @@ class ApiClient {
     });
   }
 
+  async updateSeason(id: string, data: UpdateSeasonDto): Promise<Season> {
+    return this.request<Season>(`/seasons/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteSeason(id: string): Promise<void> {
+    return this.request<void>(`/seasons/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Team endpoints (placeholder)
   async getTeams(leagueSeasonId?: string): Promise<Team[]> {
     const query = leagueSeasonId ? `?leagueSeasonId=${leagueSeasonId}` : '';
@@ -153,13 +209,37 @@ class ApiClient {
   }
 
   // Castaway endpoints (placeholder)
-  async getCastaways(seasonId?: string): Promise<Castaway[]> {
-    const query = seasonId ? `?seasonId=${seasonId}` : '';
+  async getCastaways(seasonId: string): Promise<Castaway[]> {
+    if (!seasonId) {
+      throw new Error('seasonId is required to fetch castaways');
+    }
+
+    const query = `?seasonId=${encodeURIComponent(seasonId)}`;
     return this.request<Castaway[]>(`/castaways${query}`);
   }
 
   async getCastaway(id: string): Promise<Castaway> {
     return this.request<Castaway>(`/castaways/${id}`);
+  }
+
+  async createCastaway(data: CreateCastawayDto): Promise<Castaway> {
+    return this.request<Castaway>('/castaways', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCastaway(id: string, data: UpdateCastawayDto): Promise<Castaway> {
+    return this.request<Castaway>(`/castaways/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteCastaway(id: string): Promise<void> {
+    return this.request<void>(`/castaways/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   // Episode endpoints (placeholder)

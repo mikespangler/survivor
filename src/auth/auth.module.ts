@@ -15,12 +15,6 @@ import { PrismaModule } from '../prisma/prisma.module';
     SystemAdminGuard,
     LeagueOwnerOrAdminGuard,
   ],
-  exports: [
-    ClerkService,
-    AuthGuard,
-    SystemAdminGuard,
-    LeagueOwnerOrAdminGuard,
-  ],
+  exports: [ClerkService, AuthGuard, SystemAdminGuard, LeagueOwnerOrAdminGuard],
 })
 export class AuthModule {}
-

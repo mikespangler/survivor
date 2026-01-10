@@ -46,4 +46,3 @@ export class LeagueOwnerOrAdminGuard implements CanActivate {
     return true;
   }
 }
-

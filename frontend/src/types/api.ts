@@ -2,8 +2,10 @@
 
 export interface User {
   id: string;
-  email: string;
-  name: string;
+  clerkId: string;
+  email: string | null;
+  name: string | null;
+  systemRole: 'user' | 'admin';
   createdAt: string;
   updatedAt: string;
 }
@@ -76,7 +78,7 @@ export interface Castaway {
   name: string;
   seasonId: string;
   season?: Season;
-  status: string;
+  status: 'ACTIVE' | 'ELIMINATED' | 'JURY';
   teams?: TeamCastaway[];
 }
 
@@ -114,6 +116,10 @@ export interface CreateLeagueDto {
   inviteEmails?: string[];
 }
 
+export interface JoinLeagueDto {
+  leagueId: string;
+}
+
 export interface CreateSeasonDto {
   number: number;
   name: string;
@@ -121,9 +127,27 @@ export interface CreateSeasonDto {
   startDate?: string;
 }
 
+export interface UpdateSeasonDto {
+  number?: number;
+  name?: string;
+  status?: 'UPCOMING' | 'ACTIVE' | 'COMPLETED';
+  startDate?: string;
+}
+
 export interface CreateTeamDto {
   name: string;
   leagueSeasonId: string;
+}
+
+export interface CreateCastawayDto {
+  name: string;
+  seasonId: string;
+  status: 'ACTIVE' | 'ELIMINATED' | 'JURY';
+}
+
+export interface UpdateCastawayDto {
+  name?: string;
+  status?: 'ACTIVE' | 'ELIMINATED' | 'JURY';
 }
 
 export interface UpdateLeagueSeasonSettingsDto {

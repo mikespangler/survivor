@@ -12,15 +12,50 @@ import {
   Container,
 } from '@chakra-ui/react';
 import { SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs';
+import { api } from '@/lib/api';
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const { isSignedIn, user } = useUser();
-  
+  const [isAdmin, setIsAdmin] = useState(false);
+  const { isSignedIn, isLoaded, user } = useUser();
+
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    let isActive = true;
+
+    const loadCurrentUser = async () => {
+      // Wait for Clerk to finish loading
+      if (!isLoaded) {
+        return;
+      }
+
+      // If user is not signed in, don't make API call
+      if (!isSignedIn) {
+        setIsAdmin(false);
+        return;
+      }
+
+      try {
+        const currentUser = await api.getCurrentUser();
+        if (isActive) {
+          setIsAdmin(currentUser.systemRole === 'admin');
+        }
+      } catch (error) {
+        // Only log errors if user is signed in (401 is expected if not signed in)
+        if (isSignedIn) {
+          console.error('Failed to fetch current user info', error);
+        }
+        if (isActive) {
+          setIsAdmin(false);
+        }
+      }
+    };
+
+    void loadCurrentUser();
+
+    return () => {
+      isActive = false;
+    };
+  }, [isSignedIn, isLoaded]);
   
   const onToggle = () => setIsOpen(!isOpen);
 
@@ -40,26 +75,19 @@ export const Navigation = () => {
 
           {/* Desktop Navigation */}
           <HStack gap={8} display={{ base: 'none', md: 'flex' }}>
-            <Link href="/leagues">
-              <Box fontWeight="medium" color="gray.700" _hover={{ color: 'orange.600' }}>
-                Leagues
-              </Box>
-            </Link>
-            <Link href="/seasons">
-              <Box fontWeight="medium" color="gray.700" _hover={{ color: 'orange.600' }}>
-                Seasons
-              </Box>
-            </Link>
-            <Link href="/about">
-              <Box fontWeight="medium" color="gray.700" _hover={{ color: 'orange.600' }}>
-                About
-              </Box>
-            </Link>
+            <Link href="/leagues">Leagues</Link>
+            {isAdmin && (
+              <Link href="/admin">
+                <Button colorScheme="purple" size="sm" variant="solid">
+                  Admin
+                </Button>
+              </Link>
+            )}
           </HStack>
 
           {/* Auth Buttons */}
           <HStack gap={4} display={{ base: 'none', md: 'flex' }}>
-            {!mounted ? (
+            {!isLoaded ? (
               // Render placeholder during SSR/initial mount to avoid hydration mismatch
               <Box w="200px" h="32px" />
             ) : isSignedIn ? (
@@ -112,18 +140,27 @@ export const Navigation = () => {
                   Leagues
                 </Box>
               </Link>
-              <Link href="/seasons" onClick={onToggle}>
-                <Box fontWeight="medium" color="gray.700" px={4} py={2}>
-                  Seasons
-                </Box>
-              </Link>
+              {isAdmin && (
+                <Link href="/admin" onClick={onToggle}>
+                  <Box
+                    fontWeight="medium"
+                    color="purple.600"
+                    px={4}
+                    py={2}
+                    bg="purple.50"
+                    borderRadius="md"
+                  >
+                    Admin Dashboard
+                  </Box>
+                </Link>
+              )}
               <Link href="/about" onClick={onToggle}>
                 <Box fontWeight="medium" color="gray.700" px={4} py={2}>
                   About
                 </Box>
               </Link>
               <VStack gap={2} px={4} pt={2}>
-                {!mounted ? (
+                {!isLoaded ? (
                   // Render placeholder during SSR/initial mount to avoid hydration mismatch
                   <Box w="full" h="80px" />
                 ) : isSignedIn ? (
