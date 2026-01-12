@@ -22,6 +22,11 @@ export class SeasonController {
     return this.seasonService.findAll();
   }
 
+  @Get(':id/metadata')
+  getMetadata(@Param('id') id: string) {
+    return this.seasonService.getMetadata(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.seasonService.findOne(id);

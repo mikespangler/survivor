@@ -99,6 +99,68 @@ export interface Episode {
   title?: string;
 }
 
+// Season metadata response
+export interface SeasonMetadata {
+  id: string;
+  number: number;
+  name: string;
+  status: 'UPCOMING' | 'ACTIVE' | 'COMPLETED';
+  startDate: string | null;
+  activeEpisode: number;
+  currentEpisode: {
+    number: number;
+    airDate: string | null;
+    title: string | null;
+    deadline: string | null;
+  } | null;
+}
+
+// League standings response
+export interface LeagueStandings {
+  leagueSeasonId: string;
+  teams: StandingsTeam[];
+}
+
+export interface StandingsTeam {
+  id: string;
+  name: string;
+  totalPoints: number;
+  rank: number;
+  owner: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  };
+  isCurrentUser: boolean;
+}
+
+// My team response
+export interface MyTeamResponse {
+  id: string;
+  name: string;
+  totalPoints: number;
+  rank: number;
+  totalTeams: number;
+  leagueSeasonId: string;
+  roster: TeamCastawayWithDetails[];
+  stats: {
+    activeCastaways: number;
+    eliminatedCastaways: number;
+  };
+}
+
+export interface TeamCastawayWithDetails {
+  id: string;
+  castaway: {
+    id: string;
+    name: string;
+    status: 'ACTIVE' | 'ELIMINATED' | 'JURY';
+  };
+  startEpisode: number;
+  endEpisode: number | null;
+  isActive: boolean;
+}
+
 // DTOs for creating/updating resources
 export interface CreateUserDto {
   email: string;

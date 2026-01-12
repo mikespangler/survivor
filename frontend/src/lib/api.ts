@@ -20,6 +20,9 @@ import type {
   DraftConfig,
   UpdateLeagueSeasonSettingsDto,
   UpdateDraftConfigDto,
+  SeasonMetadata,
+  LeagueStandings,
+  MyTeamResponse,
 } from '@/types/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -171,6 +174,10 @@ class ApiClient {
     return this.request<Season>(`/seasons/${id}`);
   }
 
+  async getSeasonMetadata(id: string): Promise<SeasonMetadata> {
+    return this.request<SeasonMetadata>(`/seasons/${id}/metadata`);
+  }
+
   async createSeason(data: CreateSeasonDto): Promise<Season> {
     return this.request<Season>('/seasons', {
       method: 'POST',
@@ -299,6 +306,26 @@ class ApiClient {
         method: 'PATCH',
         body: JSON.stringify(data),
       },
+    );
+  }
+
+  // League standings endpoint
+  async getLeagueStandings(
+    leagueId: string,
+    seasonId: string,
+  ): Promise<LeagueStandings> {
+    return this.request<LeagueStandings>(
+      `/leagues/${leagueId}/seasons/${seasonId}/standings`,
+    );
+  }
+
+  // My team endpoint
+  async getMyTeam(
+    leagueId: string,
+    seasonId: string,
+  ): Promise<MyTeamResponse> {
+    return this.request<MyTeamResponse>(
+      `/leagues/${leagueId}/seasons/${seasonId}/my-team`,
     );
   }
 }

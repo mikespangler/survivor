@@ -83,6 +83,43 @@ export class SeasonService {
     });
   }
 
+  async getMetadata(id: string) {
+    const season = await this.prisma.season.findUnique({
+      where: { id },
+    });
+
+    if (!season) {
+      throw new NotFoundException(`Season with ID ${id} not found`);
+    }
+
+    // Get current episode details
+    const currentEpisode = await this.prisma.episode.findUnique({
+      where: {
+        seasonId_number: {
+          seasonId: id,
+          number: season.activeEpisode,
+        },
+      },
+    });
+
+    return {
+      id: season.id,
+      number: season.number,
+      name: season.name,
+      status: season.status,
+      startDate: season.startDate,
+      activeEpisode: season.activeEpisode,
+      currentEpisode: currentEpisode
+        ? {
+            number: currentEpisode.number,
+            airDate: currentEpisode.airDate,
+            title: currentEpisode.title,
+            deadline: currentEpisode.airDate, // Same as airDate
+          }
+        : null,
+    };
+  }
+
   async remove(id: string) {
     await this.findOne(id);
     return this.prisma.season.delete({

@@ -15,7 +15,7 @@ export class LeagueService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getLeagues(userId: string) {
-    return this.prisma.league.findMany({
+    const leagues = await this.prisma.league.findMany({
       where: {
         OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
       },
@@ -31,11 +31,35 @@ export class LeagueService {
               },
             },
           },
+          orderBy: {
+            season: {
+              number: 'desc',
+            },
+          },
         },
       },
       orderBy: {
         createdAt: 'desc',
       },
+    });
+
+    // Enhance the response with active season indicator and user's team
+    return leagues.map((league) => {
+      const leagueSeasonsEnhanced = league.leagueSeasons.map((ls) => {
+        const userTeam = ls.teams.find((team) => team.ownerId === userId);
+        return {
+          ...ls,
+          isActive: ls.season.status === 'ACTIVE',
+          userTeam: userTeam
+            ? { id: userTeam.id, name: userTeam.name }
+            : null,
+        };
+      });
+
+      return {
+        ...league,
+        leagueSeasons: leagueSeasonsEnhanced,
+      };
     });
   }
 
@@ -467,5 +491,146 @@ export class LeagueService {
         },
       });
     });
+  }
+
+  async getStandings(leagueId: string, seasonId: string, userId: string) {
+    // Find the league season
+    const leagueSeason = await this.prisma.leagueSeason.findUnique({
+      where: {
+        leagueId_seasonId: {
+          leagueId,
+          seasonId,
+        },
+      },
+    });
+
+    if (!leagueSeason) {
+      throw new NotFoundException(
+        `LeagueSeason with leagueId ${leagueId} and seasonId ${seasonId} not found`,
+      );
+    }
+
+    // Get all teams ordered by totalPoints
+    const teams = await this.prisma.team.findMany({
+      where: {
+        leagueSeasonId: leagueSeason.id,
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        totalPoints: 'desc',
+      },
+    });
+
+    // Add rank and isCurrentUser flag
+    const teamsWithRank = teams.map((team, index) => ({
+      id: team.id,
+      name: team.name,
+      totalPoints: team.totalPoints,
+      rank: index + 1,
+      owner: team.owner,
+      isCurrentUser: team.owner.id === userId,
+    }));
+
+    return {
+      leagueSeasonId: leagueSeason.id,
+      teams: teamsWithRank,
+    };
+  }
+
+  async getMyTeam(leagueId: string, seasonId: string, userId: string) {
+    // Find the league season
+    const leagueSeason = await this.prisma.leagueSeason.findUnique({
+      where: {
+        leagueId_seasonId: {
+          leagueId,
+          seasonId,
+        },
+      },
+    });
+
+    if (!leagueSeason) {
+      throw new NotFoundException(
+        `LeagueSeason with leagueId ${leagueId} and seasonId ${seasonId} not found`,
+      );
+    }
+
+    // Find user's team in this league season
+    const team = await this.prisma.team.findFirst({
+      where: {
+        leagueSeasonId: leagueSeason.id,
+        ownerId: userId,
+      },
+      include: {
+        roster: {
+          include: {
+            castaway: true,
+          },
+        },
+      },
+    });
+
+    if (!team) {
+      throw new NotFoundException(
+        'You do not have a team in this league season',
+      );
+    }
+
+    // Count teams with higher points to get rank
+    const teamsWithHigherPoints = await this.prisma.team.count({
+      where: {
+        leagueSeasonId: leagueSeason.id,
+        totalPoints: {
+          gt: team.totalPoints,
+        },
+      },
+    });
+
+    const rank = teamsWithHigherPoints + 1;
+
+    // Count total teams
+    const totalTeams = await this.prisma.team.count({
+      where: {
+        leagueSeasonId: leagueSeason.id,
+      },
+    });
+
+    // Format roster with isActive flag
+    const roster = team.roster.map((tc) => ({
+      id: tc.id,
+      castaway: {
+        id: tc.castaway.id,
+        name: tc.castaway.name,
+        status: tc.castaway.status,
+      },
+      startEpisode: tc.startEpisode,
+      endEpisode: tc.endEpisode,
+      isActive: tc.endEpisode === null,
+    }));
+
+    // Calculate stats
+    const activeCastaways = roster.filter((r) => r.isActive).length;
+    const eliminatedCastaways = roster.filter((r) => !r.isActive).length;
+
+    return {
+      id: team.id,
+      name: team.name,
+      totalPoints: team.totalPoints,
+      rank,
+      totalTeams,
+      leagueSeasonId: team.leagueSeasonId,
+      roster,
+      stats: {
+        activeCastaways,
+        eliminatedCastaways,
+      },
+    };
   }
 }
