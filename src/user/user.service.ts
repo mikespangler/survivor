@@ -3,6 +3,9 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
+// Emails that always get admin privileges
+const ADMIN_EMAILS = ['spangler.mike@gmail.com'];
+
 @Injectable()
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
@@ -61,16 +64,22 @@ export class UserService {
     email: string | null;
     name: string | null;
   }) {
+    // Check if this email should always be admin
+    const shouldBeAdmin =
+      clerkUser.email && ADMIN_EMAILS.includes(clerkUser.email.toLowerCase());
+
     // Try to find existing user by clerkId
     const existingUser = await this.findByClerkId(clerkUser.clerkId);
 
     if (existingUser) {
       // Update existing user with latest info from Clerk
+      // Also ensure admin emails always have admin role
       return this.prisma.user.update({
         where: { clerkId: clerkUser.clerkId },
         data: {
           email: clerkUser.email,
           name: clerkUser.name,
+          ...(shouldBeAdmin && { systemRole: 'admin' }),
         },
       });
     }
@@ -81,7 +90,7 @@ export class UserService {
         clerkId: clerkUser.clerkId,
         email: clerkUser.email,
         name: clerkUser.name,
-        systemRole: 'user', // Default role for new users
+        systemRole: shouldBeAdmin ? 'admin' : 'user',
       },
     });
   }

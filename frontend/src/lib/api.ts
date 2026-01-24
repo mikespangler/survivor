@@ -16,6 +16,9 @@ import type {
   CreateTeamDto,
   CreateCastawayDto,
   UpdateCastawayDto,
+  CreateEpisodeDto,
+  UpdateEpisodeDto,
+  BulkCreateEpisodesDto,
   LeagueSeasonSettings,
   DraftConfig,
   UpdateLeagueSeasonSettingsDto,
@@ -262,7 +265,7 @@ class ApiClient {
     });
   }
 
-  // Episode endpoints (placeholder)
+  // Episode endpoints
   async getEpisodes(seasonId?: string): Promise<Episode[]> {
     const query = seasonId ? `?seasonId=${seasonId}` : '';
     return this.request<Episode[]>(`/episodes${query}`);
@@ -270,6 +273,33 @@ class ApiClient {
 
   async getEpisode(id: string): Promise<Episode> {
     return this.request<Episode>(`/episodes/${id}`);
+  }
+
+  async createEpisode(data: CreateEpisodeDto): Promise<Episode> {
+    return this.request<Episode>('/episodes', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async bulkCreateEpisodes(data: BulkCreateEpisodesDto): Promise<Episode[]> {
+    return this.request<Episode[]>('/episodes/bulk', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateEpisode(id: string, data: UpdateEpisodeDto): Promise<Episode> {
+    return this.request<Episode>(`/episodes/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteEpisode(id: string): Promise<void> {
+    return this.request<void>(`/episodes/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   // League Season Settings endpoints

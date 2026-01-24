@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -27,10 +27,13 @@ import { api } from '@/lib/api';
 import type {
   Castaway,
   Season,
+  Episode,
   CreateSeasonDto,
   UpdateSeasonDto,
   CreateCastawayDto,
   UpdateCastawayDto,
+  CreateEpisodeDto,
+  UpdateEpisodeDto,
 } from '@/types/api';
 
 const SEASON_STATUSES: CreateSeasonDto['status'][] = [
@@ -59,6 +62,13 @@ type CastawayFormState = {
   status: CreateCastawayDto['status'];
 };
 
+type EpisodeFormState = {
+  id: string;
+  number: string;
+  airDate: string;
+  title: string;
+};
+
 const initialSeasonForm: SeasonFormState = {
   id: '',
   number: '',
@@ -73,6 +83,13 @@ const initialCastawayForm: CastawayFormState = {
   status: 'ACTIVE',
 };
 
+const initialEpisodeForm: EpisodeFormState = {
+  id: '',
+  number: '',
+  airDate: '',
+  title: '',
+};
+
 export default function AdminPage() {
   const { isSignedIn } = useUser();
   const toast = useToast();
@@ -82,6 +99,7 @@ export default function AdminPage() {
 
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [castaways, setCastaways] = useState<Castaway[]>([]);
+  const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState('');
 
   const [seasonForm, setSeasonForm] = useState<SeasonFormState>(
@@ -89,11 +107,15 @@ export default function AdminPage() {
   );
   const [castawayForm, setCastawayForm] =
     useState<CastawayFormState>(initialCastawayForm);
+  const [episodeForm, setEpisodeForm] =
+    useState<EpisodeFormState>(initialEpisodeForm);
 
   const [isLoadingSeasons, setIsLoadingSeasons] = useState(false);
   const [isLoadingCastaways, setIsLoadingCastaways] = useState(false);
+  const [isLoadingEpisodes, setIsLoadingEpisodes] = useState(false);
   const [isSubmittingSeason, setIsSubmittingSeason] = useState(false);
   const [isSubmittingCastaway, setIsSubmittingCastaway] = useState(false);
+  const [isSubmittingEpisode, setIsSubmittingEpisode] = useState(false);
 
   const loadSeasons = useCallback(async () => {
     setIsLoadingSeasons(true);
@@ -148,6 +170,33 @@ export default function AdminPage() {
     [toast],
   );
 
+  const loadEpisodes = useCallback(
+    async (seasonId: string) => {
+      if (!seasonId) {
+        setEpisodes([]);
+        return;
+      }
+      setIsLoadingEpisodes(true);
+      try {
+        const data = await api.getEpisodes(seasonId);
+        setEpisodes(data);
+      } catch (error) {
+        console.error('Failed to load episodes', error);
+        toast({
+          title: 'Failed to load episodes',
+          description:
+            error instanceof Error
+              ? error.message
+              : 'Unexpected error occurred',
+          status: 'error',
+        });
+      } finally {
+        setIsLoadingEpisodes(false);
+      }
+    },
+    [toast],
+  );
+
   useEffect(() => {
     let isActive = true;
 
@@ -194,10 +243,12 @@ export default function AdminPage() {
   useEffect(() => {
     if (isAdmin && selectedSeasonId) {
       void loadCastaways(selectedSeasonId);
+      void loadEpisodes(selectedSeasonId);
     } else if (!selectedSeasonId) {
       setCastaways([]);
+      setEpisodes([]);
     }
-  }, [isAdmin, selectedSeasonId, loadCastaways]);
+  }, [isAdmin, selectedSeasonId, loadCastaways, loadEpisodes]);
 
   const handleSeasonSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -253,33 +304,6 @@ export default function AdminPage() {
         ? new Date(season.startDate).toISOString().slice(0, 10)
         : '',
     });
-  };
-
-  const handleSeasonDelete = async (season: Season) => {
-    if (
-      !window.confirm(
-        `Delete season "${season.name}" (#${season.number})? This cannot be undone.`,
-      )
-    ) {
-      return;
-    }
-
-    try {
-      await api.deleteSeason(season.id);
-      toast({ title: 'Season deleted', status: 'success' });
-      const refreshedSeasons = await loadSeasons();
-      if (!refreshedSeasons.some((item) => item.id === selectedSeasonId)) {
-        setSelectedSeasonId(refreshedSeasons[0]?.id ?? '');
-      }
-    } catch (error) {
-      console.error('Failed to delete season', error);
-      toast({
-        title: 'Failed to delete season',
-        description:
-          error instanceof Error ? error.message : 'Unexpected error',
-        status: 'error',
-      });
-    }
   };
 
   const handleCastawaySubmit = async (event: React.FormEvent) => {
@@ -362,12 +386,89 @@ export default function AdminPage() {
     }
   };
 
-  const seasonLabel = useMemo(
-    () =>
-      seasons.find((season) => season.id === selectedSeasonId)?.name ||
-      'Select a season',
-    [seasons, selectedSeasonId],
-  );
+  const handleEpisodeSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!selectedSeasonId) {
+      toast({
+        title: 'Select a season before managing episodes',
+        status: 'warning',
+      });
+      return;
+    }
+    if (!episodeForm.number) {
+      toast({
+        title: 'Episode number is required',
+        status: 'warning',
+      });
+      return;
+    }
+
+    const payload: CreateEpisodeDto | UpdateEpisodeDto = {
+      number: Number(episodeForm.number),
+      airDate: episodeForm.airDate || undefined,
+      title: episodeForm.title || undefined,
+    };
+
+    setIsSubmittingEpisode(true);
+    try {
+      if (episodeForm.id) {
+        await api.updateEpisode(episodeForm.id, payload);
+        toast({ title: 'Episode updated', status: 'success' });
+      } else {
+        await api.createEpisode({
+          ...(payload as CreateEpisodeDto),
+          seasonId: selectedSeasonId,
+        });
+        toast({ title: 'Episode created', status: 'success' });
+      }
+
+      setEpisodeForm(initialEpisodeForm);
+      await loadEpisodes(selectedSeasonId);
+    } catch (error) {
+      console.error('Failed to save episode', error);
+      toast({
+        title: 'Failed to save episode',
+        description:
+          error instanceof Error ? error.message : 'Unexpected error',
+        status: 'error',
+      });
+    } finally {
+      setIsSubmittingEpisode(false);
+    }
+  };
+
+  const handleEpisodeEdit = (episode: Episode) => {
+    setEpisodeForm({
+      id: episode.id,
+      number: episode.number.toString(),
+      airDate: episode.airDate
+        ? new Date(episode.airDate).toISOString().slice(0, 16)
+        : '',
+      title: episode.title || '',
+    });
+  };
+
+  const handleEpisodeDelete = async (episode: Episode) => {
+    if (
+      !window.confirm(`Delete Episode ${episode.number}? This cannot be undone.`)
+    ) {
+      return;
+    }
+
+    try {
+      await api.deleteEpisode(episode.id);
+      toast({ title: 'Episode deleted', status: 'success' });
+      await loadEpisodes(selectedSeasonId);
+    } catch (error) {
+      console.error('Failed to delete episode', error);
+      toast({
+        title: 'Failed to delete episode',
+        description:
+          error instanceof Error ? error.message : 'Unexpected error',
+        status: 'error',
+      });
+    }
+  };
 
   if (isCheckingAdmin) {
     return (
@@ -407,7 +508,6 @@ export default function AdminPage() {
               borderWidth="1px"
               borderRadius="lg"
               mb={6}
-              bg="white"
             >
               <Heading size="sm">
                 {seasonForm.id ? 'Edit Season' : 'Create Season'}
@@ -488,14 +588,14 @@ export default function AdminPage() {
             </Stack>
           </Box>
 
-          <Box borderWidth="1px" borderRadius="lg" overflowX="auto" bg="white">
+          <Box borderWidth="1px" borderRadius="lg" overflowX="auto">
             {isLoadingSeasons ? (
               <Box py={6} textAlign="center">
                 <Spinner />
               </Box>
             ) : (
               <Table>
-                <Thead bg="gray.50">
+                <Thead>
                   <Tr>
                     <Th>#</Th>
                     <Th>Name</Th>
@@ -516,23 +616,14 @@ export default function AdminPage() {
                           : '—'}
                       </Td>
                       <Td>
-                        <Stack direction="row" spacing={2}>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleSeasonEdit(season)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            colorScheme="red"
-                            variant="ghost"
-                            onClick={() => handleSeasonDelete(season)}
-                          >
-                            Delete
-                          </Button>
-                        </Stack>
+                        <Button
+                          size="sm"
+                          colorScheme="orange"
+                          variant="outline"
+                          onClick={() => handleSeasonEdit(season)}
+                        >
+                          Edit
+                        </Button>
                       </Td>
                     </Tr>
                   ))}
@@ -552,33 +643,25 @@ export default function AdminPage() {
         <Divider />
 
         <Box>
-          <Heading size="md" mb={4}>
-            Castaways
-          </Heading>
-
-          <Stack spacing={4} mb={4}>
-            <FormControl>
-              <FormLabel>Filter by Season</FormLabel>
-              <Select
-                value={selectedSeasonId}
-                onChange={(event) => {
-                  setSelectedSeasonId(event.target.value);
-                  setCastawayForm(initialCastawayForm);
-                }}
-              >
-                {seasons.map((season) => (
-                  <option key={season.id} value={season.id}>
-                    {season.number} – {season.name}
-                  </option>
-                ))}
-                {seasons.length === 0 && (
-                  <option value="">No seasons available</option>
-                )}
-              </Select>
-              <Text mt={2} fontSize="sm" color="gray.500">
-                Currently viewing: {seasonLabel}
-              </Text>
-            </FormControl>
+          <Stack direction="row" align="center" mb={4} spacing={4}>
+            <Heading size="md">Castaways</Heading>
+            <Select
+              value={selectedSeasonId}
+              onChange={(event) => {
+                setSelectedSeasonId(event.target.value);
+                setCastawayForm(initialCastawayForm);
+              }}
+              maxW="300px"
+            >
+              {seasons.map((season) => (
+                <option key={season.id} value={season.id}>
+                  Season {season.number}: {season.name}
+                </option>
+              ))}
+              {seasons.length === 0 && (
+                <option value="">No seasons available</option>
+              )}
+            </Select>
           </Stack>
 
           <Box
@@ -592,7 +675,6 @@ export default function AdminPage() {
               borderWidth="1px"
               borderRadius="lg"
               mb={6}
-              bg="white"
             >
               <Heading size="sm">
                 {castawayForm.id ? 'Edit Castaway' : 'Create Castaway'}
@@ -650,14 +732,14 @@ export default function AdminPage() {
             </Stack>
           </Box>
 
-          <Box borderWidth="1px" borderRadius="lg" overflowX="auto" bg="white">
+          <Box borderWidth="1px" borderRadius="lg" overflowX="auto">
             {isLoadingCastaways ? (
               <Box py={6} textAlign="center">
                 <Spinner />
               </Box>
             ) : (
               <Table>
-                <Thead bg="gray.50">
+                <Thead>
                   <Tr>
                     <Th>Name</Th>
                     <Th>Status</Th>
@@ -696,6 +778,173 @@ export default function AdminPage() {
                         {selectedSeasonId
                           ? 'No castaways for this season yet.'
                           : 'Select a season to view castaways.'}
+                      </Td>
+                    </Tr>
+                  )}
+                </Tbody>
+              </Table>
+            )}
+          </Box>
+        </Box>
+
+        <Divider />
+
+        <Box>
+          <Stack direction="row" align="center" mb={4} spacing={4}>
+            <Heading size="md">Episodes</Heading>
+            <Select
+              value={selectedSeasonId}
+              onChange={(event) => {
+                setSelectedSeasonId(event.target.value);
+                setEpisodeForm(initialEpisodeForm);
+              }}
+              maxW="300px"
+            >
+              {seasons.map((season) => (
+                <option key={season.id} value={season.id}>
+                  Season {season.number}: {season.name}
+                </option>
+              ))}
+              {seasons.length === 0 && (
+                <option value="">No seasons available</option>
+              )}
+            </Select>
+          </Stack>
+
+          <Box
+            as="form"
+            onSubmit={handleEpisodeSubmit}
+            opacity={selectedSeasonId ? 1 : 0.6}
+          >
+            <Stack
+              spacing={4}
+              p={5}
+              borderWidth="1px"
+              borderRadius="lg"
+              mb={6}
+            >
+              <Heading size="sm">
+                {episodeForm.id ? 'Edit Episode' : 'Create Episode'}
+              </Heading>
+              <FormControl isRequired>
+                <FormLabel>Episode Number</FormLabel>
+                <Input
+                  type="number"
+                  min={1}
+                  value={episodeForm.number}
+                  onChange={(event) =>
+                    setEpisodeForm((prev) => ({
+                      ...prev,
+                      number: event.target.value,
+                    }))
+                  }
+                  isDisabled={!selectedSeasonId}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Air Date & Time</FormLabel>
+                <Input
+                  type="datetime-local"
+                  value={episodeForm.airDate}
+                  onChange={(event) =>
+                    setEpisodeForm((prev) => ({
+                      ...prev,
+                      airDate: event.target.value,
+                    }))
+                  }
+                  isDisabled={!selectedSeasonId}
+                />
+                <Text mt={1} fontSize="sm" color="gray.500">
+                  This is used as the deadline for weekly questions
+                </Text>
+              </FormControl>
+              <FormControl>
+                <FormLabel>Title (optional)</FormLabel>
+                <Input
+                  value={episodeForm.title}
+                  onChange={(event) =>
+                    setEpisodeForm((prev) => ({
+                      ...prev,
+                      title: event.target.value,
+                    }))
+                  }
+                  placeholder="e.g., Premiere, Merge, Finale"
+                  isDisabled={!selectedSeasonId}
+                />
+              </FormControl>
+              <Stack direction="row" spacing={3}>
+                <Button
+                  type="submit"
+                  colorScheme="orange"
+                  isDisabled={!selectedSeasonId}
+                  isLoading={isSubmittingEpisode}
+                >
+                  {episodeForm.id ? 'Update Episode' : 'Create Episode'}
+                </Button>
+                {episodeForm.id && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => setEpisodeForm(initialEpisodeForm)}
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </Stack>
+            </Stack>
+          </Box>
+
+          <Box borderWidth="1px" borderRadius="lg" overflowX="auto">
+            {isLoadingEpisodes ? (
+              <Box py={6} textAlign="center">
+                <Spinner />
+              </Box>
+            ) : (
+              <Table>
+                <Thead>
+                  <Tr>
+                    <Th>#</Th>
+                    <Th>Title</Th>
+                    <Th>Air Date</Th>
+                    <Th>Actions</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {episodes.map((episode) => (
+                    <Tr key={episode.id}>
+                      <Td>{episode.number}</Td>
+                      <Td>{episode.title || '—'}</Td>
+                      <Td>
+                        {episode.airDate
+                          ? new Date(episode.airDate).toLocaleString()
+                          : '—'}
+                      </Td>
+                      <Td>
+                        <Stack direction="row" spacing={2}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEpisodeEdit(episode)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="sm"
+                            colorScheme="red"
+                            variant="ghost"
+                            onClick={() => handleEpisodeDelete(episode)}
+                          >
+                            Delete
+                          </Button>
+                        </Stack>
+                      </Td>
+                    </Tr>
+                  ))}
+                  {episodes.length === 0 && (
+                    <Tr>
+                      <Td colSpan={4} textAlign="center" py={6}>
+                        {selectedSeasonId
+                          ? 'No episodes for this season yet.'
+                          : 'Select a season to view episodes.'}
                       </Td>
                     </Tr>
                   )}

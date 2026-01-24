@@ -94,10 +94,36 @@ export interface TeamCastaway {
 export interface Episode {
   id: string;
   seasonId: string;
-  season?: Season;
+  season?: {
+    id: string;
+    number: number;
+    name: string;
+  };
   number: number;
   airDate?: string;
   title?: string;
+}
+
+export interface CreateEpisodeDto {
+  seasonId: string;
+  number: number;
+  airDate?: string;
+  title?: string;
+}
+
+export interface UpdateEpisodeDto {
+  number?: number;
+  airDate?: string;
+  title?: string;
+}
+
+export interface BulkCreateEpisodesDto {
+  seasonId: string;
+  episodes: Array<{
+    number: number;
+    airDate?: string;
+    title?: string;
+  }>;
 }
 
 // Season metadata response

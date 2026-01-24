@@ -12,6 +12,7 @@ import { SeasonModule } from './season/season.module';
 import { CastawayModule } from './castaway/castaway.module';
 import { TeamModule } from './team/team.module';
 import { QuestionModule } from './question/question.module';
+import { EpisodeModule } from './episode/episode.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { QuestionModule } from './question/question.module';
     CastawayModule,
     TeamModule,
     QuestionModule,
+    EpisodeModule,
   ],
   controllers: [AppController],
   providers: [
