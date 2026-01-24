@@ -11,6 +11,7 @@ import { AuthGuard } from './auth/auth.guard';
 import { SeasonModule } from './season/season.module';
 import { CastawayModule } from './castaway/castaway.module';
 import { TeamModule } from './team/team.module';
+import { QuestionModule } from './question/question.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { TeamModule } from './team/team.module';
     SeasonModule,
     CastawayModule,
     TeamModule,
+    QuestionModule,
   ],
   controllers: [AppController],
   providers: [

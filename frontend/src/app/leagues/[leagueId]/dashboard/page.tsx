@@ -45,6 +45,7 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
   const [seasonMetadata, setSeasonMetadata] = useState<SeasonMetadata | null>(null);
   const [standings, setStandings] = useState<LeagueStandings | null>(null);
   const [myTeam, setMyTeam] = useState<MyTeamResponse | null>(null);
+  const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,6 +86,8 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
         setLoading(false);
         return;
       }
+
+      setActiveSeasonId(activeSeason.seasonId);
 
       // Load season metadata, standings, and user's team in parallel
       const [metadata, standingsData, teamData] = await Promise.all([
@@ -222,7 +225,9 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
             </Grid>
 
             {/* Weekly Questions CTA */}
-            <WeeklyQuestionsCTA leagueId={leagueId} />
+            {activeSeasonId && (
+              <WeeklyQuestionsCTA leagueId={leagueId} seasonId={activeSeasonId} />
+            )}
 
             {/* Two Column Layout: Standings & My Team */}
             <Grid templateColumns="repeat(2, 1fr)" gap={6}>

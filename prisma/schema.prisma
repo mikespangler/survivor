@@ -8,16 +8,17 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(uuid())
-  clerkId        String   @unique
-  email          String?  @unique
-  name           String?
-  systemRole     String   @default("user")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  ownedLeagues   League[]
-  teams          Team[]
-  memberLeagues  League[] @relation("LeagueMembers")
+  id                String             @id @default(uuid())
+  clerkId           String             @unique
+  email             String?            @unique
+  name              String?
+  systemRole        String             @default("user")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  ownedLeagues      League[]
+  teams             Team[]
+  memberLeagues     League[]           @relation("LeagueMembers")
+  questionTemplates QuestionTemplate[]
 
   @@index([clerkId])
 }
@@ -34,14 +35,15 @@ model League {
 }
 
 model LeagueSeason {
-  id           String                @id @default(cuid())
-  leagueId     String
-  seasonId     String
-  draftConfigs DraftConfig[]
-  league       League                @relation(fields: [leagueId], references: [id], onDelete: Cascade)
-  season       Season                @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  settings     LeagueSeasonSettings?
-  teams        Team[]
+  id              String                @id @default(cuid())
+  leagueId        String
+  seasonId        String
+  draftConfigs    DraftConfig[]
+  league          League                @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  season          Season                @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  settings        LeagueSeasonSettings?
+  teams           Team[]
+  leagueQuestions LeagueQuestion[]
 
   @@unique([leagueId, seasonId])
 }
@@ -55,6 +57,7 @@ model Team {
   leagueSeason   LeagueSeason   @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
   owner          User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   roster         TeamCastaway[]
+  answers        PlayerAnswer[]
 }
 
 model Season {
@@ -123,4 +126,59 @@ model DraftConfig {
 
   @@unique([leagueSeasonId, roundNumber])
   @@index([leagueSeasonId])
+}
+
+// System-wide question templates (managed by system admins)
+model QuestionTemplate {
+  id              String           @id @default(cuid())
+  text            String
+  type            String           // 'MULTIPLE_CHOICE' | 'FILL_IN_THE_BLANK'
+  options         Json?            // For MC: ["Option A", "Option B", ...]
+  pointValue      Int              @default(1)
+  category        String?          // e.g., "Elimination", "Challenge", "Social"
+  createdById     String
+  createdBy       User             @relation(fields: [createdById], references: [id])
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  leagueQuestions LeagueQuestion[]
+
+  @@index([category])
+}
+
+// League-specific questions for an episode
+model LeagueQuestion {
+  id             String            @id @default(cuid())
+  leagueSeasonId String
+  leagueSeason   LeagueSeason      @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
+  episodeNumber  Int
+  templateId     String?
+  template       QuestionTemplate? @relation(fields: [templateId], references: [id])
+  text           String
+  type           String
+  options        Json?
+  pointValue     Int               @default(1)
+  correctAnswer  String?           // Set by commissioner after episode
+  isScored       Boolean           @default(false)
+  sortOrder      Int               @default(0)
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  answers        PlayerAnswer[]
+
+  @@index([leagueSeasonId, episodeNumber])
+}
+
+// Player answers
+model PlayerAnswer {
+  id               String         @id @default(cuid())
+  leagueQuestionId String
+  leagueQuestion   LeagueQuestion @relation(fields: [leagueQuestionId], references: [id], onDelete: Cascade)
+  teamId           String
+  team             Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  answer           String
+  pointsEarned     Int?           // null until scored
+  submittedAt      DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@unique([leagueQuestionId, teamId])
+  @@index([teamId])
 }

@@ -23,6 +23,19 @@ import type {
   SeasonMetadata,
   LeagueStandings,
   MyTeamResponse,
+  QuestionTemplate,
+  CreateQuestionTemplateDto,
+  UpdateQuestionTemplateDto,
+  LeagueQuestion,
+  CreateLeagueQuestionDto,
+  UpdateLeagueQuestionDto,
+  CreateFromTemplatesDto,
+  PlayerAnswer,
+  SubmitAnswerDto,
+  SetCorrectAnswersDto,
+  EpisodeQuestionsResponse,
+  EpisodeResultsResponse,
+  QuestionStatusResponse,
 } from '@/types/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -326,6 +339,191 @@ class ApiClient {
   ): Promise<MyTeamResponse> {
     return this.request<MyTeamResponse>(
       `/leagues/${leagueId}/seasons/${seasonId}/my-team`,
+    );
+  }
+
+  // ================== Question Template endpoints (System Admin) ==================
+
+  async getQuestionTemplates(category?: string): Promise<QuestionTemplate[]> {
+    const query = category ? `?category=${encodeURIComponent(category)}` : '';
+    return this.request<QuestionTemplate[]>(`/question-templates${query}`);
+  }
+
+  async getQuestionTemplate(id: string): Promise<QuestionTemplate> {
+    return this.request<QuestionTemplate>(`/question-templates/${id}`);
+  }
+
+  async createQuestionTemplate(
+    data: CreateQuestionTemplateDto,
+  ): Promise<QuestionTemplate> {
+    return this.request<QuestionTemplate>('/question-templates', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateQuestionTemplate(
+    id: string,
+    data: UpdateQuestionTemplateDto,
+  ): Promise<QuestionTemplate> {
+    return this.request<QuestionTemplate>(`/question-templates/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteQuestionTemplate(id: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/question-templates/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // ================== League Question endpoints (Commissioner) ==================
+
+  async getLeagueQuestions(
+    leagueId: string,
+    seasonId: string,
+    episodeNumber?: number,
+  ): Promise<LeagueQuestion[]> {
+    const query = episodeNumber !== undefined ? `?episode=${episodeNumber}` : '';
+    return this.request<LeagueQuestion[]>(
+      `/leagues/${leagueId}/seasons/${seasonId}/questions${query}`,
+    );
+  }
+
+  async getAvailableTemplates(
+    leagueId: string,
+    seasonId: string,
+    category?: string,
+  ): Promise<QuestionTemplate[]> {
+    const query = category ? `?category=${encodeURIComponent(category)}` : '';
+    return this.request<QuestionTemplate[]>(
+      `/leagues/${leagueId}/seasons/${seasonId}/questions/templates${query}`,
+    );
+  }
+
+  async createLeagueQuestion(
+    leagueId: string,
+    seasonId: string,
+    data: CreateLeagueQuestionDto,
+  ): Promise<LeagueQuestion> {
+    return this.request<LeagueQuestion>(
+      `/leagues/${leagueId}/seasons/${seasonId}/questions`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
+  async createQuestionsFromTemplates(
+    leagueId: string,
+    seasonId: string,
+    data: CreateFromTemplatesDto,
+  ): Promise<LeagueQuestion[]> {
+    return this.request<LeagueQuestion[]>(
+      `/leagues/${leagueId}/seasons/${seasonId}/questions/from-templates`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
+  async updateLeagueQuestion(
+    leagueId: string,
+    seasonId: string,
+    questionId: string,
+    data: UpdateLeagueQuestionDto,
+  ): Promise<LeagueQuestion> {
+    return this.request<LeagueQuestion>(
+      `/leagues/${leagueId}/seasons/${seasonId}/questions/${questionId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
+  async deleteLeagueQuestion(
+    leagueId: string,
+    seasonId: string,
+    questionId: string,
+  ): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(
+      `/leagues/${leagueId}/seasons/${seasonId}/questions/${questionId}`,
+      {
+        method: 'DELETE',
+      },
+    );
+  }
+
+  async scoreQuestions(
+    leagueId: string,
+    seasonId: string,
+    data: SetCorrectAnswersDto,
+  ): Promise<{ success: boolean; scoredCount: number }> {
+    return this.request<{ success: boolean; scoredCount: number }>(
+      `/leagues/${leagueId}/seasons/${seasonId}/questions/score`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
+  // ================== Player Question endpoints ==================
+
+  async getEpisodeQuestions(
+    leagueId: string,
+    seasonId: string,
+    episodeNumber: number,
+  ): Promise<EpisodeQuestionsResponse> {
+    return this.request<EpisodeQuestionsResponse>(
+      `/leagues/${leagueId}/seasons/${seasonId}/questions/episode/${episodeNumber}`,
+    );
+  }
+
+  async submitAnswer(
+    leagueId: string,
+    seasonId: string,
+    questionId: string,
+    data: SubmitAnswerDto,
+  ): Promise<PlayerAnswer> {
+    return this.request<PlayerAnswer>(
+      `/leagues/${leagueId}/seasons/${seasonId}/questions/${questionId}/answer`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
+  async getMyAnswers(
+    leagueId: string,
+    seasonId: string,
+  ): Promise<PlayerAnswer[]> {
+    return this.request<PlayerAnswer[]>(
+      `/leagues/${leagueId}/seasons/${seasonId}/questions/my-answers`,
+    );
+  }
+
+  async getEpisodeResults(
+    leagueId: string,
+    seasonId: string,
+    episodeNumber: number,
+  ): Promise<EpisodeResultsResponse> {
+    return this.request<EpisodeResultsResponse>(
+      `/leagues/${leagueId}/seasons/${seasonId}/questions/results/${episodeNumber}`,
+    );
+  }
+
+  async getQuestionStatus(
+    leagueId: string,
+    seasonId: string,
+  ): Promise<QuestionStatusResponse> {
+    return this.request<QuestionStatusResponse>(
+      `/leagues/${leagueId}/seasons/${seasonId}/questions/status`,
     );
   }
 }

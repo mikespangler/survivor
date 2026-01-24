@@ -27,6 +27,7 @@ export interface Season {
   name: string;
   status: 'UPCOMING' | 'ACTIVE' | 'COMPLETED';
   startDate?: string;
+  activeEpisode?: number;
   castaways?: Castaway[];
   episodes?: Episode[];
   leagueSeasons?: LeagueSeason[];
@@ -221,5 +222,177 @@ export interface UpdateDraftConfigDto {
   castawaysPerTeam?: number;
   draftDate?: string;
   status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
+}
+
+// Question Template types
+export type QuestionType = 'MULTIPLE_CHOICE' | 'FILL_IN_THE_BLANK';
+
+export interface QuestionTemplate {
+  id: string;
+  text: string;
+  type: QuestionType;
+  options?: string[];
+  pointValue: number;
+  category?: string;
+  createdById: string;
+  createdBy?: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateQuestionTemplateDto {
+  text: string;
+  type: QuestionType;
+  options?: string[];
+  pointValue?: number;
+  category?: string;
+}
+
+export interface UpdateQuestionTemplateDto {
+  text?: string;
+  type?: QuestionType;
+  options?: string[];
+  pointValue?: number;
+  category?: string;
+}
+
+// League Question types
+export interface LeagueQuestion {
+  id: string;
+  leagueSeasonId: string;
+  episodeNumber: number;
+  templateId?: string;
+  template?: QuestionTemplate;
+  text: string;
+  type: QuestionType;
+  options?: string[];
+  pointValue: number;
+  correctAnswer?: string;
+  isScored: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+  answers?: PlayerAnswer[];
+}
+
+export interface CreateLeagueQuestionDto {
+  episodeNumber: number;
+  text: string;
+  type: QuestionType;
+  options?: string[];
+  pointValue?: number;
+  templateId?: string;
+  sortOrder?: number;
+}
+
+export interface UpdateLeagueQuestionDto {
+  episodeNumber?: number;
+  text?: string;
+  type?: QuestionType;
+  options?: string[];
+  pointValue?: number;
+  sortOrder?: number;
+}
+
+export interface CreateFromTemplatesDto {
+  episodeNumber: number;
+  templateIds: string[];
+}
+
+// Player Answer types
+export interface PlayerAnswer {
+  id: string;
+  leagueQuestionId: string;
+  leagueQuestion?: LeagueQuestion;
+  teamId: string;
+  team?: Team & {
+    owner: {
+      id: string;
+      name: string | null;
+      email: string | null;
+    };
+  };
+  answer: string;
+  pointsEarned?: number;
+  submittedAt: string;
+  updatedAt: string;
+}
+
+export interface SubmitAnswerDto {
+  answer: string;
+}
+
+export interface SetCorrectAnswersDto {
+  answers: Array<{
+    questionId: string;
+    correctAnswer: string;
+  }>;
+}
+
+// Episode Questions response (for players)
+export interface EpisodeQuestionsResponse {
+  episodeNumber: number;
+  deadline: string | null;
+  canSubmit: boolean;
+  questions: Array<{
+    id: string;
+    text: string;
+    type: QuestionType;
+    options?: string[];
+    pointValue: number;
+    isScored: boolean;
+    correctAnswer: string | null;
+    myAnswer: string | null;
+    pointsEarned: number | null;
+  }>;
+}
+
+// Episode Results response
+export interface EpisodeResultsResponse {
+  episodeNumber: number;
+  episodeTitle: string | null;
+  airDate: string | null;
+  deadlinePassed: boolean;
+  isFullyScored: boolean;
+  questions: Array<{
+    id: string;
+    text: string;
+    type: QuestionType;
+    options?: string[];
+    pointValue: number;
+    isScored: boolean;
+    correctAnswer: string | null;
+    answers: Array<{
+      teamId: string;
+      teamName: string;
+      ownerName: string | null;
+      answer: string;
+      pointsEarned: number | null;
+      isCurrentUser: boolean;
+    }>;
+  }>;
+  leaderboard: Array<{
+    teamId: string;
+    teamName: string;
+    ownerName: string | null;
+    points: number;
+    rank: number;
+    isCurrentUser: boolean;
+  }>;
+}
+
+// Question Status response
+export interface QuestionStatusResponse {
+  currentEpisode: number;
+  deadline: string | null;
+  canSubmit: boolean;
+  totalQuestions: number;
+  answeredQuestions: number;
+  questionsRemaining: number;
+  hasQuestions: boolean;
 }
 

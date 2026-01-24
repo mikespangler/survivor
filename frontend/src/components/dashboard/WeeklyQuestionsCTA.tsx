@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -7,31 +8,66 @@ import {
   HStack,
   Text,
   Button,
+  Skeleton,
 } from '@chakra-ui/react';
 import { ClockIcon } from './icons';
+import { api } from '@/lib/api';
+import type { QuestionStatusResponse } from '@/types/api';
 
 interface WeeklyQuestionsCTAProps {
   leagueId: string;
-  // These would come from an API in production
-  dueDate?: string;
-  questionsRemaining?: number;
-  hasAction?: boolean;
+  seasonId: string;
 }
 
-// Mock data for weekly questions
-const mockData = {
-  dueDate: 'Wednesday, 8:00 PM EST',
-  questionsRemaining: 5,
-  hasAction: true,
-};
+function formatDeadline(deadline: string | null): string {
+  if (!deadline) return 'No deadline set';
+  const date = new Date(deadline);
+  return date.toLocaleString('en-US', {
+    weekday: 'long',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  });
+}
 
 export function WeeklyQuestionsCTA({
   leagueId,
-  dueDate = mockData.dueDate,
-  questionsRemaining = mockData.questionsRemaining,
-  hasAction = mockData.hasAction,
+  seasonId,
 }: WeeklyQuestionsCTAProps) {
   const router = useRouter();
+  const [status, setStatus] = useState<QuestionStatusResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadStatus = async () => {
+      if (!leagueId || !seasonId) return;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const data = await api.getQuestionStatus(leagueId, seasonId);
+        setStatus(data);
+      } catch (err: any) {
+        console.error('Failed to load question status', err);
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadStatus();
+  }, [leagueId, seasonId]);
+
+  // Don't render if there are no questions
+  if (!isLoading && (!status || !status.hasQuestions)) {
+    return null;
+  }
+
+  const hasAction = status ? status.questionsRemaining > 0 && status.canSubmit : false;
+  const dueDate = status ? formatDeadline(status.deadline) : '';
+  const questionsRemaining = status?.questionsRemaining ?? 0;
 
   return (
     <Box
@@ -55,7 +91,6 @@ export function WeeklyQuestionsCTA({
         opacity={0.3}
         pointerEvents="none"
       >
-        {/* Scroll/parchment illustration would go here */}
         <Box
           w="282px"
           h="282px"
@@ -92,6 +127,33 @@ export function WeeklyQuestionsCTA({
         </Box>
       )}
 
+      {/* Submissions Closed Badge */}
+      {!isLoading && status && !status.canSubmit && (
+        <Box
+          position="absolute"
+          top="-1.5px"
+          right="-2px"
+          bg="#243524"
+          borderBottomLeftRadius="12px"
+          px={3}
+          py={1}
+          borderLeft="2px solid"
+          borderBottom="2px solid"
+          borderColor="rgba(48, 65, 48, 0.5)"
+        >
+          <Text
+            fontFamily="body"
+            fontSize="12px"
+            fontWeight="bold"
+            color="green.400"
+            textTransform="uppercase"
+            letterSpacing="0.6px"
+          >
+            Submissions Closed
+          </Text>
+        </Box>
+      )}
+
       {/* Content */}
       <VStack align="start" gap={0} position="relative" zIndex={1}>
         <Text
@@ -101,7 +163,7 @@ export function WeeklyQuestionsCTA({
           color="text.primary"
           mb={2}
         >
-          Answer Weekly Questions
+          {status?.canSubmit ? 'Answer Weekly Questions' : 'View Question Results'}
         </Text>
         <Text
           fontFamily="body"
@@ -110,28 +172,48 @@ export function WeeklyQuestionsCTA({
           color="text.secondary"
           mb={4}
         >
-          Make your predictions for this week&apos;s episode to earn points.
+          {status?.canSubmit
+            ? "Make your predictions for this week's episode to earn points."
+            : 'See how everyone answered and check the leaderboard.'}
         </Text>
 
-        <HStack gap={2} mb={8}>
-          <ClockIcon boxSize="16px" color="brand.primary" />
-          <Text
-            fontFamily="body"
-            fontSize="14px"
-            fontWeight="bold"
-            color="brand.primary"
-          >
-            Due: {dueDate}
-          </Text>
-          <Text
-            fontFamily="body"
-            fontSize="14px"
-            fontWeight="medium"
-            color="text.secondary"
-          >
-            • {questionsRemaining} questions remaining
-          </Text>
-        </HStack>
+        {isLoading ? (
+          <Skeleton height="20px" width="300px" mb={8} />
+        ) : (
+          <HStack gap={2} mb={8} flexWrap="wrap">
+            <ClockIcon boxSize="16px" color="brand.primary" />
+            <Text
+              fontFamily="body"
+              fontSize="14px"
+              fontWeight="bold"
+              color="brand.primary"
+            >
+              {status?.canSubmit ? `Due: ${dueDate}` : 'Episode ' + status?.currentEpisode}
+            </Text>
+            {status?.canSubmit && (
+              <Text
+                fontFamily="body"
+                fontSize="14px"
+                fontWeight="medium"
+                color="text.secondary"
+              >
+                {questionsRemaining === 0
+                  ? '• All questions answered!'
+                  : `• ${questionsRemaining} question${questionsRemaining === 1 ? '' : 's'} remaining`}
+              </Text>
+            )}
+            {!status?.canSubmit && (
+              <Text
+                fontFamily="body"
+                fontSize="14px"
+                fontWeight="medium"
+                color="text.secondary"
+              >
+                • {status?.answeredQuestions} / {status?.totalQuestions} answered
+              </Text>
+            )}
+          </HStack>
+        )}
 
         <Button
           bg="brand.primary"
@@ -144,14 +226,21 @@ export function WeeklyQuestionsCTA({
           boxShadow="0px 6px 0px 0px #C34322"
           _hover={{ bg: '#E85A3A' }}
           _active={{ transform: 'translateY(2px)', boxShadow: '0px 3px 0px 0px #C34322' }}
-          onClick={() => router.push(`/leagues/${leagueId}/questions`)}
+          onClick={() =>
+            router.push(
+              status?.canSubmit
+                ? `/leagues/${leagueId}/questions`
+                : `/leagues/${leagueId}/questions/results`,
+            )
+          }
           rightIcon={
             <Text as="span" ml={1}>
               →
             </Text>
           }
+          isDisabled={isLoading}
         >
-          Submit Predictions
+          {status?.canSubmit ? 'Submit Predictions' : 'View Results'}
         </Button>
       </VStack>
     </Box>
