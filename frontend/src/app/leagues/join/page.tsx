@@ -61,7 +61,7 @@ export default function JoinLeaguePage() {
   };
 
   return (
-    <Box as="main" minH="100vh" bg="gray.50" py={10}>
+    <Box as="main" minH="100vh" py={10}>
       <Container maxW="container.md">
         <VStack gap={6} align="stretch">
           <Heading as="h1" size="xl">
@@ -85,7 +85,7 @@ export default function JoinLeaguePage() {
             </Box>
           )}
 
-          <Box bg="white" p={6} borderRadius="md" shadow="sm">
+          <Box bg="bg.secondary" p={6} borderRadius="md" shadow="sm">
             <form onSubmit={handleSubmit}>
               <VStack gap={6} align="stretch">
                 <FormControl isRequired>
@@ -103,7 +103,7 @@ export default function JoinLeaguePage() {
 
                 <Button
                   type="submit"
-                  colorScheme="orange"
+                  variant="primary"
                   isLoading={loading}
                   loadingText="Joining..."
                   isDisabled={!leagueId.trim()}

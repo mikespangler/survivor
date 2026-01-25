@@ -121,7 +121,22 @@ export const theme = extendTheme({
       },
     },
     Input: {
+      baseStyle: {
+        field: {
+          color: 'text.primary',
+          _placeholder: { color: 'text.secondary' },
+        },
+      },
       variants: {
+        outline: {
+          field: {
+            bg: 'transparent',
+            borderColor: 'border.default',
+            color: 'text.primary',
+            _hover: { borderColor: 'text.secondary' },
+            _focus: { borderColor: 'brand.primary', boxShadow: 'none' },
+          },
+        },
         filled: {
           field: {
             bg: 'bg.secondary',
@@ -137,7 +152,62 @@ export const theme = extendTheme({
         },
       },
       defaultProps: {
-        variant: 'filled',
+        variant: 'outline',
+      },
+    },
+    Select: {
+      baseStyle: {
+        field: {
+          color: 'text.primary',
+        },
+        icon: {
+          color: 'text.secondary',
+        },
+      },
+      variants: {
+        outline: {
+          field: {
+            bg: 'transparent',
+            borderColor: 'border.default',
+            color: 'text.primary',
+            _hover: { borderColor: 'text.secondary' },
+            _focus: { borderColor: 'brand.primary', boxShadow: 'none' },
+          },
+        },
+      },
+    },
+    Textarea: {
+      baseStyle: {
+        color: 'text.primary',
+        _placeholder: { color: 'text.secondary' },
+      },
+      variants: {
+        outline: {
+          bg: 'transparent',
+          borderColor: 'border.default',
+          _hover: { borderColor: 'text.secondary' },
+          _focus: { borderColor: 'brand.primary', boxShadow: 'none' },
+        },
+      },
+    },
+    FormLabel: {
+      baseStyle: {
+        color: 'text.primary',
+        fontWeight: 'medium',
+      },
+    },
+    Table: {
+      variants: {
+        simple: {
+          th: {
+            color: 'text.secondary',
+            borderColor: 'border.default',
+          },
+          td: {
+            color: 'text.primary',
+            borderColor: 'border.default',
+          },
+        },
       },
     },
     Spinner: {

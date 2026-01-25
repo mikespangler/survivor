@@ -18,7 +18,9 @@ model User {
   ownedLeagues      League[]
   teams             Team[]
   memberLeagues     League[]           @relation("LeagueMembers")
+  commissionerLeagues League[]         @relation("LeagueCommissioners")
   questionTemplates QuestionTemplate[]
+  createdInviteTokens InviteToken[]
 
   @@index([clerkId])
 }
@@ -32,6 +34,8 @@ model League {
   owner         User           @relation(fields: [ownerId], references: [id])
   leagueSeasons LeagueSeason[]
   members       User[]         @relation("LeagueMembers")
+  commissioners User[]         @relation("LeagueCommissioners")
+  inviteTokens  InviteToken[]
 }
 
 model LeagueSeason {
@@ -160,6 +164,10 @@ model LeagueQuestion {
   correctAnswer  String?           // Set by commissioner after episode
   isScored       Boolean           @default(false)
   sortOrder      Int               @default(0)
+  questionScope  String            @default("episode") // "episode" | "season"
+  isWager        Boolean           @default(false)
+  minWager       Int?              // For wager questions
+  maxWager       Int?              // For wager questions
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
   answers        PlayerAnswer[]
@@ -175,10 +183,28 @@ model PlayerAnswer {
   teamId           String
   team             Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
   answer           String
+  wagerAmount      Int?           // Points wagered (for wager questions)
   pointsEarned     Int?           // null until scored
   submittedAt      DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
 
   @@unique([leagueQuestionId, teamId])
   @@index([teamId])
+}
+
+// Invite tokens for league invitations
+model InviteToken {
+  id         String   @id @default(cuid())
+  leagueId   String
+  league     League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  token      String   @unique
+  createdById String
+  createdBy  User     @relation(fields: [createdById], references: [id])
+  expiresAt  DateTime
+  usedAt     DateTime?
+  usedById   String?
+  createdAt  DateTime @default(now())
+
+  @@index([token])
+  @@index([leagueId])
 }

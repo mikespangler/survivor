@@ -154,7 +154,7 @@ export default function QuestionsResultsPage() {
 
   if (isLoading && !resultsData) {
     return (
-      <Box as="main" minH="100vh" bg="gray.50" py={20}>
+      <Box as="main" minH="100vh" py={20}>
         <Container maxW="container.lg">
           <VStack gap={4}>
             <Spinner size="xl" />
@@ -167,7 +167,7 @@ export default function QuestionsResultsPage() {
 
   if (error) {
     return (
-      <Box as="main" minH="100vh" bg="gray.50" py={20}>
+      <Box as="main" minH="100vh" py={20}>
         <Container maxW="container.lg">
           <Alert status="error" borderRadius="md">
             <AlertIcon />
@@ -180,7 +180,7 @@ export default function QuestionsResultsPage() {
   }
 
   return (
-    <Box as="main" minH="100vh" bg="gray.50" py={10}>
+    <Box as="main" minH="100vh" py={10}>
       <Container maxW="container.lg">
         <VStack gap={6} align="stretch">
           <HStack justify="space-between" align="flex-start">
@@ -195,7 +195,7 @@ export default function QuestionsResultsPage() {
               )}
             </Box>
             <Button
-              colorScheme="orange"
+              variant="primary"
               onClick={() => router.push(`/leagues/${leagueId}/questions`)}
             >
               Answer Questions

@@ -1,40 +1,42 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Box,
-  Button,
   Container,
-  Heading,
-  Text,
   VStack,
   HStack,
-  Badge,
-  Radio,
-  RadioGroup,
-  Input,
+  Text,
   Spinner,
-  useToast,
-  Card,
-  CardHeader,
-  CardBody,
-  Progress,
   Alert,
   AlertIcon,
   AlertTitle,
   AlertDescription,
-  Divider,
+  Button,
+  useToast,
 } from '@chakra-ui/react';
 import { useUser } from '@clerk/nextjs';
 import { api } from '@/lib/api';
-import type { League, Season, EpisodeQuestionsResponse } from '@/types/api';
+import type {
+  League,
+  Season,
+  EpisodeQuestionsResponse,
+  MyTeamResponse,
+} from '@/types/api';
+import {
+  QuestionCard,
+  StatsBar,
+  HeaderBar,
+  FooterBar,
+} from '@/components/questions';
 
+// Helper to format deadline
 function formatDeadline(deadline: string | null): string {
   if (!deadline) return 'No deadline set';
   const date = new Date(deadline);
   return date.toLocaleString('en-US', {
-    weekday: 'long',
+    weekday: 'short',
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
@@ -43,23 +45,26 @@ function formatDeadline(deadline: string | null): string {
   });
 }
 
+// Helper to get time remaining
 function getTimeRemaining(deadline: string | null): string {
   if (!deadline) return '';
   const now = new Date();
   const end = new Date(deadline);
   const diff = end.getTime() - now.getTime();
 
-  if (diff <= 0) return 'Deadline passed';
+  if (diff <= 0) return '0d : 0h : 0m';
 
-  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-  if (hours >= 24) {
-    const days = Math.floor(hours / 24);
-    return `${days} day${days > 1 ? 's' : ''} remaining`;
-  }
+  return `${days}d : ${hours}h : ${minutes}m`;
+}
 
-  return `${hours}h ${minutes}m remaining`;
+// Answer state type
+interface AnswerState {
+  answer: string;
+  wagerAmount: number;
 }
 
 export default function PlayerQuestionsPage() {
@@ -71,10 +76,14 @@ export default function PlayerQuestionsPage() {
 
   const [league, setLeague] = useState<League | null>(null);
   const [activeSeason, setActiveSeason] = useState<Season | null>(null);
-  const [questionsData, setQuestionsData] = useState<EpisodeQuestionsResponse | null>(null);
-  const [answers, setAnswers] = useState<{ [questionId: string]: string }>({});
-  const [submitting, setSubmitting] = useState<{ [questionId: string]: boolean }>({});
+  const [questionsData, setQuestionsData] =
+    useState<EpisodeQuestionsResponse | null>(null);
+  const [teamData, setTeamData] = useState<MyTeamResponse | null>(null);
+  const [answers, setAnswers] = useState<{ [questionId: string]: AnswerState }>(
+    {},
+  );
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
@@ -110,17 +119,28 @@ export default function PlayerQuestionsPage() {
       );
       setQuestionsData(data);
 
+      // Load team data for stats
+      try {
+        const team = await api.getMyTeam(leagueId, active.id);
+        setTeamData(team);
+      } catch {
+        // User might not have a team yet
+        console.log('No team found for user');
+      }
+
       // Pre-populate answers
-      const initialAnswers: { [key: string]: string } = {};
+      const initialAnswers: { [key: string]: AnswerState } = {};
       data.questions.forEach((q) => {
-        if (q.myAnswer) {
-          initialAnswers[q.id] = q.myAnswer;
-        }
+        initialAnswers[q.id] = {
+          answer: q.myAnswer || '',
+          wagerAmount: q.myWagerAmount ?? q.minWager ?? 0,
+        };
       });
       setAnswers(initialAnswers);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load data', err);
-      setError(err.message || 'Failed to load questions');
+      const message = err instanceof Error ? err.message : 'Failed to load questions';
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -134,51 +154,159 @@ export default function PlayerQuestionsPage() {
     loadData();
   }, [isSignedIn, loadData, router]);
 
-  const handleSubmitAnswer = async (questionId: string) => {
-    if (!activeSeason || !answers[questionId]) return;
+  // Group questions by scope and type
+  const groupedQuestions = useMemo(() => {
+    if (!questionsData) return { episode: [], season: [], wager: [] };
 
-    setSubmitting((prev) => ({ ...prev, [questionId]: true }));
+    const episode: typeof questionsData.questions = [];
+    const season: typeof questionsData.questions = [];
+    const wager: typeof questionsData.questions = [];
+
+    questionsData.questions.forEach((q) => {
+      if (q.isWager) {
+        wager.push(q);
+      } else if (q.questionScope === 'season') {
+        season.push(q);
+      } else {
+        episode.push(q);
+      }
+    });
+
+    return { episode, season, wager };
+  }, [questionsData]);
+
+  // Handle answer selection
+  const handleSelectAnswer = (questionId: string, answer: string) => {
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: {
+        ...prev[questionId],
+        answer,
+      },
+    }));
+  };
+
+  // Handle clear selection
+  const handleClearSelection = (questionId: string) => {
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: {
+        ...prev[questionId],
+        answer: '',
+      },
+    }));
+  };
+
+  // Handle wager change
+  const handleWagerChange = (questionId: string, amount: number) => {
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: {
+        ...prev[questionId],
+        wagerAmount: amount,
+      },
+    }));
+  };
+
+  // Submit all answers
+  const handleSubmitAll = async () => {
+    if (!activeSeason || !questionsData) return;
+
+    setIsSubmitting(true);
     try {
-      await api.submitAnswer(leagueId, activeSeason.id, questionId, {
-        answer: answers[questionId],
-      });
-      toast({ title: 'Answer submitted', status: 'success', duration: 2000 });
+      // Submit each answer
+      for (const q of questionsData.questions) {
+        const answerState = answers[q.id];
+        if (answerState?.answer) {
+          await api.submitAnswer(leagueId, activeSeason.id, q.id, {
+            answer: answerState.answer,
+            wagerAmount: q.isWager ? answerState.wagerAmount : undefined,
+          });
+        }
+      }
 
-      // Reload to get updated data
-      const data = await api.getEpisodeQuestions(
-        leagueId,
-        activeSeason.id,
-        questionsData?.episodeNumber || 1,
-      );
-      setQuestionsData(data);
-    } catch (err: any) {
       toast({
-        title: 'Failed to submit answer',
-        description: err.message,
+        title: 'Answers submitted successfully!',
+        status: 'success',
+        duration: 3000,
+      });
+
+      // Reload data
+      await loadData();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to submit answers';
+      toast({
+        title: 'Failed to submit answers',
+        description: message,
         status: 'error',
       });
     } finally {
-      setSubmitting((prev) => ({ ...prev, [questionId]: false }));
+      setIsSubmitting(false);
     }
   };
 
+  // Save draft (same as submit but shows different message)
+  const handleSaveDraft = async () => {
+    if (!activeSeason || !questionsData) return;
+
+    setIsSubmitting(true);
+    try {
+      // Submit each answered question
+      for (const q of questionsData.questions) {
+        const answerState = answers[q.id];
+        if (answerState?.answer) {
+          await api.submitAnswer(leagueId, activeSeason.id, q.id, {
+            answer: answerState.answer,
+            wagerAmount: q.isWager ? answerState.wagerAmount : undefined,
+          });
+        }
+      }
+
+      toast({
+        title: 'Draft saved!',
+        status: 'success',
+        duration: 2000,
+      });
+
+      // Reload data
+      await loadData();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to save draft';
+      toast({
+        title: 'Failed to save draft',
+        description: message,
+        status: 'error',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Calculate progress
+  const answeredCount = questionsData
+    ? questionsData.questions.filter((q) => answers[q.id]?.answer).length
+    : 0;
+  const totalQuestions = questionsData?.questions.length || 0;
+
+  // Loading state
   if (isLoading) {
     return (
-      <Box as="main" minH="100vh" bg="gray.50" py={20}>
-        <Container maxW="container.md">
+      <Box as="main" minH="100vh" bg="transparent" py={20}>
+        <Container maxW="container.lg">
           <VStack gap={4}>
-            <Spinner size="xl" />
-            <Text>Loading questions...</Text>
+            <Spinner size="xl" color="brand.primary" />
+            <Text color="text.secondary">Loading questions...</Text>
           </VStack>
         </Container>
       </Box>
     );
   }
 
+  // Error state
   if (error) {
     return (
-      <Box as="main" minH="100vh" bg="gray.50" py={20}>
-        <Container maxW="container.md">
+      <Box as="main" minH="100vh" bg="transparent" py={20}>
+        <Container maxW="container.lg">
           <Alert status="error" borderRadius="md">
             <AlertIcon />
             <AlertTitle>Error</AlertTitle>
@@ -189,17 +317,24 @@ export default function PlayerQuestionsPage() {
     );
   }
 
+  // No questions state
   if (!questionsData || questionsData.questions.length === 0) {
     return (
-      <Box as="main" minH="100vh" bg="gray.50" py={10}>
-        <Container maxW="container.md">
+      <Box as="main" minH="100vh" bg="transparent" py={10}>
+        <Container maxW="container.lg">
           <VStack gap={6} align="stretch">
             <Box>
-              <Heading as="h1" size="xl">
+              <Text
+                fontFamily="display"
+                fontSize="48px"
+                fontWeight="bold"
+                color="text.primary"
+                letterSpacing="-1.2px"
+              >
                 Weekly Questions
-              </Heading>
+              </Text>
               {league && activeSeason && (
-                <Text fontSize="lg" color="gray.600">
+                <Text fontSize="18px" color="text.secondary" fontWeight="medium">
                   {league.name} - {activeSeason.name}
                 </Text>
               )}
@@ -209,13 +344,14 @@ export default function PlayerQuestionsPage() {
               <AlertIcon />
               <AlertTitle>No Questions Yet</AlertTitle>
               <AlertDescription>
-                Questions for this episode haven&apos;t been set up yet. Check back later!
+                Questions for this episode haven&apos;t been set up yet. Check
+                back later!
               </AlertDescription>
             </Alert>
 
             <Button
               variant="link"
-              colorScheme="orange"
+              color="brand.primary"
               onClick={() => router.push(`/leagues/${leagueId}/questions/results`)}
             >
               View Past Results
@@ -226,207 +362,147 @@ export default function PlayerQuestionsPage() {
     );
   }
 
-  const answeredCount = questionsData.questions.filter((q) => q.myAnswer).length;
-  const totalQuestions = questionsData.questions.length;
-  const progress = totalQuestions > 0 ? (answeredCount / totalQuestions) * 100 : 0;
-  const timeRemaining = getTimeRemaining(questionsData.deadline);
+  // Render question section
+  const renderQuestionSection = (
+    title: string,
+    subtitle: string,
+    questions: typeof questionsData.questions,
+    startIndex: number,
+  ) => {
+    if (questions.length === 0) return null;
+
+    return (
+      <VStack spacing={4} align="stretch">
+        {/* Section header */}
+        <HStack justify="space-between" align="center">
+          <Text
+            fontFamily="display"
+            fontSize="32px"
+            fontWeight="bold"
+            color="text.primary"
+            letterSpacing="-0.8px"
+          >
+            {title}
+          </Text>
+          <Text
+            fontFamily="body"
+            fontSize="14px"
+            fontWeight="medium"
+            color="text.secondary"
+          >
+            {subtitle}
+          </Text>
+        </HStack>
+
+        {/* Questions */}
+        <VStack spacing={6} align="stretch">
+          {questions.map((q, idx) => (
+            <QuestionCard
+              key={q.id}
+              questionNumber={startIndex + idx + 1}
+              text={q.text}
+              type={q.type}
+              options={q.options as string[] | undefined}
+              pointValue={q.pointValue}
+              questionScope={q.questionScope}
+              isWager={q.isWager}
+              minWager={q.minWager}
+              maxWager={q.maxWager}
+              selectedAnswer={answers[q.id]?.answer || null}
+              wagerAmount={answers[q.id]?.wagerAmount ?? q.minWager ?? 0}
+              isDisabled={!questionsData.canSubmit}
+              isScored={q.isScored}
+              correctAnswer={q.correctAnswer}
+              pointsEarned={q.pointsEarned}
+              onSelectAnswer={(answer) => handleSelectAnswer(q.id, answer)}
+              onClearSelection={() => handleClearSelection(q.id)}
+              onWagerChange={(amount) => handleWagerChange(q.id, amount)}
+            />
+          ))}
+        </VStack>
+      </VStack>
+    );
+  };
 
   return (
-    <Box as="main" minH="100vh" bg="gray.50" py={10}>
-      <Container maxW="container.md">
-        <VStack gap={6} align="stretch">
-          <Box>
-            <HStack justify="space-between" align="flex-start">
-              <Box>
-                <Heading as="h1" size="xl">
-                  Episode {questionsData.episodeNumber} Questions
-                </Heading>
-                {league && activeSeason && (
-                  <Text fontSize="lg" color="gray.600">
-                    {league.name} - {activeSeason.name}
-                  </Text>
-                )}
-              </Box>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push(`/leagues/${leagueId}/questions/results`)}
+    <Box as="main" minH="100vh" bg="transparent">
+      <Container maxW="container.lg" py={8}>
+        <VStack spacing={8} align="stretch">
+          {/* Header */}
+          <HStack justify="space-between" align="flex-start" flexWrap="wrap" gap={4}>
+            <VStack align="start" spacing={2}>
+              <Text
+                fontFamily="display"
+                fontSize="48px"
+                fontWeight="bold"
+                color="text.primary"
+                letterSpacing="-1.2px"
+                lineHeight="48px"
               >
-                View Results
-              </Button>
-            </HStack>
-          </Box>
+                Weekly Questions
+              </Text>
+              <Text
+                fontFamily="body"
+                fontSize="18px"
+                fontWeight="medium"
+                color="text.secondary"
+              >
+                Make your predictions for this week&apos;s episode to earn points.
+              </Text>
+            </VStack>
 
-          {/* Deadline and Progress */}
-          <Card>
-            <CardBody>
-              <VStack spacing={4} align="stretch">
-                <HStack justify="space-between">
-                  <Box>
-                    <Text fontWeight="bold" color="gray.700">
-                      Deadline
-                    </Text>
-                    <Text>{formatDeadline(questionsData.deadline)}</Text>
-                  </Box>
-                  <Box textAlign="right">
-                    {questionsData.canSubmit ? (
-                      <Badge colorScheme="green" fontSize="md" px={3} py={1}>
-                        {timeRemaining}
-                      </Badge>
-                    ) : (
-                      <Badge colorScheme="red" fontSize="md" px={3} py={1}>
-                        Submissions Closed
-                      </Badge>
-                    )}
-                  </Box>
-                </HStack>
+            {/* Header bar with week info */}
+            <HeaderBar
+              weekNumber={questionsData.episodeNumber}
+              dueIn={getTimeRemaining(questionsData.deadline)}
+              locksAt={formatDeadline(questionsData.deadline)}
+            />
+          </HStack>
 
-                <Box>
-                  <HStack justify="space-between" mb={1}>
-                    <Text fontSize="sm" color="gray.600">
-                      Progress
-                    </Text>
-                    <Text fontSize="sm" fontWeight="medium">
-                      {answeredCount} / {totalQuestions} answered
-                    </Text>
-                  </HStack>
-                  <Progress
-                    value={progress}
-                    colorScheme={progress === 100 ? 'green' : 'orange'}
-                    borderRadius="full"
-                    size="sm"
-                  />
-                </Box>
-              </VStack>
-            </CardBody>
-          </Card>
+          {/* Stats bar */}
+          {teamData && (
+            <StatsBar
+              teamName={teamData.name}
+              totalPoints={teamData.totalPoints}
+              rank={teamData.rank}
+              totalTeams={teamData.totalTeams}
+              isLoading={false}
+            />
+          )}
 
-          {/* Questions */}
-          <VStack spacing={4} align="stretch">
-            {questionsData.questions.map((question, index) => (
-              <Card key={question.id}>
-                <CardHeader pb={2}>
-                  <HStack justify="space-between">
-                    <Text fontWeight="bold" color="gray.700">
-                      Question {index + 1}
-                    </Text>
-                    <HStack>
-                      <Badge colorScheme="blue">{question.pointValue} pt</Badge>
-                      {question.myAnswer && (
-                        <Badge colorScheme="green">Answered</Badge>
-                      )}
-                      {question.isScored && (
-                        <Badge colorScheme="purple">Scored</Badge>
-                      )}
-                    </HStack>
-                  </HStack>
-                </CardHeader>
-                <CardBody pt={0}>
-                  <VStack spacing={4} align="stretch">
-                    <Text fontSize="lg">{question.text}</Text>
+          {/* Episode Questions Section */}
+          {renderQuestionSection(
+            'Episode Questions',
+            `${groupedQuestions.episode.length} question${groupedQuestions.episode.length !== 1 ? 's' : ''}`,
+            groupedQuestions.episode,
+            0,
+          )}
 
-                    {question.type === 'MULTIPLE_CHOICE' && question.options ? (
-                      <RadioGroup
-                        value={answers[question.id] || ''}
-                        onChange={(value) =>
-                          setAnswers((prev) => ({ ...prev, [question.id]: value }))
-                        }
-                        isDisabled={!questionsData.canSubmit}
-                      >
-                        <VStack align="stretch" spacing={2}>
-                          {(question.options as string[]).map((option) => (
-                            <Box
-                              key={option}
-                              p={3}
-                              borderWidth="1px"
-                              borderRadius="md"
-                              borderColor={
-                                answers[question.id] === option
-                                  ? 'orange.300'
-                                  : 'gray.200'
-                              }
-                              bg={
-                                answers[question.id] === option
-                                  ? 'orange.50'
-                                  : 'white'
-                              }
-                              cursor={questionsData.canSubmit ? 'pointer' : 'default'}
-                              onClick={() =>
-                                questionsData.canSubmit &&
-                                setAnswers((prev) => ({
-                                  ...prev,
-                                  [question.id]: option,
-                                }))
-                              }
-                            >
-                              <Radio value={option}>{option}</Radio>
-                            </Box>
-                          ))}
-                        </VStack>
-                      </RadioGroup>
-                    ) : (
-                      <Input
-                        value={answers[question.id] || ''}
-                        onChange={(e) =>
-                          setAnswers((prev) => ({
-                            ...prev,
-                            [question.id]: e.target.value,
-                          }))
-                        }
-                        placeholder="Type your answer..."
-                        isDisabled={!questionsData.canSubmit}
-                      />
-                    )}
+          {/* Season Bonus Questions Section */}
+          {renderQuestionSection(
+            'Season Bonus Questions',
+            'Scored at season end',
+            groupedQuestions.season,
+            groupedQuestions.episode.length,
+          )}
 
-                    {questionsData.canSubmit && (
-                      <Button
-                        colorScheme="orange"
-                        size="sm"
-                        alignSelf="flex-end"
-                        onClick={() => handleSubmitAnswer(question.id)}
-                        isLoading={submitting[question.id]}
-                        isDisabled={
-                          !answers[question.id] ||
-                          answers[question.id] === question.myAnswer
-                        }
-                      >
-                        {question.myAnswer ? 'Update Answer' : 'Submit Answer'}
-                      </Button>
-                    )}
+          {/* Point Wager Questions Section */}
+          {renderQuestionSection(
+            'Point Wager Questions',
+            'Risk it for the biscuit',
+            groupedQuestions.wager,
+            groupedQuestions.episode.length + groupedQuestions.season.length,
+          )}
 
-                    {question.isScored && (
-                      <Box p={3} bg="gray.50" borderRadius="md">
-                        <HStack justify="space-between">
-                          <Box>
-                            <Text fontSize="sm" color="gray.600">
-                              Correct Answer
-                            </Text>
-                            <Text fontWeight="medium">{question.correctAnswer}</Text>
-                          </Box>
-                          <Box textAlign="right">
-                            <Text fontSize="sm" color="gray.600">
-                              Points Earned
-                            </Text>
-                            <Text
-                              fontWeight="bold"
-                              fontSize="lg"
-                              color={
-                                question.pointsEarned && question.pointsEarned > 0
-                                  ? 'green.500'
-                                  : 'red.500'
-                              }
-                            >
-                              {question.pointsEarned ?? 0} / {question.pointValue}
-                            </Text>
-                          </Box>
-                        </HStack>
-                      </Box>
-                    )}
-                  </VStack>
-                </CardBody>
-              </Card>
-            ))}
-          </VStack>
+          {/* Footer */}
+          <FooterBar
+            answeredCount={answeredCount}
+            totalCount={totalQuestions}
+            canSubmit={questionsData.canSubmit}
+            isSubmitting={isSubmitting}
+            onSaveDraft={handleSaveDraft}
+            onSubmit={handleSubmitAll}
+          />
         </VStack>
       </Container>
     </Box>

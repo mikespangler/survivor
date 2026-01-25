@@ -17,6 +17,7 @@ export interface League {
   ownerId: string;
   owner?: User;
   members?: User[];
+  commissioners?: User[];
   leagueSeasons?: LeagueSeason[];
   createdAt: string;
 }
@@ -252,6 +253,7 @@ export interface UpdateDraftConfigDto {
 
 // Question Template types
 export type QuestionType = 'MULTIPLE_CHOICE' | 'FILL_IN_THE_BLANK';
+export type QuestionScope = 'episode' | 'season';
 
 export interface QuestionTemplate {
   id: string;
@@ -300,6 +302,10 @@ export interface LeagueQuestion {
   correctAnswer?: string;
   isScored: boolean;
   sortOrder: number;
+  questionScope: QuestionScope;
+  isWager: boolean;
+  minWager?: number | null;
+  maxWager?: number | null;
   createdAt: string;
   updatedAt: string;
   answers?: PlayerAnswer[];
@@ -313,6 +319,10 @@ export interface CreateLeagueQuestionDto {
   pointValue?: number;
   templateId?: string;
   sortOrder?: number;
+  questionScope?: QuestionScope;
+  isWager?: boolean;
+  minWager?: number;
+  maxWager?: number;
 }
 
 export interface UpdateLeagueQuestionDto {
@@ -322,6 +332,10 @@ export interface UpdateLeagueQuestionDto {
   options?: string[];
   pointValue?: number;
   sortOrder?: number;
+  questionScope?: QuestionScope;
+  isWager?: boolean;
+  minWager?: number;
+  maxWager?: number;
 }
 
 export interface CreateFromTemplatesDto {
@@ -343,6 +357,7 @@ export interface PlayerAnswer {
     };
   };
   answer: string;
+  wagerAmount?: number | null;
   pointsEarned?: number;
   submittedAt: string;
   updatedAt: string;
@@ -350,6 +365,7 @@ export interface PlayerAnswer {
 
 export interface SubmitAnswerDto {
   answer: string;
+  wagerAmount?: number;
 }
 
 export interface SetCorrectAnswersDto {
@@ -374,6 +390,11 @@ export interface EpisodeQuestionsResponse {
     correctAnswer: string | null;
     myAnswer: string | null;
     pointsEarned: number | null;
+    questionScope: QuestionScope;
+    isWager: boolean;
+    minWager: number | null;
+    maxWager: number | null;
+    myWagerAmount: number | null;
   }>;
 }
 
@@ -420,5 +441,47 @@ export interface QuestionStatusResponse {
   answeredQuestions: number;
   questionsRemaining: number;
   hasQuestions: boolean;
+}
+
+// Invite token types
+export interface InviteToken {
+  id: string;
+  leagueId: string;
+  token: string;
+  createdById: string;
+  createdBy?: User;
+  expiresAt: string;
+  usedAt?: string;
+  usedById?: string;
+  createdAt: string;
+}
+
+export interface InviteLink {
+  id: string;
+  token: string;
+  link: string;
+  expiresAt: string;
+  createdAt: string;
+  usedAt?: string;
+  usedById?: string;
+  createdBy?: User;
+  isValid: boolean;
+}
+
+export interface InviteByEmailDto {
+  emails: string[];
+}
+
+export interface JoinByTokenDto {
+  token: string;
+}
+
+export interface AddCommissionerDto {
+  userId: string;
+}
+
+export interface CommissionersResponse {
+  owner: User;
+  commissioners: User[];
 }
 

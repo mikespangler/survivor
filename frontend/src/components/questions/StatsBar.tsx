@@ -1,0 +1,148 @@
+'use client';
+
+import { Box, HStack, VStack, Text, Skeleton } from '@chakra-ui/react';
+import { StarIcon, TrophyIcon, UsersIcon } from '../dashboard/icons';
+
+interface StatsBarProps {
+  teamName: string;
+  totalPoints: number;
+  rank: number;
+  totalTeams: number;
+  isLoading?: boolean;
+}
+
+function StatCard({
+  icon,
+  label,
+  value,
+  suffix,
+  isLoading,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  suffix?: string;
+  isLoading?: boolean;
+}) {
+  return (
+    <Box
+      bg="linear-gradient(166deg, rgb(33, 38, 48) 2.5%, rgb(25, 29, 36) 97.5%)"
+      border="2px solid"
+      borderColor="rgba(43, 48, 59, 0.5)"
+      borderRadius="16px"
+      p={4}
+      flex={1}
+    >
+      <VStack align="start" spacing={2}>
+        <HStack spacing={2}>
+          {icon}
+          <Text
+            fontFamily="display"
+            fontSize="12px"
+            fontWeight="bold"
+            color="text.secondary"
+            textTransform="uppercase"
+            letterSpacing="0.5px"
+          >
+            {label}
+          </Text>
+        </HStack>
+        {isLoading ? (
+          <Skeleton height="36px" width="80px" />
+        ) : (
+          <HStack align="baseline" spacing={1}>
+            <Text
+              fontFamily="display"
+              fontSize="32px"
+              fontWeight="bold"
+              color="brand.primary"
+              lineHeight="36px"
+            >
+              {value}
+            </Text>
+            {suffix && (
+              <Text
+                fontFamily="body"
+                fontSize="16px"
+                fontWeight="medium"
+                color="text.secondary"
+              >
+                {suffix}
+              </Text>
+            )}
+          </HStack>
+        )}
+      </VStack>
+    </Box>
+  );
+}
+
+export function StatsBar({
+  teamName,
+  totalPoints,
+  rank,
+  totalTeams,
+  isLoading = false,
+}: StatsBarProps) {
+  return (
+    <HStack spacing={4} w="full">
+      {/* Team card - wider */}
+      <Box
+        bg="linear-gradient(168deg, rgb(33, 38, 48) 2.5%, rgb(25, 29, 36) 97.5%)"
+        border="2px solid"
+        borderColor="rgba(43, 48, 59, 0.5)"
+        borderRadius="16px"
+        p={4}
+        minW="280px"
+      >
+        <HStack justify="space-between" align="center" h="full">
+          <VStack align="start" spacing={2} justify="space-between" h="full">
+            <HStack spacing={2}>
+              <UsersIcon boxSize="20px" color="text.secondary" />
+              <Text
+                fontFamily="display"
+                fontSize="12px"
+                fontWeight="bold"
+                color="text.secondary"
+                textTransform="uppercase"
+                letterSpacing="0.5px"
+              >
+                Your Team
+              </Text>
+            </HStack>
+            {isLoading ? (
+              <Skeleton height="36px" width="120px" />
+            ) : (
+              <Text
+                fontFamily="display"
+                fontSize="32px"
+                fontWeight="bold"
+                color="brand.primary"
+                lineHeight="36px"
+              >
+                {teamName}
+              </Text>
+            )}
+          </VStack>
+        </HStack>
+      </Box>
+
+      {/* Total Points */}
+      <StatCard
+        icon={<StarIcon boxSize="18px" color="text.secondary" />}
+        label="Total Points"
+        value={totalPoints}
+        isLoading={isLoading}
+      />
+
+      {/* Rank */}
+      <StatCard
+        icon={<TrophyIcon boxSize="18px" color="text.secondary" />}
+        label="Your Rank"
+        value={`#${rank}`}
+        suffix={`/ ${totalTeams}`}
+        isLoading={isLoading}
+      />
+    </HStack>
+  );
+}

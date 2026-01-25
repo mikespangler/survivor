@@ -366,7 +366,7 @@ export default function CommissionerQuestionsPage() {
 
   if (isLoading) {
     return (
-      <Box as="main" minH="100vh" bg="gray.50" py={20}>
+      <Box as="main" minH="100vh" bg="transparent" py={20}>
         <Container maxW="container.xl">
           <VStack gap={4}>
             <Spinner size="xl" />
@@ -379,7 +379,7 @@ export default function CommissionerQuestionsPage() {
 
   if (error) {
     return (
-      <Box as="main" minH="100vh" bg="gray.50" py={20}>
+      <Box as="main" minH="100vh" bg="transparent" py={20}>
         <Container maxW="container.md">
           <Box bg="red.50" borderColor="red.200" borderWidth="1px" borderRadius="md" p={4}>
             <Text color="red.700">{error}</Text>
@@ -393,7 +393,7 @@ export default function CommissionerQuestionsPage() {
   const totalAnswers = questions.reduce((sum, q) => sum + (q.answers?.length || 0), 0);
 
   return (
-    <Box as="main" minH="100vh" bg="gray.50" py={10}>
+    <Box as="main" minH="100vh" bg="transparent" py={10}>
       <Container maxW="container.xl">
         <VStack gap={6} align="stretch">
           <HStack justify="space-between" align="center">
@@ -451,9 +451,9 @@ export default function CommissionerQuestionsPage() {
 
             <TabPanels>
               <TabPanel px={0}>
-                <Box borderWidth="1px" borderRadius="lg" overflowX="auto" bg="white">
+                <Box borderWidth="1px" borderRadius="lg" overflowX="auto" bg="transparent">
                   <Table>
-                    <Thead bg="gray.50">
+                    <Thead bg="transparent">
                       <Tr>
                         <Th>#</Th>
                         <Th>Question</Th>
@@ -503,7 +503,7 @@ export default function CommissionerQuestionsPage() {
                               <Button
                                 size="sm"
                                 colorScheme="red"
-                                variant="ghost"
+                                variant="outline"
                                 onClick={() => handleDeleteQuestion(question)}
                                 isDisabled={question.isScored}
                               >
@@ -527,7 +527,7 @@ export default function CommissionerQuestionsPage() {
 
               <TabPanel px={0}>
                 <Box as="form" onSubmit={handleSubmitQuestion}>
-                  <Stack spacing={4} p={5} borderWidth="1px" borderRadius="lg" bg="white">
+                  <Stack spacing={4} p={5} borderWidth="1px" borderRadius="lg" bg="transparent">
                     <Heading size="sm">
                       {form.id ? 'Edit Question' : 'Create Question'}
                     </Heading>
@@ -618,12 +618,12 @@ export default function CommissionerQuestionsPage() {
                     )}
 
                     <Stack direction="row" spacing={3}>
-                      <Button type="submit" colorScheme="orange" isLoading={isSubmitting}>
+                      <Button type="submit" variant="primary" isLoading={isSubmitting}>
                         {form.id ? 'Update Question' : 'Create Question'}
                       </Button>
                       {form.id && (
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           onClick={() =>
                             setForm({ ...initialQuestionForm, episodeNumber: selectedEpisode })
                           }
@@ -658,7 +658,7 @@ export default function CommissionerQuestionsPage() {
                   borderWidth="1px"
                   borderRadius="md"
                   cursor="pointer"
-                  bg={selectedTemplates.includes(template.id) ? 'orange.50' : 'white'}
+                  bg={selectedTemplates.includes(template.id) ? 'orange.900' : 'transparent'}
                   borderColor={selectedTemplates.includes(template.id) ? 'orange.300' : 'gray.200'}
                   onClick={() => toggleTemplateSelection(template.id)}
                 >
@@ -689,11 +689,11 @@ export default function CommissionerQuestionsPage() {
             </Stack>
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onTemplatesClose}>
+            <Button variant="outline" mr={3} onClick={onTemplatesClose}>
               Cancel
             </Button>
             <Button
-              colorScheme="orange"
+              variant="primary"
               onClick={handleAddFromTemplates}
               isLoading={isSubmitting}
               isDisabled={selectedTemplates.length === 0}
@@ -759,7 +759,7 @@ export default function CommissionerQuestionsPage() {
             </Stack>
           </ModalBody>
           <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onScoringClose}>
+            <Button variant="outline" mr={3} onClick={onScoringClose}>
               Cancel
             </Button>
             <Button colorScheme="green" onClick={handleSubmitScoring} isLoading={isScoring}>

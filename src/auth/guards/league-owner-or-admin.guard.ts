@@ -8,7 +8,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
-export class LeagueOwnerOrAdminGuard implements CanActivate {
+export class LeagueCommissionerOrAdminGuard implements CanActivate {
   constructor(private readonly prisma: PrismaService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -27,19 +27,30 @@ export class LeagueOwnerOrAdminGuard implements CanActivate {
       throw new ForbiddenException('League ID not found in request');
     }
 
-    // Check if league exists and if user is the owner
+    // Check if league exists and if user is the owner or a commissioner
     const league = await this.prisma.league.findUnique({
       where: { id: leagueId },
-      select: { ownerId: true },
+      select: { 
+        ownerId: true,
+        commissioners: {
+          select: { id: true },
+        },
+      },
     });
 
     if (!league) {
       throw new NotFoundException(`League with ID ${leagueId} not found`);
     }
 
-    if (league.ownerId !== user.id) {
+    // Owner is automatically a commissioner
+    const isOwner = league.ownerId === user.id;
+    const isCommissioner = league.commissioners.some(
+      (commissioner) => commissioner.id === user.id,
+    );
+
+    if (!isOwner && !isCommissioner) {
       throw new ForbiddenException(
-        'You must be the league owner to perform this action',
+        'You must be a league commissioner to perform this action',
       );
     }
 

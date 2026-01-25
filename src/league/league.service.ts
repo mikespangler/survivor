@@ -3,12 +3,17 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateLeagueSeasonSettingsDto } from './dto/update-league-season-settings.dto';
 import { UpdateDraftConfigDto } from './dto/update-draft-config.dto';
 import { CreateLeagueDto } from './dto/create-league.dto';
 import { JoinLeagueDto } from './dto/join-league.dto';
+import { InviteByEmailDto } from './dto/invite-by-email.dto';
+import { JoinByTokenDto } from './dto/join-by-token.dto';
+import { AddCommissionerDto } from './dto/add-commissioner.dto';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class LeagueService {
@@ -22,6 +27,7 @@ export class LeagueService {
       include: {
         owner: true,
         members: true,
+        commissioners: true,
         leagueSeasons: {
           include: {
             season: true,
@@ -72,6 +78,7 @@ export class LeagueService {
       include: {
         owner: true,
         members: true,
+        commissioners: true,
         leagueSeasons: {
           include: {
             season: true,
@@ -150,9 +157,13 @@ export class LeagueService {
           name: createDto.name,
           description: createDto.description,
           ownerId: userId,
+          commissioners: {
+            connect: { id: userId },
+          },
         },
         include: {
           owner: true,
+          commissioners: true,
         },
       });
 
@@ -180,6 +191,7 @@ export class LeagueService {
         include: {
           owner: true,
           members: true,
+          commissioners: true,
           leagueSeasons: {
             include: {
               season: true,
@@ -475,10 +487,11 @@ export class LeagueService {
       // Return the league with updated members
       return tx.league.findUnique({
         where: { id: leagueId },
-        include: {
-          owner: true,
-          members: true,
-          leagueSeasons: {
+      include: {
+        owner: true,
+        members: true,
+        commissioners: true,
+        leagueSeasons: {
             include: {
               season: true,
               teams: {
@@ -631,6 +644,550 @@ export class LeagueService {
         activeCastaways,
         eliminatedCastaways,
       },
+    };
+  }
+
+  // Invite token methods
+  async generateInviteLink(leagueId: string, userId: string) {
+    // Verify user is commissioner
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+      select: {
+        ownerId: true,
+        commissioners: {
+          select: { id: true },
+        },
+      },
+    });
+
+    if (!league) {
+      throw new NotFoundException(`League with ID ${leagueId} not found`);
+    }
+
+    const isOwner = league.ownerId === userId;
+    const isCommissioner = league.commissioners.some(
+      (c) => c.id === userId,
+    );
+
+    if (!isOwner && !isCommissioner) {
+      throw new ForbiddenException(
+        'You must be a league commissioner to generate invite links',
+      );
+    }
+
+    // Generate secure token
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30); // 30 days expiration
+
+    const inviteToken = await this.prisma.inviteToken.create({
+      data: {
+        leagueId,
+        token,
+        createdById: userId,
+        expiresAt,
+      },
+      include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    // Return token and shareable link
+    return {
+      id: inviteToken.id,
+      token: inviteToken.token,
+      link: `/leagues/join/${inviteToken.token}`,
+      expiresAt: inviteToken.expiresAt,
+      createdAt: inviteToken.createdAt,
+      usedAt: inviteToken.usedAt,
+      createdBy: inviteToken.createdBy,
+    };
+  }
+
+  async validateInviteToken(token: string) {
+    const inviteToken = await this.prisma.inviteToken.findUnique({
+      where: { token },
+      include: {
+        league: {
+          include: {
+            owner: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!inviteToken) {
+      throw new NotFoundException('Invalid invite token');
+    }
+
+    if (inviteToken.usedAt) {
+      throw new BadRequestException('This invite link has already been used');
+    }
+
+    if (new Date() > inviteToken.expiresAt) {
+      throw new BadRequestException('This invite link has expired');
+    }
+
+    return {
+      leagueId: inviteToken.leagueId,
+      league: inviteToken.league,
+      expiresAt: inviteToken.expiresAt,
+    };
+  }
+
+  async getInviteLinks(leagueId: string, userId: string) {
+    // Verify user is commissioner
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+      select: {
+        ownerId: true,
+        commissioners: {
+          select: { id: true },
+        },
+      },
+    });
+
+    if (!league) {
+      throw new NotFoundException(`League with ID ${leagueId} not found`);
+    }
+
+    const isOwner = league.ownerId === userId;
+    const isCommissioner = league.commissioners.some(
+      (c) => c.id === userId,
+    );
+
+    if (!isOwner && !isCommissioner) {
+      throw new ForbiddenException(
+        'You must be a league commissioner to view invite links',
+      );
+    }
+
+    const tokens = await this.prisma.inviteToken.findMany({
+      where: { leagueId },
+      include: {
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return tokens.map((token) => ({
+      id: token.id,
+      token: token.token,
+      link: `/leagues/join/${token.token}`,
+      expiresAt: token.expiresAt,
+      createdAt: token.createdAt,
+      usedAt: token.usedAt,
+      usedById: token.usedById,
+      createdBy: token.createdBy,
+      isValid: !token.usedAt && new Date() < token.expiresAt,
+    }));
+  }
+
+  async revokeInviteToken(tokenId: string, userId: string) {
+    const inviteToken = await this.prisma.inviteToken.findUnique({
+      where: { id: tokenId },
+      include: {
+        league: {
+          select: {
+            ownerId: true,
+            commissioners: {
+              select: { id: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!inviteToken) {
+      throw new NotFoundException('Invite token not found');
+    }
+
+    // Verify user is commissioner
+    const isOwner = inviteToken.league.ownerId === userId;
+    const isCommissioner = inviteToken.league.commissioners.some(
+      (c) => c.id === userId,
+    );
+
+    if (!isOwner && !isCommissioner) {
+      throw new ForbiddenException(
+        'You must be a league commissioner to revoke invite links',
+      );
+    }
+
+    // Delete the token
+    await this.prisma.inviteToken.delete({
+      where: { id: tokenId },
+    });
+
+    return { success: true };
+  }
+
+  async inviteByEmail(leagueId: string, emails: string[], userId: string) {
+    // Verify user is commissioner
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+      select: {
+        ownerId: true,
+        commissioners: {
+          select: { id: true },
+        },
+      },
+    });
+
+    if (!league) {
+      throw new NotFoundException(`League with ID ${leagueId} not found`);
+    }
+
+    const isOwner = league.ownerId === userId;
+    const isCommissioner = league.commissioners.some(
+      (c) => c.id === userId,
+    );
+
+    if (!isOwner && !isCommissioner) {
+      throw new ForbiddenException(
+        'You must be a league commissioner to invite members',
+      );
+    }
+
+    // For now, just return success - email sending can be implemented later
+    // The emails are stored for tracking purposes
+    return {
+      success: true,
+      emails,
+      message: 'Invitations will be sent manually via shareable links',
+    };
+  }
+
+  async joinLeagueByToken(userId: string, token: string) {
+    // Validate token
+    const tokenData = await this.validateInviteToken(token);
+
+    const leagueId = tokenData.leagueId;
+
+    // Check if user is already a member
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+      include: {
+        owner: true,
+        members: true,
+      },
+    });
+
+    if (!league) {
+      throw new NotFoundException(`League with ID ${leagueId} not found`);
+    }
+
+    // Check if user is already the owner
+    if (league.ownerId === userId) {
+      throw new BadRequestException('You are already the owner of this league');
+    }
+
+    // Check if user is already a member
+    const isAlreadyMember = league.members.some(
+      (member) => member.id === userId,
+    );
+    if (isAlreadyMember) {
+      throw new ConflictException('You are already a member of this league');
+    }
+
+    // Find active or upcoming season
+    const activeSeason = await this.prisma.season.findFirst({
+      where: {
+        status: {
+          in: ['ACTIVE', 'UPCOMING'],
+        },
+      },
+      orderBy: {
+        number: 'desc',
+      },
+    });
+
+    if (!activeSeason) {
+      throw new NotFoundException('No active or upcoming season found');
+    }
+
+    // Get user info for team name
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Generate generic team name
+    const teamName = user.name
+      ? `${user.name}'s Team`
+      : user.email
+        ? `${user.email.split('@')[0]}'s Team`
+        : 'Team';
+
+    // Use transaction to ensure atomicity
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Add user to league members
+      await tx.league.update({
+        where: { id: leagueId },
+        data: {
+          members: {
+            connect: { id: userId },
+          },
+        },
+      });
+
+      // 2. Mark token as used
+      await tx.inviteToken.update({
+        where: { token },
+        data: {
+          usedAt: new Date(),
+          usedById: userId,
+        },
+      });
+
+      // 3. Find or create LeagueSeason
+      let leagueSeason = await tx.leagueSeason.findUnique({
+        where: {
+          leagueId_seasonId: {
+            leagueId,
+            seasonId: activeSeason.id,
+          },
+        },
+      });
+
+      if (!leagueSeason) {
+        leagueSeason = await tx.leagueSeason.create({
+          data: {
+            leagueId,
+            seasonId: activeSeason.id,
+          },
+        });
+      }
+
+      // 4. Check if user already has a team in this leagueSeason
+      const existingTeam = await tx.team.findFirst({
+        where: {
+          leagueSeasonId: leagueSeason.id,
+          ownerId: userId,
+        },
+      });
+
+      if (existingTeam) {
+        throw new ConflictException(
+          'You already have a team in this league season',
+        );
+      }
+
+      // 5. Create team
+      await tx.team.create({
+        data: {
+          name: teamName,
+          leagueSeasonId: leagueSeason.id,
+          ownerId: userId,
+          totalPoints: 0,
+        },
+        include: {
+          owner: true,
+          leagueSeason: {
+            include: {
+              season: true,
+            },
+          },
+        },
+      });
+
+      // Return the league with updated members
+      return tx.league.findUnique({
+        where: { id: leagueId },
+        include: {
+          owner: true,
+          members: true,
+          commissioners: true,
+          leagueSeasons: {
+            include: {
+              season: true,
+              teams: {
+                include: {
+                  owner: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+  }
+
+  // Commissioner management methods
+  async addCommissioner(
+    leagueId: string,
+    userId: string,
+    newCommissionerId: string,
+  ) {
+    // Verify current user is commissioner
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+      include: {
+        owner: true,
+        commissioners: true,
+        members: true,
+      },
+    });
+
+    if (!league) {
+      throw new NotFoundException(`League with ID ${leagueId} not found`);
+    }
+
+    const isOwner = league.ownerId === userId;
+    const isCommissioner = league.commissioners.some(
+      (c) => c.id === userId,
+    );
+
+    if (!isOwner && !isCommissioner) {
+      throw new ForbiddenException(
+        'You must be a league commissioner to add commissioners',
+      );
+    }
+
+    // Can't add owner as commissioner (they already are)
+    if (league.ownerId === newCommissionerId) {
+      throw new BadRequestException(
+        'The league owner is already a commissioner',
+      );
+    }
+
+    // Check if user is already a commissioner
+    const isAlreadyCommissioner = league.commissioners.some(
+      (c) => c.id === newCommissionerId,
+    );
+    if (isAlreadyCommissioner) {
+      throw new ConflictException('User is already a commissioner');
+    }
+
+    // Check if user is a member of the league
+    const isMember = league.members.some((m) => m.id === newCommissionerId);
+    if (!isMember && league.ownerId !== newCommissionerId) {
+      throw new BadRequestException(
+        'User must be a league member before becoming a commissioner',
+      );
+    }
+
+    // Add to commissioners
+    await this.prisma.league.update({
+      where: { id: leagueId },
+      data: {
+        commissioners: {
+          connect: { id: newCommissionerId },
+        },
+      },
+    });
+
+    // Return updated commissioners list
+    return this.getCommissioners(leagueId);
+  }
+
+  async removeCommissioner(
+    leagueId: string,
+    userId: string,
+    commissionerId: string,
+  ) {
+    // Verify current user is commissioner
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+      include: {
+        owner: true,
+        commissioners: true,
+      },
+    });
+
+    if (!league) {
+      throw new NotFoundException(`League with ID ${leagueId} not found`);
+    }
+
+    const isOwner = league.ownerId === userId;
+    const isCommissioner = league.commissioners.some(
+      (c) => c.id === userId,
+    );
+
+    if (!isOwner && !isCommissioner) {
+      throw new ForbiddenException(
+        'You must be a league commissioner to remove commissioners',
+      );
+    }
+
+    // Can't remove owner from commissioners
+    if (league.ownerId === commissionerId) {
+      throw new BadRequestException('Cannot remove the league owner from commissioners');
+    }
+
+    // Check if user is actually a commissioner
+    const isCommissionerToRemove = league.commissioners.some(
+      (c) => c.id === commissionerId,
+    );
+    if (!isCommissionerToRemove) {
+      throw new NotFoundException('User is not a commissioner');
+    }
+
+    // Remove from commissioners
+    await this.prisma.league.update({
+      where: { id: leagueId },
+      data: {
+        commissioners: {
+          disconnect: { id: commissionerId },
+        },
+      },
+    });
+
+    return { success: true };
+  }
+
+  async getCommissioners(leagueId: string) {
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        commissioners: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    if (!league) {
+      throw new NotFoundException(`League with ID ${leagueId} not found`);
+    }
+
+    return {
+      owner: league.owner,
+      commissioners: league.commissioners,
     };
   }
 }

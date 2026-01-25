@@ -17,7 +17,7 @@ import {
   SubmitAnswerDto,
   SetCorrectAnswersDto,
 } from './dto';
-import { LeagueOwnerOrAdminGuard } from '../auth/guards/league-owner-or-admin.guard';
+import { LeagueCommissionerOrAdminGuard } from '../auth/guards/league-owner-or-admin.guard';
 import { LeagueMemberGuard } from '../auth/guards/league-member.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
@@ -28,7 +28,7 @@ export class LeagueQuestionController {
   // ================== COMMISSIONER ROUTES ==================
 
   @Get()
-  @UseGuards(LeagueOwnerOrAdminGuard)
+  @UseGuards(LeagueCommissionerOrAdminGuard)
   async getQuestions(
     @Param('leagueId') leagueId: string,
     @Param('seasonId') seasonId: string,
@@ -43,13 +43,13 @@ export class LeagueQuestionController {
   }
 
   @Get('templates')
-  @UseGuards(LeagueOwnerOrAdminGuard)
+  @UseGuards(LeagueCommissionerOrAdminGuard)
   async getAvailableTemplates(@Query('category') category?: string) {
     return this.questionService.getTemplates(category);
   }
 
   @Post()
-  @UseGuards(LeagueOwnerOrAdminGuard)
+  @UseGuards(LeagueCommissionerOrAdminGuard)
   async createQuestion(
     @Param('leagueId') leagueId: string,
     @Param('seasonId') seasonId: string,
@@ -59,7 +59,7 @@ export class LeagueQuestionController {
   }
 
   @Post('from-templates')
-  @UseGuards(LeagueOwnerOrAdminGuard)
+  @UseGuards(LeagueCommissionerOrAdminGuard)
   async createFromTemplates(
     @Param('leagueId') leagueId: string,
     @Param('seasonId') seasonId: string,
@@ -69,7 +69,7 @@ export class LeagueQuestionController {
   }
 
   @Patch(':questionId')
-  @UseGuards(LeagueOwnerOrAdminGuard)
+  @UseGuards(LeagueCommissionerOrAdminGuard)
   async updateQuestion(
     @Param('questionId') questionId: string,
     @Body() dto: UpdateLeagueQuestionDto,
@@ -78,13 +78,13 @@ export class LeagueQuestionController {
   }
 
   @Delete(':questionId')
-  @UseGuards(LeagueOwnerOrAdminGuard)
+  @UseGuards(LeagueCommissionerOrAdminGuard)
   async deleteQuestion(@Param('questionId') questionId: string) {
     return this.questionService.deleteLeagueQuestion(questionId);
   }
 
   @Post('score')
-  @UseGuards(LeagueOwnerOrAdminGuard)
+  @UseGuards(LeagueCommissionerOrAdminGuard)
   async scoreQuestions(
     @Param('leagueId') leagueId: string,
     @Param('seasonId') seasonId: string,

@@ -53,6 +53,12 @@ export const Button = defineStyleConfig({
         boxShadow: 'none',
         transform: 'translateY(4px)',
       },
+      _disabled: {
+        bg: 'brand.primary',
+        opacity: 0.5,
+        cursor: 'not-allowed',
+        boxShadow: 'none',
+      },
     },
     // Primary small variant
     primarySm: {
@@ -68,6 +74,12 @@ export const Button = defineStyleConfig({
       _active: {
         boxShadow: 'none',
         transform: 'translateY(2px)',
+      },
+      _disabled: {
+        bg: 'brand.primary',
+        opacity: 0.5,
+        cursor: 'not-allowed',
+        boxShadow: 'none',
       },
     },
     // Secondary dark button with hard shadow
@@ -86,6 +98,12 @@ export const Button = defineStyleConfig({
         boxShadow: 'none',
         transform: 'translateY(4px)',
       },
+      _disabled: {
+        bg: '#2B2B31',
+        opacity: 0.5,
+        cursor: 'not-allowed',
+        boxShadow: 'none',
+      },
     },
     // Secondary small variant
     secondarySm: {
@@ -103,15 +121,63 @@ export const Button = defineStyleConfig({
         boxShadow: 'none',
         transform: 'translateY(2px)',
       },
+      _disabled: {
+        bg: '#2B2B31',
+        opacity: 0.5,
+        cursor: 'not-allowed',
+        boxShadow: 'none',
+      },
     },
-    // Ghost/outline variant for less prominent actions
-    ghost: {
-      bg: 'transparent',
+    // Outline variant - solid dark button without shadow (for tertiary actions)
+    outline: {
+      bg: 'bg.secondary',
       color: 'text.primary',
       border: '1px solid',
       borderColor: 'border.default',
       _hover: {
-        bg: 'bg.overlay',
+        bg: '#353540',
+      },
+      _disabled: {
+        bg: 'bg.secondary',
+        opacity: 0.5,
+        cursor: 'not-allowed',
+      },
+    },
+    // Solid variant - override Chakra's default colorScheme="orange" behavior
+    solid: {
+      bg: 'brand.primary',
+      color: 'text.button',
+      boxShadow: 'button-lg',
+      _hover: {
+        bg: '#E85A3A',
+        _disabled: {
+          bg: 'brand.primary',
+        },
+      },
+      _active: {
+        boxShadow: 'none',
+        transform: 'translateY(4px)',
+      },
+      _disabled: {
+        bg: 'brand.primary',
+        opacity: 0.5,
+        cursor: 'not-allowed',
+        boxShadow: 'none',
+      },
+    },
+    // Ghost variant - alias for outline
+    ghost: {
+      bg: 'bg.secondary',
+      color: 'text.primary',
+      border: '1px solid',
+      borderColor: 'border.default',
+      _hover: {
+        bg: '#353540',
+      },
+      _disabled: {
+        bg: 'bg.secondary',
+        opacity: 0.5,
+        cursor: 'not-allowed',
       },
     },
     // Link style button

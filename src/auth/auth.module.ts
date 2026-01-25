@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ClerkService } from './clerk.service';
 import { AuthGuard } from './auth.guard';
 import { SystemAdminGuard } from './guards/system-admin.guard';
-import { LeagueOwnerOrAdminGuard } from './guards/league-owner-or-admin.guard';
+import { LeagueCommissionerOrAdminGuard } from './guards/league-owner-or-admin.guard';
 import { UserModule } from '../user/user.module';
 import { PrismaModule } from '../prisma/prisma.module';
 
@@ -13,8 +13,8 @@ import { PrismaModule } from '../prisma/prisma.module';
     ClerkService,
     AuthGuard,
     SystemAdminGuard,
-    LeagueOwnerOrAdminGuard,
+    LeagueCommissionerOrAdminGuard,
   ],
-  exports: [ClerkService, AuthGuard, SystemAdminGuard, LeagueOwnerOrAdminGuard],
+  exports: [ClerkService, AuthGuard, SystemAdminGuard, LeagueCommissionerOrAdminGuard],
 })
 export class AuthModule {}

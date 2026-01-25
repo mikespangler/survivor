@@ -5,6 +5,7 @@ import {
   IsArray,
   Min,
   IsIn,
+  IsBoolean,
 } from 'class-validator';
 
 export class UpdateLeagueQuestionDto {
@@ -36,4 +37,23 @@ export class UpdateLeagueQuestionDto {
   @IsInt()
   @Min(0)
   sortOrder?: number;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['episode', 'season'])
+  questionScope?: 'episode' | 'season';
+
+  @IsOptional()
+  @IsBoolean()
+  isWager?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  minWager?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  maxWager?: number;
 }

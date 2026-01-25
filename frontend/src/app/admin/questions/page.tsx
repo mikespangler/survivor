@@ -292,7 +292,7 @@ export default function AdminQuestionsPage() {
             p={5}
             borderWidth="1px"
             borderRadius="lg"
-            bg="white"
+            bg="bg.secondary"
           >
             <Heading size="sm">
               {form.id ? 'Edit Template' : 'Create Template'}
@@ -405,13 +405,13 @@ export default function AdminQuestionsPage() {
             <Stack direction="row" spacing={3}>
               <Button
                 type="submit"
-                colorScheme="orange"
+                variant="primary"
                 isLoading={isSubmitting}
               >
                 {form.id ? 'Update Template' : 'Create Template'}
               </Button>
               {form.id && (
-                <Button variant="ghost" onClick={() => setForm(initialForm)}>
+                <Button variant="outline" onClick={() => setForm(initialForm)}>
                   Cancel
                 </Button>
               )}
@@ -438,14 +438,14 @@ export default function AdminQuestionsPage() {
             </FormControl>
           </HStack>
 
-          <Box borderWidth="1px" borderRadius="lg" overflowX="auto" bg="white">
+          <Box borderWidth="1px" borderRadius="lg" overflowX="auto" bg="bg.secondary">
             {isLoading ? (
               <Box py={6} textAlign="center">
                 <Spinner />
               </Box>
             ) : (
               <Table>
-                <Thead bg="gray.50">
+                <Thead>
                   <Tr>
                     <Th>Question</Th>
                     <Th>Type</Th>
@@ -491,7 +491,7 @@ export default function AdminQuestionsPage() {
                           <Button
                             size="sm"
                             colorScheme="red"
-                            variant="ghost"
+                            variant="outline"
                             onClick={() => handleDelete(template)}
                           >
                             Delete

@@ -250,6 +250,10 @@ export class QuestionService {
         options: dto.options || null,
         pointValue: dto.pointValue ?? 1,
         sortOrder,
+        questionScope: dto.questionScope ?? 'episode',
+        isWager: dto.isWager ?? false,
+        minWager: dto.minWager ?? null,
+        maxWager: dto.maxWager ?? null,
       },
       include: {
         template: true,
@@ -339,6 +343,12 @@ export class QuestionService {
         ...(dto.options !== undefined && { options: dto.options }),
         ...(dto.pointValue !== undefined && { pointValue: dto.pointValue }),
         ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
+        ...(dto.questionScope !== undefined && {
+          questionScope: dto.questionScope,
+        }),
+        ...(dto.isWager !== undefined && { isWager: dto.isWager }),
+        ...(dto.minWager !== undefined && { minWager: dto.minWager }),
+        ...(dto.maxWager !== undefined && { maxWager: dto.maxWager }),
       },
       include: {
         template: true,
@@ -461,6 +471,11 @@ export class QuestionService {
         correctAnswer: q.isScored ? q.correctAnswer : null,
         myAnswer: q.answers[0]?.answer || null,
         pointsEarned: q.answers[0]?.pointsEarned ?? null,
+        questionScope: q.questionScope,
+        isWager: q.isWager,
+        minWager: q.minWager,
+        maxWager: q.maxWager,
+        myWagerAmount: q.answers[0]?.wagerAmount ?? null,
       })),
     };
   }
@@ -526,6 +541,20 @@ export class QuestionService {
       }
     }
 
+    // Validate wager amount if this is a wager question
+    if (question.isWager && dto.wagerAmount !== undefined) {
+      if (question.minWager !== null && dto.wagerAmount < question.minWager) {
+        throw new BadRequestException(
+          `Wager amount must be at least ${question.minWager}`,
+        );
+      }
+      if (question.maxWager !== null && dto.wagerAmount > question.maxWager) {
+        throw new BadRequestException(
+          `Wager amount must not exceed ${question.maxWager}`,
+        );
+      }
+    }
+
     // Upsert answer
     return this.prisma.playerAnswer.upsert({
       where: {
@@ -538,9 +567,11 @@ export class QuestionService {
         leagueQuestionId: questionId,
         teamId: team.id,
         answer: dto.answer,
+        wagerAmount: question.isWager ? dto.wagerAmount : null,
       },
       update: {
         answer: dto.answer,
+        wagerAmount: question.isWager ? dto.wagerAmount : null,
         updatedAt: new Date(),
       },
       include: {
@@ -635,7 +666,15 @@ export class QuestionService {
           const isCorrect =
             answer.answer.toLowerCase().trim() ===
             correctAnswer.toLowerCase().trim();
-          const pointsEarned = isCorrect ? question.pointValue : 0;
+
+          // For wager questions, use wagerAmount; otherwise use pointValue
+          let pointsEarned: number;
+          if (question.isWager && answer.wagerAmount !== null) {
+            // Wager: correct = gain wager, incorrect = lose wager
+            pointsEarned = isCorrect ? answer.wagerAmount : -answer.wagerAmount;
+          } else {
+            pointsEarned = isCorrect ? question.pointValue : 0;
+          }
 
           await tx.playerAnswer.update({
             where: { id: answer.id },

@@ -39,6 +39,11 @@ import type {
   EpisodeQuestionsResponse,
   EpisodeResultsResponse,
   QuestionStatusResponse,
+  InviteLink,
+  InviteByEmailDto,
+  JoinByTokenDto,
+  AddCommissionerDto,
+  CommissionersResponse,
 } from '@/types/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -554,6 +559,95 @@ class ApiClient {
   ): Promise<QuestionStatusResponse> {
     return this.request<QuestionStatusResponse>(
       `/leagues/${leagueId}/seasons/${seasonId}/questions/status`,
+    );
+  }
+
+  // ================== Invite Link endpoints ==================
+
+  async generateInviteLink(leagueId: string): Promise<InviteLink> {
+    return this.request<InviteLink>(`/leagues/${leagueId}/invite-link`, {
+      method: 'POST',
+    });
+  }
+
+  async getInviteLinks(leagueId: string): Promise<InviteLink[]> {
+    return this.request<InviteLink[]>(`/leagues/${leagueId}/invite-links`);
+  }
+
+  async revokeInviteLink(
+    leagueId: string,
+    tokenId: string,
+  ): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(
+      `/leagues/${leagueId}/invite-links/${tokenId}`,
+      {
+        method: 'DELETE',
+      },
+    );
+  }
+
+  async inviteByEmail(
+    leagueId: string,
+    data: InviteByEmailDto,
+  ): Promise<{ success: boolean; emails: string[]; message: string }> {
+    return this.request<{ success: boolean; emails: string[]; message: string }>(
+      `/leagues/${leagueId}/invite-email`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
+  async joinLeagueByToken(data: JoinByTokenDto): Promise<League> {
+    return this.request<League>('/leagues/join-by-token', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async validateInviteToken(token: string): Promise<{
+    leagueId: string;
+    league: League;
+    expiresAt: string;
+  }> {
+    return this.request<{
+      leagueId: string;
+      league: League;
+      expiresAt: string;
+    }>(`/leagues/validate-token/${token}`);
+  }
+
+  // ================== Commissioner endpoints ==================
+
+  async addCommissioner(
+    leagueId: string,
+    data: AddCommissionerDto,
+  ): Promise<CommissionersResponse> {
+    return this.request<CommissionersResponse>(
+      `/leagues/${leagueId}/commissioners`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
+  async removeCommissioner(
+    leagueId: string,
+    userId: string,
+  ): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(
+      `/leagues/${leagueId}/commissioners/${userId}`,
+      {
+        method: 'DELETE',
+      },
+    );
+  }
+
+  async getCommissioners(leagueId: string): Promise<CommissionersResponse> {
+    return this.request<CommissionersResponse>(
+      `/leagues/${leagueId}/commissioners`,
     );
   }
 }

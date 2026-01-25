@@ -10,7 +10,7 @@ import {
 import { LeagueService } from './league.service';
 import { UpdateLeagueSeasonSettingsDto } from './dto/update-league-season-settings.dto';
 import { UpdateDraftConfigDto } from './dto/update-draft-config.dto';
-import { LeagueOwnerOrAdminGuard } from '../auth/guards/league-owner-or-admin.guard';
+import { LeagueCommissionerOrAdminGuard } from '../auth/guards/league-owner-or-admin.guard';
 import { LeagueMemberGuard } from '../auth/guards/league-member.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
@@ -19,7 +19,7 @@ export class LeagueController {
   constructor(private readonly leagueService: LeagueService) {}
 
   @Get('settings')
-  @UseGuards(LeagueOwnerOrAdminGuard)
+  @UseGuards(LeagueCommissionerOrAdminGuard)
   async getSettings(
     @Param('leagueId') leagueId: string,
     @Param('seasonId') seasonId: string,
@@ -28,7 +28,7 @@ export class LeagueController {
   }
 
   @Patch('settings')
-  @UseGuards(LeagueOwnerOrAdminGuard)
+  @UseGuards(LeagueCommissionerOrAdminGuard)
   async updateSettings(
     @Param('leagueId') leagueId: string,
     @Param('seasonId') seasonId: string,
@@ -42,7 +42,7 @@ export class LeagueController {
   }
 
   @Get('draft-config')
-  @UseGuards(LeagueOwnerOrAdminGuard)
+  @UseGuards(LeagueCommissionerOrAdminGuard)
   async getDraftConfig(
     @Param('leagueId') leagueId: string,
     @Param('seasonId') seasonId: string,
@@ -53,7 +53,7 @@ export class LeagueController {
   }
 
   @Patch('draft-config')
-  @UseGuards(LeagueOwnerOrAdminGuard)
+  @UseGuards(LeagueCommissionerOrAdminGuard)
   async updateDraftConfig(
     @Param('leagueId') leagueId: string,
     @Param('seasonId') seasonId: string,
