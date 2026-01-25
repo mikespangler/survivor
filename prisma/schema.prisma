@@ -48,20 +48,22 @@ model LeagueSeason {
   settings        LeagueSeasonSettings?
   teams           Team[]
   leagueQuestions LeagueQuestion[]
+  retentionConfigs RetentionConfig[]
 
   @@unique([leagueId, seasonId])
 }
 
 model Team {
-  id             String         @id @default(cuid())
+  id             String              @id @default(cuid())
   name           String
   leagueSeasonId String
   ownerId        String
-  totalPoints    Int            @default(0)
-  leagueSeason   LeagueSeason   @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
-  owner          User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  totalPoints    Int                 @default(0)
+  leagueSeason   LeagueSeason        @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
+  owner          User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   roster         TeamCastaway[]
   answers        PlayerAnswer[]
+  episodePoints  TeamEpisodePoints[]
 }
 
 model Season {
@@ -207,4 +209,38 @@ model InviteToken {
 
   @@index([token])
   @@index([leagueId])
+}
+
+// Retention points configuration per episode
+model RetentionConfig {
+  id                String       @id @default(cuid())
+  leagueSeasonId    String
+  episodeNumber     Int
+  pointsPerCastaway Int          // Commissioner-configurable points per active castaway
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  leagueSeason      LeagueSeason @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
+
+  @@unique([leagueSeasonId, episodeNumber])
+  @@index([leagueSeasonId])
+}
+
+// Episode-by-episode point tracking for teams
+model TeamEpisodePoints {
+  id                  String   @id @default(cuid())
+  teamId              String
+  episodeNumber       Int
+  questionPoints      Int      @default(0)  // Points from weekly questions
+  retentionPoints     Int      @default(0)  // Points from active castaways
+  totalEpisodePoints  Int      @default(0)  // Sum of question + retention
+  runningTotal        Int      @default(0)  // Cumulative total through this episode
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  team                Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, episodeNumber])
+  @@index([teamId])
+  @@index([episodeNumber])
 }

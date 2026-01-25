@@ -1,13 +1,21 @@
 'use client';
 
-import { Box, HStack, VStack, Text, Skeleton } from '@chakra-ui/react';
+import { Box, HStack, VStack, Text, Skeleton, Avatar, AvatarGroup } from '@chakra-ui/react';
 import { StarIcon, TrophyIcon, UsersIcon } from '../dashboard/icons';
+
+interface TeamMember {
+  id: string;
+  name: string;
+  imageUrl?: string;
+  isActive: boolean;
+}
 
 interface StatsBarProps {
   teamName: string;
   totalPoints: number;
   rank: number;
   totalTeams: number;
+  teamMembers?: TeamMember[];
   isLoading?: boolean;
 }
 
@@ -82,6 +90,7 @@ export function StatsBar({
   totalPoints,
   rank,
   totalTeams,
+  teamMembers = [],
   isLoading = false,
 }: StatsBarProps) {
   return (
@@ -124,6 +133,25 @@ export function StatsBar({
               </Text>
             )}
           </VStack>
+
+          {/* Player avatars */}
+          {!isLoading && teamMembers.length > 0 && (
+            <AvatarGroup size="sm" max={5} spacing="-3">
+              {teamMembers.slice(0, 5).map((member, idx) => (
+                <Avatar
+                  key={member.id}
+                  name={member.name}
+                  src={member.imageUrl}
+                  border="2px solid"
+                  borderColor="rgba(48, 53, 65, 0.5)"
+                  bg="#14181f"
+                  opacity={member.isActive ? 1 : 0.3}
+                  w="32px"
+                  h="32px"
+                />
+              ))}
+            </AvatarGroup>
+          )}
         </HStack>
       </Box>
 

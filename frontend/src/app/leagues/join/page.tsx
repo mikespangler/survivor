@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -13,45 +13,48 @@ import {
   Button,
   Text,
 } from '@chakra-ui/react';
-import { useUser } from '@clerk/nextjs';
 import { api } from '@/lib/api';
+import { AuthenticatedLayout } from '@/components/navigation';
 
 export default function JoinLeaguePage() {
   const router = useRouter();
-  const { isSignedIn } = useUser();
 
-  const [leagueId, setLeagueId] = useState('');
+  const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Redirect if not signed in (client-side only)
-  useEffect(() => {
-    if (isSignedIn === false) {
-      router.push('/');
-    }
-  }, [isSignedIn, router]);
-
-  // Don't render form until we know auth status
-  if (isSignedIn === false || isSignedIn === undefined) {
-    return null;
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!leagueId.trim()) {
-      setError('League ID is required');
+    if (!code.trim()) {
+      setError('League code is required');
       return;
     }
 
     try {
       setLoading(true);
 
-      const league = await api.joinLeague({ leagueId: leagueId.trim() });
+      const input = code.trim();
+      let league;
 
-      // Redirect to league show page after successful join
-      router.push(`/leagues/${league.id}`);
+      // Extract token from URL if it's a full invite link
+      let token = input;
+      if (input.includes('/leagues/join/')) {
+        const match = input.match(/\/leagues\/join\/([^\/\?]+)/);
+        token = match ? match[1] : input;
+      }
+
+      // Try as invite token first (more common flow)
+      try {
+        league = await api.joinLeagueByToken({ token });
+      } catch (tokenError) {
+        // If token fails, try as league ID
+        league = await api.joinLeague({ leagueId: input });
+      }
+
+      // Redirect to league dashboard after successful join
+      router.push(`/leagues/${league.id}/dashboard`);
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to join league';
       setError(errorMessage);
@@ -61,12 +64,13 @@ export default function JoinLeaguePage() {
   };
 
   return (
-    <Box as="main" minH="100vh" py={10}>
-      <Container maxW="container.md">
-        <VStack gap={6} align="stretch">
-          <Heading as="h1" size="xl">
-            Join a League
-          </Heading>
+    <AuthenticatedLayout>
+      <Box as="main" minH="100vh" py={10}>
+        <Container maxW="container.md">
+          <VStack gap={6} align="stretch">
+            <Heading as="h1" size="xl">
+              Join a League
+            </Heading>
 
           {error && (
             <Box
@@ -89,15 +93,15 @@ export default function JoinLeaguePage() {
             <form onSubmit={handleSubmit}>
               <VStack gap={6} align="stretch">
                 <FormControl isRequired>
-                  <FormLabel>League ID</FormLabel>
+                  <FormLabel>League Code or Invite Link</FormLabel>
                   <Input
                     type="text"
-                    value={leagueId}
-                    onChange={(e) => setLeagueId(e.target.value)}
-                    placeholder="Enter league ID"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    placeholder="Enter invite code or paste invite link"
                   />
                   <Text fontSize="sm" color="gray.500" mt={2}>
-                    Enter the league ID provided by the league owner.
+                    Enter the invite code from your league commissioner, or paste the full invite link.
                   </Text>
                 </FormControl>
 
@@ -106,7 +110,7 @@ export default function JoinLeaguePage() {
                   variant="primary"
                   isLoading={loading}
                   loadingText="Joining..."
-                  isDisabled={!leagueId.trim()}
+                  isDisabled={!code.trim()}
                   size="lg"
                 >
                   Join League
@@ -117,6 +121,7 @@ export default function JoinLeaguePage() {
         </VStack>
       </Container>
     </Box>
+    </AuthenticatedLayout>
   );
 }
 

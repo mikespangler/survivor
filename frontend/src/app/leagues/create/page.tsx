@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -15,13 +15,12 @@ import {
   Text,
   Divider,
 } from '@chakra-ui/react';
-import { useUser } from '@clerk/nextjs';
 import { api } from '@/lib/api';
+import { AuthenticatedLayout } from '@/components/navigation';
 import type { CreateLeagueDto } from '@/types/api';
 
 export default function CreateLeaguePage() {
   const router = useRouter();
-  const { isSignedIn } = useUser();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -29,18 +28,6 @@ export default function CreateLeaguePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  // Redirect if not signed in (client-side only)
-  useEffect(() => {
-    if (isSignedIn === false) {
-    router.push('/');
-    }
-  }, [isSignedIn, router]);
-
-  // Don't render form until we know auth status
-  if (isSignedIn === false || isSignedIn === undefined) {
-    return null;
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,12 +70,13 @@ export default function CreateLeaguePage() {
   };
 
   return (
-    <Box as="main" minH="100vh" py={10}>
-      <Container maxW="container.md">
-        <VStack gap={6} align="stretch">
-          <Heading as="h1" size="xl">
-            Create a League
-          </Heading>
+    <AuthenticatedLayout>
+      <Box as="main" minH="100vh" py={10}>
+        <Container maxW="container.md">
+          <VStack gap={6} align="stretch">
+            <Heading as="h1" size="xl">
+              Create a League
+            </Heading>
 
           {successMessage && (
             <Box
@@ -183,6 +171,7 @@ export default function CreateLeaguePage() {
         </VStack>
       </Container>
     </Box>
+    </AuthenticatedLayout>
   );
 }
 

@@ -113,7 +113,7 @@ export const CTASection = () => {
                 <Image src="/landing/icon-arrow-right.svg" alt="" w="16px" h="16px" filter="brightness(0)" />
               </Button>
             </Link>
-            <Link href="/leagues/create">
+            <Link href="/sign-up">
               <Button
                 size="lg"
                 bg="rgba(248, 246, 242, 0.05)"

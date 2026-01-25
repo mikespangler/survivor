@@ -27,6 +27,7 @@ import {
 import { CopyIcon, DeleteIcon } from '@/components/dashboard/icons';
 import { useUser } from '@clerk/nextjs';
 import { api } from '@/lib/api';
+import { AuthenticatedLayout } from '@/components/navigation';
 import type {
   League,
   DraftConfig,
@@ -354,42 +355,47 @@ export default function LeagueSettingsPage() {
 
   if (loading) {
     return (
-      <Box as="main" minH="100vh" bg="transparent" py={20}>
-        <Container maxW="container.md">
-          <VStack gap={4}>
-            <Spinner size="xl" />
-            <Text>Loading league settings...</Text>
-          </VStack>
-        </Container>
-      </Box>
+      <AuthenticatedLayout>
+        <Box as="main" minH="100vh" bg="transparent" py={20}>
+          <Container maxW="container.md">
+            <VStack gap={4}>
+              <Spinner size="xl" />
+              <Text>Loading league settings...</Text>
+            </VStack>
+          </Container>
+        </Box>
+      </AuthenticatedLayout>
     );
   }
 
   if (error && !league) {
     return (
-      <Box as="main" minH="100vh" bg="transparent" py={20}>
-        <Container maxW="container.md">
-          <Box
-            bg="red.900"
-            borderColor="red.500"
-            borderWidth="1px"
-            borderRadius="md"
-            p={4}
-          >
-            <VStack align="start" gap={2}>
-              <Text fontWeight="bold" color="red.200">
-                Error
-              </Text>
-              <Text color="red.300">{error}</Text>
-            </VStack>
-          </Box>
-        </Container>
-      </Box>
+      <AuthenticatedLayout>
+        <Box as="main" minH="100vh" bg="transparent" py={20}>
+          <Container maxW="container.md">
+            <Box
+              bg="red.900"
+              borderColor="red.500"
+              borderWidth="1px"
+              borderRadius="md"
+              p={4}
+            >
+              <VStack align="start" gap={2}>
+                <Text fontWeight="bold" color="red.200">
+                  Error
+                </Text>
+                <Text color="red.300">{error}</Text>
+              </VStack>
+            </Box>
+          </Container>
+        </Box>
+      </AuthenticatedLayout>
     );
   }
 
   return (
-    <Box as="main" minH="100vh" bg="transparent" py={10}>
+    <AuthenticatedLayout>
+      <Box as="main" minH="100vh" bg="transparent" py={10}>
       <Container maxW="container.md">
         <VStack gap={6} align="stretch">
           <Heading as="h1" size="xl">
@@ -723,6 +729,25 @@ export default function LeagueSettingsPage() {
             </VStack>
           </Box>
 
+          {/* Retention Points Configuration */}
+          <Box p={6} borderRadius="md" borderWidth="1px">
+            <VStack gap={4} align="stretch">
+              <Heading as="h2" size="md">
+                Retention Points Configuration
+              </Heading>
+              <Text>
+                Configure points earned per active castaway for each episode. This allows
+                you to reward teams for keeping their castaways in the game.
+              </Text>
+              <Button
+                variant="primary"
+                onClick={() => router.push(`/leagues/${leagueId}/settings/retention`)}
+              >
+                Configure Retention Points
+              </Button>
+            </VStack>
+          </Box>
+
           <Box p={6} borderRadius="md" borderWidth="1px">
             <form onSubmit={handleSubmit}>
               <VStack gap={6} align="stretch">
@@ -781,6 +806,7 @@ export default function LeagueSettingsPage() {
         </VStack>
       </Container>
     </Box>
+    </AuthenticatedLayout>
   );
 }
 

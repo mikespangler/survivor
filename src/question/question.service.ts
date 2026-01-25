@@ -3,8 +3,11 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { LeagueService } from '../league/league.service';
 import {
   CreateQuestionTemplateDto,
   UpdateQuestionTemplateDto,
@@ -17,7 +20,11 @@ import {
 
 @Injectable()
 export class QuestionService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => LeagueService))
+    private readonly leagueService: LeagueService,
+  ) {}
 
   // ================== TEMPLATE METHODS (System Admin) ==================
 
@@ -699,6 +706,30 @@ export class QuestionService {
         });
       }
     });
+
+    // Trigger episode points recalculation for affected teams
+    const affectedTeamIds = Array.from(
+      new Set(questions.flatMap((q) => q.answers.map((a) => a.teamId))),
+    );
+    const episodeNumber = questions[0]?.episodeNumber;
+
+    if (episodeNumber && affectedTeamIds.length > 0) {
+      // Recalculate episode points for each affected team
+      await Promise.all(
+        affectedTeamIds.map(async (teamId) => {
+          const team = await this.prisma.team.findUnique({
+            where: { id: teamId },
+            include: { leagueSeason: { include: { season: true } } },
+          });
+          if (team) {
+            await this.leagueService.recalculateTeamHistory(
+              teamId,
+              team.leagueSeason.season.activeEpisode,
+            );
+          }
+        }),
+      );
+    }
 
     return { success: true, scoredCount: questions.length };
   }

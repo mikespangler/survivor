@@ -485,3 +485,59 @@ export interface CommissionersResponse {
   commissioners: User[];
 }
 
+// Retention configuration types
+export interface RetentionConfig {
+  id: string;
+  leagueSeasonId: string;
+  episodeNumber: number;
+  pointsPerCastaway: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateRetentionConfigDto {
+  episodes: Array<{
+    episodeNumber: number;
+    pointsPerCastaway: number;
+  }>;
+}
+
+// Episode points tracking
+export interface TeamEpisodePoints {
+  episodeNumber: number;
+  questionPoints: number;
+  retentionPoints: number;
+  totalEpisodePoints: number;
+  runningTotal: number;
+}
+
+// Detailed standings response
+export interface DetailedStandingsTeam {
+  id: string;
+  name: string;
+  totalPoints: number;
+  rank: number;
+  rankChange: number;
+  owner: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  };
+  isCurrentUser: boolean;
+  episodeHistory: TeamEpisodePoints[];
+  roster: Array<{
+    id: string;
+    castawayId: string;
+    castawayName: string;
+    startEpisode: number;
+    endEpisode: number | null;
+    isActive: boolean;
+  }>;
+}
+
+export interface DetailedStandingsResponse {
+  leagueSeasonId: string;
+  currentEpisode: number;
+  teams: DetailedStandingsTeam[];
+}
+

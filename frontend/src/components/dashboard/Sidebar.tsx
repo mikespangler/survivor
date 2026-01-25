@@ -1,7 +1,7 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-import { useClerk } from '@clerk/nextjs';
+import { usePathname, useRouter } from 'next/navigation';
+import { useClerk, UserButton } from '@clerk/nextjs';
 import {
   Box,
   VStack,
@@ -20,13 +20,15 @@ import {
   LogoutIcon,
   CollapseIcon,
   ChevronDownIcon,
+  AdminIcon,
 } from './icons';
 import type { League, SeasonMetadata } from '@/types/api';
 
 interface SidebarProps {
-  league: League;
-  seasonMetadata: SeasonMetadata | null;
-  onLeagueChange?: () => void;
+  league?: League | null;
+  seasonMetadata?: SeasonMetadata | null;
+  isAdmin?: boolean;
+  currentLeagueId?: string;
 }
 
 interface NavLinkProps {
@@ -65,13 +67,19 @@ const NavLink = ({ href, icon, children, isActive = false }: NavLinkProps) => (
   </Button>
 );
 
-export function Sidebar({ league, seasonMetadata, onLeagueChange }: SidebarProps) {
+export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { signOut } = useClerk();
 
-  const baseUrl = `/leagues/${league.id}`;
+  const baseUrl = league ? `/leagues/${league.id}` : '';
 
   const isActive = (path: string) => {
+    if (!league) {
+      // Global navigation - check exact path
+      return pathname === path;
+    }
+    // League-specific navigation
     if (path === `${baseUrl}/dashboard`) {
       return pathname === path || pathname === baseUrl;
     }
@@ -80,6 +88,10 @@ export function Sidebar({ league, seasonMetadata, onLeagueChange }: SidebarProps
 
   const handleLogout = () => {
     signOut({ redirectUrl: '/' });
+  };
+
+  const handleLeagueChange = () => {
+    router.push('/');
   };
 
   return (
@@ -139,94 +151,100 @@ export function Sidebar({ league, seasonMetadata, onLeagueChange }: SidebarProps
           </VStack>
         </HStack>
 
-        {/* League Selector */}
-        <Box
-          px={3}
-          pb={6}
-          borderBottom="2px solid"
-          borderColor="rgba(48, 53, 65, 0.5)"
-        >
-          <Button
-            w="full"
-            h="51px"
-            bg="brand.primary"
-            color="text.button"
-            borderRadius="20px"
-            boxShadow="0px 6px 0px 0px #C34322"
-            _hover={{ bg: '#E85A3A' }}
-            _active={{ transform: 'translateY(2px)', boxShadow: '0px 3px 0px 0px #C34322' }}
-            onClick={onLeagueChange}
+        {/* League Selector - Only show if in league context */}
+        {league && (
+          <Box
             px={3}
+            pb={6}
+            borderBottom="2px solid"
+            borderColor="rgba(48, 53, 65, 0.5)"
           >
-            <HStack w="full" justify="space-between">
-              <HStack gap={2}>
-                <Flex
-                  bg="rgba(254, 254, 254, 0.2)"
-                  borderRadius="full"
-                  boxSize="32px"
-                  align="center"
-                  justify="center"
-                >
-                  <Text fontFamily="body" fontSize="12px" fontWeight="bold" color="#1D222A">
-                    {league.name.slice(0, 2).toUpperCase()}
-                  </Text>
-                </Flex>
-                <VStack align="start" gap={0}>
-                  <Text fontFamily="heading" fontSize="14px" color="#14181F">
-                    {league.name}
-                  </Text>
-                  <Text
-                    fontFamily="body"
-                    fontSize="12px"
-                    fontWeight="bold"
-                    color="rgba(20, 24, 31, 0.65)"
+            <Button
+              w="full"
+              h="51px"
+              bg="brand.primary"
+              color="text.button"
+              borderRadius="20px"
+              boxShadow="0px 6px 0px 0px #C34322"
+              _hover={{ bg: '#E85A3A' }}
+              _active={{ transform: 'translateY(2px)', boxShadow: '0px 3px 0px 0px #C34322' }}
+              onClick={handleLeagueChange}
+              px={3}
+            >
+              <HStack w="full" justify="space-between">
+                <HStack gap={2}>
+                  <Flex
+                    bg="rgba(254, 254, 254, 0.2)"
+                    borderRadius="full"
+                    boxSize="32px"
+                    align="center"
+                    justify="center"
                   >
-                    Season {seasonMetadata?.number || '—'}
-                  </Text>
-                </VStack>
+                    <Text fontFamily="body" fontSize="12px" fontWeight="bold" color="#1D222A">
+                      {league.name.slice(0, 2).toUpperCase()}
+                    </Text>
+                  </Flex>
+                  <VStack align="start" gap={0}>
+                    <Text fontFamily="heading" fontSize="14px" color="#14181F">
+                      {league.name}
+                    </Text>
+                    <Text
+                      fontFamily="body"
+                      fontSize="12px"
+                      fontWeight="bold"
+                      color="rgba(20, 24, 31, 0.65)"
+                    >
+                      Season {seasonMetadata?.number || '—'}
+                    </Text>
+                  </VStack>
+                </HStack>
+                <ChevronDownIcon boxSize="16px" color="#14181F" />
               </HStack>
-              <ChevronDownIcon boxSize="16px" color="#14181F" />
-            </HStack>
-          </Button>
-        </Box>
+            </Button>
+          </Box>
+        )}
 
-        {/* Navigation */}
+        {/* Navigation - Only show league nav if in league context */}
         <VStack align="stretch" gap={1} px={3} flex="1">
-          <NavLink
-            href={`${baseUrl}/dashboard`}
-            icon={<DashboardIcon boxSize="20px" />}
-            isActive={isActive(`${baseUrl}/dashboard`)}
-          >
-            Dashboard
-          </NavLink>
-          <NavLink
-            href={`${baseUrl}/standings`}
-            icon={<StandingsIcon boxSize="20px" />}
-            isActive={isActive(`${baseUrl}/standings`)}
-          >
-            Standings
-          </NavLink>
-          <NavLink
-            href={`${baseUrl}/questions`}
-            icon={<WeeklyQuestionsIcon boxSize="20px" />}
-            isActive={isActive(`${baseUrl}/questions`)}
-          >
-            Weekly Team Questions
-          </NavLink>
-          <NavLink
-            href={`${baseUrl}/draft`}
-            icon={<DraftIcon boxSize="20px" />}
-            isActive={isActive(`${baseUrl}/draft`)}
-          >
-            Draft
-          </NavLink>
-          <NavLink
-            href={`${baseUrl}/history`}
-            icon={<HistoryIcon boxSize="20px" />}
-            isActive={isActive(`${baseUrl}/history`)}
-          >
-            History
-          </NavLink>
+          {league && (
+            <>
+              <NavLink
+                href={`${baseUrl}/dashboard`}
+                icon={<DashboardIcon boxSize="20px" />}
+                isActive={isActive(`${baseUrl}/dashboard`)}
+              >
+                Dashboard
+              </NavLink>
+              <NavLink
+                href={`${baseUrl}/standings`}
+                icon={<StandingsIcon boxSize="20px" />}
+                isActive={isActive(`${baseUrl}/standings`)}
+              >
+                Standings
+              </NavLink>
+              <NavLink
+                href={`${baseUrl}/questions`}
+                icon={<WeeklyQuestionsIcon boxSize="20px" />}
+                isActive={isActive(`${baseUrl}/questions`)}
+              >
+                Weekly Team Questions
+              </NavLink>
+              <NavLink
+                href={`${baseUrl}/draft`}
+                icon={<DraftIcon boxSize="20px" />}
+                isActive={isActive(`${baseUrl}/draft`)}
+              >
+                Draft
+              </NavLink>
+              <NavLink
+                href={`${baseUrl}/history`}
+                icon={<HistoryIcon boxSize="20px" />}
+                isActive={isActive(`${baseUrl}/history`)}
+              >
+                History
+              </NavLink>
+            </>
+          )}
         </VStack>
 
         {/* Bottom Section */}
@@ -238,13 +256,52 @@ export function Sidebar({ league, seasonMetadata, onLeagueChange }: SidebarProps
           borderTop="2px solid"
           borderColor="rgba(48, 53, 65, 0.5)"
         >
-          <NavLink
-            href={`${baseUrl}/settings`}
-            icon={<SettingsIcon boxSize="20px" />}
-            isActive={isActive(`${baseUrl}/settings`)}
+          {/* User Profile */}
+          <Box
+            px={3}
+            py={2.5}
+            h="40px"
+            display="flex"
+            alignItems="center"
+            gap={3}
           >
-            Settings
-          </NavLink>
+            <UserButton
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: 'w-5 h-5',
+                  userButtonTrigger: 'focus:shadow-none',
+                },
+              }}
+            />
+            <Text fontSize="14px" fontFamily="body" color="text.secondary" fontWeight="medium">
+              Profile
+            </Text>
+          </Box>
+
+          {/* Admin Link - Only show for admin users */}
+          {isAdmin && (
+            <NavLink
+              href="/admin"
+              icon={<AdminIcon boxSize="20px" />}
+              isActive={isActive('/admin')}
+            >
+              Admin
+            </NavLink>
+          )}
+
+          {/* Settings - League settings if in league, otherwise could be user settings */}
+          {league && (
+            <NavLink
+              href={`${baseUrl}/settings`}
+              icon={<SettingsIcon boxSize="20px" />}
+              isActive={isActive(`${baseUrl}/settings`)}
+            >
+              Settings
+            </NavLink>
+          )}
+
+          {/* Logout */}
           <Button
             variant="ghost"
             justifyContent="flex-start"
@@ -265,6 +322,8 @@ export function Sidebar({ league, seasonMetadata, onLeagueChange }: SidebarProps
               </Text>
             </HStack>
           </Button>
+
+          {/* Collapse */}
           <Button
             variant="ghost"
             justifyContent="flex-end"

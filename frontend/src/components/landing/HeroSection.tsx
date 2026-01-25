@@ -181,7 +181,7 @@ export const HeroSection = () => {
                 Join a League
               </Button>
             </Link>
-            <Link href="/leagues/create">
+            <Link href="/sign-up">
               <Button
                 size="lg"
                 variant="secondary"

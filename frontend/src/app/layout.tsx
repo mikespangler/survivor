@@ -4,7 +4,6 @@ import { Nunito, Fredoka } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { Providers } from "./providers";
-import { Navigation } from "@/components/Navigation";
 
 // Google Fonts
 const nunito = Nunito({
@@ -42,7 +41,6 @@ export default function RootLayout({
             src="/color-mode-script.js"
           />
           <Providers>
-            <Navigation />
             {children}
           </Providers>
         </body>

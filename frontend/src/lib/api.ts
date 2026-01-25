@@ -44,6 +44,9 @@ import type {
   JoinByTokenDto,
   AddCommissionerDto,
   CommissionersResponse,
+  RetentionConfig,
+  UpdateRetentionConfigDto,
+  DetailedStandingsResponse,
 } from '@/types/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -374,6 +377,54 @@ class ApiClient {
   ): Promise<MyTeamResponse> {
     return this.request<MyTeamResponse>(
       `/leagues/${leagueId}/seasons/${seasonId}/my-team`,
+    );
+  }
+
+  // Detailed standings with episode breakdown
+  async getDetailedStandings(
+    leagueId: string,
+    seasonId: string,
+    episode?: number,
+  ): Promise<DetailedStandingsResponse> {
+    const query = episode ? `?episode=${episode}` : '';
+    return this.request<DetailedStandingsResponse>(
+      `/leagues/${leagueId}/seasons/${seasonId}/standings/detailed${query}`,
+    );
+  }
+
+  // Retention configuration endpoints
+  async getRetentionConfig(
+    leagueId: string,
+    seasonId: string,
+  ): Promise<RetentionConfig[]> {
+    return this.request<RetentionConfig[]>(
+      `/leagues/${leagueId}/seasons/${seasonId}/retention-config`,
+    );
+  }
+
+  async updateRetentionConfig(
+    leagueId: string,
+    seasonId: string,
+    data: UpdateRetentionConfigDto,
+  ): Promise<RetentionConfig[]> {
+    return this.request<RetentionConfig[]>(
+      `/leagues/${leagueId}/seasons/${seasonId}/retention-config`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
+  async recalculatePoints(
+    leagueId: string,
+    seasonId: string,
+  ): Promise<{ success: boolean; teamsRecalculated: number; episodes: number }> {
+    return this.request(
+      `/leagues/${leagueId}/seasons/${seasonId}/recalculate-points`,
+      {
+        method: 'POST',
+      },
     );
   }
 

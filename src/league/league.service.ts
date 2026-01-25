@@ -647,6 +647,353 @@ export class LeagueService {
     };
   }
 
+  // Episode points calculation methods
+  async calculateEpisodePoints(teamId: string, episodeNumber: number) {
+    const team = await this.prisma.team.findUnique({
+      where: { id: teamId },
+      include: {
+        leagueSeason: true,
+        roster: true,
+        answers: {
+          where: {
+            leagueQuestion: {
+              episodeNumber,
+              isScored: true,
+            },
+          },
+          include: {
+            leagueQuestion: true,
+          },
+        },
+      },
+    });
+
+    if (!team) {
+      throw new NotFoundException(`Team with id ${teamId} not found`);
+    }
+
+    // Calculate question points: Sum of pointsEarned from answers
+    const questionPoints = team.answers.reduce(
+      (sum, answer) => sum + (answer.pointsEarned || 0),
+      0,
+    );
+
+    // Get retention config for this episode
+    const retentionConfig = await this.prisma.retentionConfig.findUnique({
+      where: {
+        leagueSeasonId_episodeNumber: {
+          leagueSeasonId: team.leagueSeasonId,
+          episodeNumber,
+        },
+      },
+    });
+
+    // Count active castaways for this episode
+    const activeCastaways = team.roster.filter(
+      (tc) =>
+        tc.startEpisode <= episodeNumber &&
+        (tc.endEpisode === null || tc.endEpisode >= episodeNumber),
+    ).length;
+
+    // Calculate retention points
+    const retentionPoints =
+      activeCastaways * (retentionConfig?.pointsPerCastaway || 0);
+
+    return {
+      questionPoints,
+      retentionPoints,
+      totalEpisodePoints: questionPoints + retentionPoints,
+    };
+  }
+
+  async recalculateTeamHistory(teamId: string, maxEpisode: number) {
+    const team = await this.prisma.team.findUnique({
+      where: { id: teamId },
+      include: {
+        leagueSeason: {
+          include: {
+            season: true,
+          },
+        },
+      },
+    });
+
+    if (!team) {
+      throw new NotFoundException(`Team with id ${teamId} not found`);
+    }
+
+    let runningTotal = 0;
+
+    // Use transaction for atomicity
+    await this.prisma.$transaction(async (tx) => {
+      for (let ep = 1; ep <= maxEpisode; ep++) {
+        const points = await this.calculateEpisodePoints(teamId, ep);
+
+        runningTotal += points.totalEpisodePoints;
+
+        // Upsert TeamEpisodePoints
+        await tx.teamEpisodePoints.upsert({
+          where: {
+            teamId_episodeNumber: {
+              teamId,
+              episodeNumber: ep,
+            },
+          },
+          create: {
+            teamId,
+            episodeNumber: ep,
+            questionPoints: points.questionPoints,
+            retentionPoints: points.retentionPoints,
+            totalEpisodePoints: points.totalEpisodePoints,
+            runningTotal,
+          },
+          update: {
+            questionPoints: points.questionPoints,
+            retentionPoints: points.retentionPoints,
+            totalEpisodePoints: points.totalEpisodePoints,
+            runningTotal,
+          },
+        });
+      }
+
+      // Update team's total points to match running total
+      await tx.team.update({
+        where: { id: teamId },
+        data: { totalPoints: runningTotal },
+      });
+    });
+
+    return { teamId, episodesRecalculated: maxEpisode, finalTotal: runningTotal };
+  }
+
+  async getDetailedStandings(
+    leagueId: string,
+    seasonId: string,
+    userId: string,
+    episodeFilter?: number,
+  ) {
+    const leagueSeason = await this.prisma.leagueSeason.findUnique({
+      where: {
+        leagueId_seasonId: {
+          leagueId,
+          seasonId,
+        },
+      },
+      include: {
+        season: true,
+      },
+    });
+
+    if (!leagueSeason) {
+      throw new NotFoundException(
+        `LeagueSeason with leagueId ${leagueId} and seasonId ${seasonId} not found`,
+      );
+    }
+
+    const currentEpisode = leagueSeason.season.activeEpisode;
+
+    // Fetch all teams with episode points
+    const teams = await this.prisma.team.findMany({
+      where: {
+        leagueSeasonId: leagueSeason.id,
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        episodePoints: episodeFilter
+          ? {
+              where: { episodeNumber: episodeFilter },
+              orderBy: { episodeNumber: 'asc' },
+            }
+          : {
+              orderBy: { episodeNumber: 'asc' },
+            },
+        roster: {
+          include: {
+            castaway: true,
+          },
+        },
+      },
+      orderBy: {
+        totalPoints: 'desc',
+      },
+    });
+
+    // Calculate rank changes
+    const teamsWithDetails = teams.map((team, index) => {
+      const currentRank = index + 1;
+
+      // Get previous episode running total to calculate previous rank
+      let previousRank = currentRank;
+
+      if (currentEpisode > 1) {
+        const previousEpisodePoints = team.episodePoints.find(
+          (ep) => ep.episodeNumber === currentEpisode - 1,
+        );
+
+        if (previousEpisodePoints) {
+          const previousTotal = previousEpisodePoints.runningTotal;
+          const teamsWithHigherPreviousTotal = teams.filter((t) => {
+            const prevEp = t.episodePoints.find(
+              (ep) => ep.episodeNumber === currentEpisode - 1,
+            );
+            return prevEp && prevEp.runningTotal > previousTotal;
+          }).length;
+
+          previousRank = teamsWithHigherPreviousTotal + 1;
+        }
+      }
+
+      const rankChange = previousRank - currentRank;
+
+      return {
+        id: team.id,
+        name: team.name,
+        totalPoints: team.totalPoints,
+        rank: currentRank,
+        rankChange,
+        owner: team.owner,
+        isCurrentUser: team.owner.id === userId,
+        episodeHistory: team.episodePoints.map((ep) => ({
+          episodeNumber: ep.episodeNumber,
+          questionPoints: ep.questionPoints,
+          retentionPoints: ep.retentionPoints,
+          totalEpisodePoints: ep.totalEpisodePoints,
+          runningTotal: ep.runningTotal,
+        })),
+        roster: team.roster.map((tc) => ({
+          id: tc.id,
+          castawayId: tc.castawayId,
+          castawayName: tc.castaway.name,
+          startEpisode: tc.startEpisode,
+          endEpisode: tc.endEpisode,
+          isActive: tc.endEpisode === null,
+        })),
+      };
+    });
+
+    return {
+      leagueSeasonId: leagueSeason.id,
+      currentEpisode,
+      teams: teamsWithDetails,
+    };
+  }
+
+  async getRetentionConfig(leagueId: string, seasonId: string) {
+    const leagueSeason = await this.prisma.leagueSeason.findUnique({
+      where: {
+        leagueId_seasonId: {
+          leagueId,
+          seasonId,
+        },
+      },
+    });
+
+    if (!leagueSeason) {
+      throw new NotFoundException(
+        `LeagueSeason with leagueId ${leagueId} and seasonId ${seasonId} not found`,
+      );
+    }
+
+    const configs = await this.prisma.retentionConfig.findMany({
+      where: {
+        leagueSeasonId: leagueSeason.id,
+      },
+      orderBy: {
+        episodeNumber: 'asc',
+      },
+    });
+
+    return configs;
+  }
+
+  async updateRetentionConfig(
+    leagueId: string,
+    seasonId: string,
+    dto: { episodes: Array<{ episodeNumber: number; pointsPerCastaway: number }> },
+  ) {
+    const leagueSeason = await this.prisma.leagueSeason.findUnique({
+      where: {
+        leagueId_seasonId: {
+          leagueId,
+          seasonId,
+        },
+      },
+    });
+
+    if (!leagueSeason) {
+      throw new NotFoundException(
+        `LeagueSeason with leagueId ${leagueId} and seasonId ${seasonId} not found`,
+      );
+    }
+
+    // Upsert retention configs for each episode
+    await Promise.all(
+      dto.episodes.map((episode) =>
+        this.prisma.retentionConfig.upsert({
+          where: {
+            leagueSeasonId_episodeNumber: {
+              leagueSeasonId: leagueSeason.id,
+              episodeNumber: episode.episodeNumber,
+            },
+          },
+          create: {
+            leagueSeasonId: leagueSeason.id,
+            episodeNumber: episode.episodeNumber,
+            pointsPerCastaway: episode.pointsPerCastaway,
+          },
+          update: {
+            pointsPerCastaway: episode.pointsPerCastaway,
+          },
+        }),
+      ),
+    );
+
+    // Return updated configs
+    return this.getRetentionConfig(leagueId, seasonId);
+  }
+
+  async recalculateAllEpisodePoints(leagueId: string, seasonId: string) {
+    const leagueSeason = await this.prisma.leagueSeason.findUnique({
+      where: {
+        leagueId_seasonId: {
+          leagueId,
+          seasonId,
+        },
+      },
+      include: {
+        season: true,
+        teams: true,
+      },
+    });
+
+    if (!leagueSeason) {
+      throw new NotFoundException(
+        `LeagueSeason with leagueId ${leagueId} and seasonId ${seasonId} not found`,
+      );
+    }
+
+    const maxEpisode = leagueSeason.season.activeEpisode;
+
+    // Recalculate for each team
+    await Promise.all(
+      leagueSeason.teams.map((team) =>
+        this.recalculateTeamHistory(team.id, maxEpisode),
+      ),
+    );
+
+    return {
+      success: true,
+      teamsRecalculated: leagueSeason.teams.length,
+      episodes: maxEpisode,
+    };
+  }
+
   // Invite token methods
   async generateInviteLink(leagueId: string, userId: string) {
     // Verify user is commissioner

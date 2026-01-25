@@ -24,6 +24,7 @@ import {
 } from '@chakra-ui/react';
 import { useUser } from '@clerk/nextjs';
 import { api } from '@/lib/api';
+import { AuthenticatedLayout } from '@/components/navigation';
 import type {
   Castaway,
   Season,
@@ -472,27 +473,32 @@ export default function AdminPage() {
 
   if (isCheckingAdmin) {
     return (
-      <Box py={16} display="flex" justifyContent="center">
-        <Spinner size="lg" />
-      </Box>
+      <AuthenticatedLayout>
+        <Box py={16} display="flex" justifyContent="center">
+          <Spinner size="lg" />
+        </Box>
+      </AuthenticatedLayout>
     );
   }
 
   if (!isSignedIn || !isAdmin) {
     return (
-      <Container maxW="container.md" py={16}>
-        <Heading size="lg" mb={4}>
-          Access Restricted
-        </Heading>
-        <Text color="gray.600">
-          You must be signed in as a system administrator to view this page.
-        </Text>
-      </Container>
+      <AuthenticatedLayout>
+        <Container maxW="container.md" py={16}>
+          <Heading size="lg" mb={4}>
+            Access Restricted
+          </Heading>
+          <Text color="gray.600">
+            You must be signed in as a system administrator to view this page.
+          </Text>
+        </Container>
+      </AuthenticatedLayout>
     );
   }
 
   return (
-    <Container maxW="container.xl" py={10}>
+    <AuthenticatedLayout>
+      <Container maxW="container.xl" py={10}>
       <Heading mb={8}>Admin Dashboard</Heading>
 
       <Stack spacing={12}>
@@ -955,6 +961,7 @@ export default function AdminPage() {
         </Box>
       </Stack>
     </Container>
+    </AuthenticatedLayout>
   );
 }
 

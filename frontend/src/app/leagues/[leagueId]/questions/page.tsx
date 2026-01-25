@@ -18,6 +18,7 @@ import {
 } from '@chakra-ui/react';
 import { useUser } from '@clerk/nextjs';
 import { api } from '@/lib/api';
+import { AuthenticatedLayout } from '@/components/navigation';
 import type {
   League,
   Season,
@@ -291,74 +292,80 @@ export default function PlayerQuestionsPage() {
   // Loading state
   if (isLoading) {
     return (
-      <Box as="main" minH="100vh" bg="transparent" py={20}>
-        <Container maxW="container.lg">
-          <VStack gap={4}>
-            <Spinner size="xl" color="brand.primary" />
-            <Text color="text.secondary">Loading questions...</Text>
-          </VStack>
-        </Container>
-      </Box>
+      <AuthenticatedLayout>
+        <Box as="main" minH="100vh" bg="transparent" py={20}>
+          <Container maxW="container.lg">
+            <VStack gap={4}>
+              <Spinner size="xl" color="brand.primary" />
+              <Text color="text.secondary">Loading questions...</Text>
+            </VStack>
+          </Container>
+        </Box>
+      </AuthenticatedLayout>
     );
   }
 
   // Error state
   if (error) {
     return (
-      <Box as="main" minH="100vh" bg="transparent" py={20}>
-        <Container maxW="container.lg">
-          <Alert status="error" borderRadius="md">
-            <AlertIcon />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        </Container>
-      </Box>
+      <AuthenticatedLayout>
+        <Box as="main" minH="100vh" bg="transparent" py={20}>
+          <Container maxW="container.lg">
+            <Alert status="error" borderRadius="md">
+              <AlertIcon />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          </Container>
+        </Box>
+      </AuthenticatedLayout>
     );
   }
 
   // No questions state
   if (!questionsData || questionsData.questions.length === 0) {
     return (
-      <Box as="main" minH="100vh" bg="transparent" py={10}>
-        <Container maxW="container.lg">
-          <VStack gap={6} align="stretch">
-            <Box>
-              <Text
-                fontFamily="display"
-                fontSize="48px"
-                fontWeight="bold"
-                color="text.primary"
-                letterSpacing="-1.2px"
-              >
-                Weekly Questions
-              </Text>
-              {league && activeSeason && (
-                <Text fontSize="18px" color="text.secondary" fontWeight="medium">
-                  {league.name} - {activeSeason.name}
+      <AuthenticatedLayout>
+        <Box as="main" minH="100vh" bg="transparent" py={10}>
+          <Container maxW="container.lg">
+            <VStack gap={6} align="stretch">
+              <Box>
+                <Text
+                  fontFamily="display"
+                  fontSize="48px"
+                  fontWeight="bold"
+                  color="text.primary"
+                  letterSpacing="-1.2px"
+                >
+                  Weekly Questions
                 </Text>
-              )}
-            </Box>
+                {league && activeSeason && (
+                  <Text fontSize="18px" color="text.secondary" fontWeight="medium">
+                    {league.name} - {activeSeason.name}
+                  </Text>
+                )}
+              </Box>
 
-            <Alert status="info" borderRadius="md">
-              <AlertIcon />
-              <AlertTitle>No Questions Yet</AlertTitle>
-              <AlertDescription>
-                Questions for this episode haven&apos;t been set up yet. Check
-                back later!
-              </AlertDescription>
-            </Alert>
+              <Alert status="info" borderRadius="md">
+                <AlertIcon />
+                <AlertTitle>No Questions Yet</AlertTitle>
+                <AlertDescription>
+                  Questions for this episode haven&apos;t been set up yet. Check
+                  back later!
+                </AlertDescription>
+              </Alert>
 
-            <Button
-              variant="link"
-              color="brand.primary"
-              onClick={() => router.push(`/leagues/${leagueId}/questions/results`)}
-            >
-              View Past Results
-            </Button>
-          </VStack>
-        </Container>
-      </Box>
+              <Button
+                variant="link"
+                color="brand.primary"
+                onClick={() => router.push(`/leagues/${leagueId}/questions/results`)}
+              >
+                View Past Results
+              </Button>
+            </VStack>
+          </Container>
+        </Box>
+      </AuthenticatedLayout>
     );
   }
 
@@ -374,13 +381,14 @@ export default function PlayerQuestionsPage() {
     return (
       <VStack spacing={4} align="stretch">
         {/* Section header */}
-        <HStack justify="space-between" align="center">
+        <HStack justify="space-between" align="center" h="48px">
           <Text
             fontFamily="display"
             fontSize="32px"
             fontWeight="bold"
             color="text.primary"
             letterSpacing="-0.8px"
+            lineHeight="48px"
           >
             {title}
           </Text>
@@ -389,6 +397,7 @@ export default function PlayerQuestionsPage() {
             fontSize="14px"
             fontWeight="medium"
             color="text.secondary"
+            lineHeight="21px"
           >
             {subtitle}
           </Text>
@@ -425,86 +434,95 @@ export default function PlayerQuestionsPage() {
   };
 
   return (
-    <Box as="main" minH="100vh" bg="transparent">
-      <Container maxW="container.lg" py={8}>
-        <VStack spacing={8} align="stretch">
-          {/* Header */}
-          <HStack justify="space-between" align="flex-start" flexWrap="wrap" gap={4}>
-            <VStack align="start" spacing={2}>
-              <Text
-                fontFamily="display"
-                fontSize="48px"
-                fontWeight="bold"
-                color="text.primary"
-                letterSpacing="-1.2px"
-                lineHeight="48px"
-              >
-                Weekly Questions
-              </Text>
-              <Text
-                fontFamily="body"
-                fontSize="18px"
-                fontWeight="medium"
-                color="text.secondary"
-              >
-                Make your predictions for this week&apos;s episode to earn points.
-              </Text>
-            </VStack>
+    <AuthenticatedLayout>
+      <Box as="main" minH="100vh" bg="transparent">
+        <Container maxW="container.lg" py={8} px={8}>
+          <VStack spacing={11} align="stretch">
+            {/* Header */}
+            <HStack justify="space-between" align="flex-start" flexWrap="wrap" gap={4}>
+              <VStack align="start" spacing={2} maxW="550px">
+                <Text
+                  fontFamily="display"
+                  fontSize="48px"
+                  fontWeight="bold"
+                  color="text.primary"
+                  letterSpacing="-1.2px"
+                  lineHeight="48px"
+                >
+                  Weekly Questions
+                </Text>
+                <Text
+                  fontFamily="body"
+                  fontSize="18px"
+                  fontWeight="medium"
+                  color="text.secondary"
+                  lineHeight="28px"
+                >
+                  Make your predictions for this week&apos;s episode to earn points.
+                </Text>
+              </VStack>
 
-            {/* Header bar with week info */}
-            <HeaderBar
-              weekNumber={questionsData.episodeNumber}
-              dueIn={getTimeRemaining(questionsData.deadline)}
-              locksAt={formatDeadline(questionsData.deadline)}
+              {/* Header bar with week info */}
+              <HeaderBar
+                weekNumber={questionsData.episodeNumber}
+                dueIn={getTimeRemaining(questionsData.deadline)}
+                locksAt={formatDeadline(questionsData.deadline)}
+              />
+            </HStack>
+
+            {/* Stats bar */}
+            {teamData && (
+              <StatsBar
+                teamName={teamData.name}
+                totalPoints={teamData.totalPoints}
+                rank={teamData.rank}
+                totalTeams={teamData.totalTeams}
+                teamMembers={teamData.roster?.map(r => ({
+                  id: r.castaway.id,
+                  name: r.castaway.name,
+                  imageUrl: undefined, // TODO: Add image URLs when available
+                  isActive: r.isActive,
+                }))}
+                isLoading={false}
+              />
+            )}
+
+            {/* Episode Questions Section */}
+            {renderQuestionSection(
+              'Episode Questions',
+              `${groupedQuestions.episode.length} question${groupedQuestions.episode.length !== 1 ? 's' : ''}`,
+              groupedQuestions.episode,
+              0,
+            )}
+
+            {/* Season Bonus Questions Section */}
+            {renderQuestionSection(
+              'Season Bonus Questions',
+              'Scored at season end',
+              groupedQuestions.season,
+              groupedQuestions.episode.length,
+            )}
+
+            {/* Point Wager Questions Section */}
+            {renderQuestionSection(
+              'Point Wager Questions',
+              'Risk it for the biscuit',
+              groupedQuestions.wager,
+              groupedQuestions.episode.length + groupedQuestions.season.length,
+            )}
+
+            {/* Footer */}
+            <FooterBar
+              answeredCount={answeredCount}
+              totalCount={totalQuestions}
+              canSubmit={questionsData.canSubmit}
+              isSubmitting={isSubmitting}
+              onSaveDraft={handleSaveDraft}
+              onSubmit={handleSubmitAll}
             />
-          </HStack>
-
-          {/* Stats bar */}
-          {teamData && (
-            <StatsBar
-              teamName={teamData.name}
-              totalPoints={teamData.totalPoints}
-              rank={teamData.rank}
-              totalTeams={teamData.totalTeams}
-              isLoading={false}
-            />
-          )}
-
-          {/* Episode Questions Section */}
-          {renderQuestionSection(
-            'Episode Questions',
-            `${groupedQuestions.episode.length} question${groupedQuestions.episode.length !== 1 ? 's' : ''}`,
-            groupedQuestions.episode,
-            0,
-          )}
-
-          {/* Season Bonus Questions Section */}
-          {renderQuestionSection(
-            'Season Bonus Questions',
-            'Scored at season end',
-            groupedQuestions.season,
-            groupedQuestions.episode.length,
-          )}
-
-          {/* Point Wager Questions Section */}
-          {renderQuestionSection(
-            'Point Wager Questions',
-            'Risk it for the biscuit',
-            groupedQuestions.wager,
-            groupedQuestions.episode.length + groupedQuestions.season.length,
-          )}
-
-          {/* Footer */}
-          <FooterBar
-            answeredCount={answeredCount}
-            totalCount={totalQuestions}
-            canSubmit={questionsData.canSubmit}
-            isSubmitting={isSubmitting}
-            onSaveDraft={handleSaveDraft}
-            onSubmit={handleSubmitAll}
-          />
-        </VStack>
-      </Container>
-    </Box>
+          </VStack>
+        </Container>
+      </Box>
+    </AuthenticatedLayout>
   );
 }
