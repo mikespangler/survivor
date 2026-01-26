@@ -488,7 +488,7 @@ export default function AdminPage() {
           <Heading size="lg" mb={4}>
             Access Restricted
           </Heading>
-          <Text color="gray.600">
+          <Text color="text.secondary">
             You must be signed in as a system administrator to view this page.
           </Text>
         </Container>
@@ -860,7 +860,7 @@ export default function AdminPage() {
                   }
                   isDisabled={!selectedSeasonId}
                 />
-                <Text mt={1} fontSize="sm" color="gray.500">
+                <Text mt={1} fontSize="sm" color="text.secondary">
                   This is used as the deadline for weekly questions
                 </Text>
               </FormControl>

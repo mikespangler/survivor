@@ -189,7 +189,7 @@ export default function QuestionsResultsPage() {
                 Question Results
               </Heading>
               {league && activeSeason && (
-                <Text fontSize="lg" color="gray.600">
+                <Text fontSize="lg" color="text.secondary">
                   {league.name} - {activeSeason.name}
                 </Text>
               )}
@@ -420,7 +420,7 @@ export default function QuestionsResultsPage() {
                                 </Tbody>
                               </Table>
                             ) : (
-                              <Text color="gray.500" fontStyle="italic">
+                              <Text color="text.secondary" fontStyle="italic">
                                 No answers submitted yet.
                               </Text>
                             )}

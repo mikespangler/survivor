@@ -122,8 +122,8 @@ export function QuestionBreakdownTab({
           >
             <h2>
               <AccordionButton
-                bg="orange.50"
-                _hover={{ bg: 'orange.100' }}
+                bg="bg.secondary"
+                _hover={{ bg: 'bg.overlay' }}
                 py={4}
               >
                 <Box flex="1" textAlign="left">
@@ -166,7 +166,9 @@ export function QuestionBreakdownTab({
                     return (
                       <Tr
                         key={answer.teamId}
-                        bg={answer.isCurrentUser ? 'orange.50' : undefined}
+                        bg={answer.isCurrentUser ? 'bg.overlay' : undefined}
+                        borderLeftWidth={answer.isCurrentUser ? '4px' : '0'}
+                        borderLeftColor={answer.isCurrentUser ? 'brand.primary' : undefined}
                       >
                         <Td fontWeight={answer.isCurrentUser ? 'semibold' : 'normal'}>
                           {answer.teamName}
@@ -182,7 +184,7 @@ export function QuestionBreakdownTab({
                               <CloseIcon color="red.500" />
                             )
                           ) : (
-                            <Text fontSize="sm" color="gray.500">
+                            <Text fontSize="sm" color="text.secondary">
                               Not scored
                             </Text>
                           )}

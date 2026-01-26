@@ -1537,4 +1537,84 @@ export class LeagueService {
       commissioners: league.commissioners,
     };
   }
+
+  async getDraftPageData(
+    leagueId: string,
+    seasonId: string,
+    roundNumber: number,
+    userId: string,
+  ) {
+    // 1. Get league season
+    const leagueSeason = await this.prisma.leagueSeason.findUnique({
+      where: {
+        leagueId_seasonId: { leagueId, seasonId },
+      },
+      include: {
+        season: {
+          include: { castaways: true },
+        },
+        teams: {
+          include: {
+            owner: true,
+            roster: {
+              where: { endEpisode: null },
+              include: { castaway: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!leagueSeason) {
+      throw new NotFoundException('League season not found');
+    }
+
+    // 2. Get draft config
+    const draftConfig = await this.prisma.draftConfig.findUnique({
+      where: {
+        leagueSeasonId_roundNumber: {
+          leagueSeasonId: leagueSeason.id,
+          roundNumber,
+        },
+      },
+    });
+
+    if (!draftConfig) {
+      throw new NotFoundException('Draft configuration not found');
+    }
+
+    // 3. Find user's team
+    const userTeam = leagueSeason.teams.find((t) => t.owner.id === userId);
+
+    if (!userTeam) {
+      throw new NotFoundException('You do not have a team in this league');
+    }
+
+    // 4. Calculate team completion status
+    const leagueProgress = leagueSeason.teams.map((team) => ({
+      teamId: team.id,
+      teamName: team.name,
+      ownerName: team.owner.name || team.owner.email,
+      hasCompleted: team.roster.length === draftConfig.castawaysPerTeam,
+      rosterCount: team.roster.length,
+    }));
+
+    return {
+      draftConfig,
+      castaways: leagueSeason.season.castaways,
+      userTeam: {
+        id: userTeam.id,
+        name: userTeam.name,
+        ownerId: userTeam.ownerId,
+      },
+      currentRoster: userTeam.roster.map((r) => ({
+        id: r.id,
+        castaway: r.castaway,
+        startEpisode: r.startEpisode,
+        endEpisode: r.endEpisode,
+        isActive: r.endEpisode === null,
+      })),
+      leagueProgress,
+    };
+  }
 }

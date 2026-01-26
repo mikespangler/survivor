@@ -116,7 +116,7 @@ export default function JoinByTokenPage() {
                       {league.name}
                     </Heading>
                     {league.description && (
-                      <Text color="gray.400">{league.description}</Text>
+                      <Text color="text.secondary">{league.description}</Text>
                     )}
                   </VStack>
 
@@ -127,7 +127,7 @@ export default function JoinByTokenPage() {
 
                   {!isSignedIn ? (
                     <VStack gap={2}>
-                      <Text color="gray.400">
+                      <Text color="text.secondary">
                         You need to sign in to join this league.
                       </Text>
                       <Button
@@ -166,7 +166,7 @@ export default function JoinByTokenPage() {
 
                   {!isSignedIn ? (
                     <VStack gap={2}>
-                      <Text color="gray.400">
+                      <Text color="text.secondary">
                         You need to sign in to join this league.
                       </Text>
                       <Button

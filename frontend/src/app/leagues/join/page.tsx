@@ -100,7 +100,7 @@ export default function JoinLeaguePage() {
                     onChange={(e) => setCode(e.target.value)}
                     placeholder="Enter invite code or paste invite link"
                   />
-                  <Text fontSize="sm" color="gray.500" mt={2}>
+                  <Text fontSize="sm" color="text.secondary" mt={2}>
                     Enter the invite code from your league commissioner, or paste the full invite link.
                   </Text>
                 </FormControl>

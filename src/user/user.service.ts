@@ -94,4 +94,33 @@ export class UserService {
       },
     });
   }
+
+  async updateLastViewedLeague(userId: string, leagueId: string | null) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { lastViewedLeagueId: leagueId },
+    });
+  }
+
+  async getLastViewedLeague(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        lastViewedLeagueId: true,
+        lastViewedLeague: {
+          include: {
+            owner: true,
+            members: true,
+            leagueSeasons: {
+              include: { season: true },
+              orderBy: { season: { number: 'desc' } },
+              take: 1,
+            },
+          },
+        },
+      },
+    });
+
+    return user?.lastViewedLeague || null;
+  }
 }

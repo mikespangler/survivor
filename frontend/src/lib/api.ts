@@ -47,6 +47,9 @@ import type {
   RetentionConfig,
   UpdateRetentionConfigDto,
   DetailedStandingsResponse,
+  DraftPageData,
+  SubmitDraftDto,
+  TeamCastaway,
 } from '@/types/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -144,6 +147,17 @@ class ApiClient {
 
   async getCurrentUser(): Promise<User> {
     return this.request<User>('/users/me');
+  }
+
+  async getLastViewedLeague(): Promise<League | null> {
+    return this.request<League | null>('/users/me/last-viewed-league');
+  }
+
+  async updateLastViewedLeague(leagueId: string | null): Promise<User> {
+    return this.request<User>('/users/me/last-viewed-league', {
+      method: 'PATCH',
+      body: JSON.stringify({ leagueId }),
+    });
   }
 
   async createUser(data: CreateUserDto): Promise<User> {
@@ -356,6 +370,44 @@ class ApiClient {
       {
         method: 'PATCH',
         body: JSON.stringify(data),
+      },
+    );
+  }
+
+  // Draft endpoints
+  async getDraftPageData(
+    leagueId: string,
+    seasonId: string,
+    roundNumber: number = 1,
+  ): Promise<DraftPageData> {
+    return this.request<DraftPageData>(
+      `/leagues/${leagueId}/seasons/${seasonId}/draft?roundNumber=${roundNumber}`,
+    );
+  }
+
+  async submitDraft(
+    leagueId: string,
+    seasonId: string,
+    data: SubmitDraftDto,
+  ): Promise<{ success: boolean; message: string }> {
+    return this.request(
+      `/leagues/${leagueId}/seasons/${seasonId}/draft/submit`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
+  async bulkAddCastaways(
+    teamId: string,
+    castawayIds: string[],
+  ): Promise<TeamCastaway[]> {
+    return this.request<TeamCastaway[]>(
+      `/teams/${teamId}/castaways/bulk`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ castawayIds }),
       },
     );
   }

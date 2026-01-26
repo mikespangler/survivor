@@ -91,7 +91,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
   };
 
   const handleLeagueChange = () => {
-    router.push('/');
+    router.push('/leagues/select');
   };
 
   return (
@@ -279,6 +279,24 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
             </Text>
           </Box>
 
+          {/* Create League Button */}
+          <NavLink
+            href="/leagues/create"
+            icon={<Box fontSize="20px">🏝️</Box>}
+            isActive={pathname === '/leagues/create'}
+          >
+            Create League
+          </NavLink>
+
+          {/* Join League Button */}
+          <NavLink
+            href="/leagues/join"
+            icon={<Box fontSize="20px">🤝</Box>}
+            isActive={pathname === '/leagues/join'}
+          >
+            Join League
+          </NavLink>
+
           {/* Admin Link - Only show for admin users */}
           {isAdmin && (
             <NavLink
@@ -290,7 +308,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
             </NavLink>
           )}
 
-          {/* Settings - League settings if in league, otherwise could be user settings */}
+          {/* Settings - League settings if in league */}
           {league && (
             <NavLink
               href={`${baseUrl}/settings`}

@@ -403,7 +403,7 @@ export default function LeagueSettingsPage() {
           </Heading>
 
           {league && (
-            <Text fontSize="lg" color="gray.600">
+            <Text fontSize="lg" color="text.secondary">
               {league.name}
               {activeSeason && ` - ${activeSeason.name}`}
             </Text>
@@ -454,7 +454,7 @@ export default function LeagueSettingsPage() {
                 {/* Current Members List */}
                 <VStack align="stretch" gap={2}>
                   {league?.owner && (
-                    <HStack justify="space-between" p={2} borderRadius="md" bg="gray.800">
+                    <HStack justify="space-between" p={2} borderRadius="md" bg="bg.secondary">
                       <VStack align="start" gap={0}>
                         <HStack gap={2}>
                           <Text fontWeight="bold">
@@ -463,7 +463,7 @@ export default function LeagueSettingsPage() {
                           <Badge colorScheme="purple">Owner</Badge>
                         </HStack>
                         {league.owner.email && (
-                          <Text fontSize="sm" color="gray.400">
+                          <Text fontSize="sm" color="text.secondary">
                             {league.owner.email}
                           </Text>
                         )}
@@ -471,13 +471,15 @@ export default function LeagueSettingsPage() {
                     </HStack>
                   )}
 
-                  {getAllMembers().map((member) => (
+                  {getAllMembers()
+                    .filter((member) => member.id !== league?.ownerId)
+                    .map((member) => (
                     <HStack
                       key={member.id}
                       justify="space-between"
                       p={2}
                       borderRadius="md"
-                      bg="gray.800"
+                      bg="bg.secondary"
                     >
                       <VStack align="start" gap={0}>
                         <HStack gap={2}>
@@ -495,7 +497,7 @@ export default function LeagueSettingsPage() {
                           </Badge>
                         </HStack>
                         {member.email && (
-                          <Text fontSize="sm" color="gray.400">
+                          <Text fontSize="sm" color="text.secondary">
                             {member.email}
                           </Text>
                         )}
@@ -524,7 +526,7 @@ export default function LeagueSettingsPage() {
                               value={inviteEmails}
                               onChange={(e) => setInviteEmails(e.target.value)}
                             />
-                            <Text fontSize="sm" color="gray.500" mt={2}>
+                            <Text fontSize="sm" color="text.secondary" mt={2}>
                               Enter comma-separated email addresses. You can share
                               invite links with these users.
                             </Text>
@@ -556,7 +558,7 @@ export default function LeagueSettingsPage() {
                                   key={link.id}
                                   p={3}
                                   borderRadius="md"
-                                  bg="gray.800"
+                                  bg="bg.secondary"
                                   justify="space-between"
                                 >
                                   <VStack align="start" gap={1} flex={1}>
@@ -564,7 +566,7 @@ export default function LeagueSettingsPage() {
                                       {window.location.origin}
                                       {link.link}
                                     </Text>
-                                    <HStack gap={2} fontSize="xs" color="gray.400">
+                                    <HStack gap={2} fontSize="xs" color="text.secondary">
                                       <Text>
                                         Expires:{' '}
                                         {new Date(link.expiresAt).toLocaleDateString()}
@@ -621,7 +623,7 @@ export default function LeagueSettingsPage() {
                 {/* Current Commissioners List */}
                 <VStack align="stretch" gap={2}>
                   {commissioners?.owner && (
-                    <HStack justify="space-between" p={2} borderRadius="md" bg="gray.800">
+                    <HStack justify="space-between" p={2} borderRadius="md" bg="bg.secondary">
                       <VStack align="start" gap={0}>
                         <HStack gap={2}>
                           <Text fontWeight="bold">
@@ -632,7 +634,7 @@ export default function LeagueSettingsPage() {
                           <Badge colorScheme="purple">Owner</Badge>
                         </HStack>
                         {commissioners.owner.email && (
-                          <Text fontSize="sm" color="gray.400">
+                          <Text fontSize="sm" color="text.secondary">
                             {commissioners.owner.email}
                           </Text>
                         )}
@@ -640,13 +642,15 @@ export default function LeagueSettingsPage() {
                     </HStack>
                   )}
 
-                  {commissioners?.commissioners.map((commissioner) => (
+                  {commissioners?.commissioners
+                    .filter((commissioner) => commissioner.id !== league?.ownerId)
+                    .map((commissioner) => (
                     <HStack
                       key={commissioner.id}
                       justify="space-between"
                       p={2}
                       borderRadius="md"
-                      bg="gray.800"
+                      bg="bg.secondary"
                     >
                       <VStack align="start" gap={0}>
                         <HStack gap={2}>
@@ -656,7 +660,7 @@ export default function LeagueSettingsPage() {
                           <Badge colorScheme="blue">Commissioner</Badge>
                         </HStack>
                         {commissioner.email && (
-                          <Text fontSize="sm" color="gray.400">
+                          <Text fontSize="sm" color="text.secondary">
                             {commissioner.email}
                           </Text>
                         )}
@@ -702,7 +706,7 @@ export default function LeagueSettingsPage() {
                         Add
                       </Button>
                     </HStack>
-                    <Text fontSize="sm" color="gray.500" mt={2}>
+                    <Text fontSize="sm" color="text.secondary" mt={2}>
                       Only league members can be added as commissioners.
                     </Text>
                   </FormControl>
@@ -766,7 +770,7 @@ export default function LeagueSettingsPage() {
                     }
                     placeholder="Enter number of castaways per team"
                   />
-                  <Text fontSize="sm" color="gray.500" mt={2}>
+                  <Text fontSize="sm" color="text.secondary" mt={2}>
                     This setting determines how many castaways each team can
                     draft in the initial draft (Round 1).
                   </Text>
@@ -799,6 +803,15 @@ export default function LeagueSettingsPage() {
                   isDisabled={castawaysPerTeam < 1}
                 >
                   Save Settings
+                </Button>
+
+                <Button
+                  colorScheme="orange"
+                  size="lg"
+                  onClick={() => router.push(`/leagues/${leagueId}/draft`)}
+                  isDisabled={!draftConfig?.castawaysPerTeam}
+                >
+                  Go to Draft →
                 </Button>
               </VStack>
             </form>

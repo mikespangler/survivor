@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { TeamService } from './team.service';
 import { AddCastawayDto } from './dto/add-castaway.dto';
+import { BulkAddCastawaysDto } from './dto/bulk-add-castaways.dto';
 import { TeamOwnerOrAdminGuard } from '../auth/guards/team-owner-or-admin.guard';
 
 @Controller('teams')
@@ -27,6 +28,15 @@ export class TeamController {
     @Body() addCastawayDto: AddCastawayDto,
   ) {
     return this.teamService.addCastaway(teamId, addCastawayDto);
+  }
+
+  @Post(':id/castaways/bulk')
+  @UseGuards(TeamOwnerOrAdminGuard)
+  bulkAddCastaways(
+    @Param('id') teamId: string,
+    @Body() bulkDto: BulkAddCastawaysDto,
+  ) {
+    return this.teamService.bulkAddCastaways(teamId, bulkDto);
   }
 
   @Delete(':id/castaways/:castawayId')

@@ -69,11 +69,11 @@ export function CastawayRetentionTab({
         borderRadius="24px"
         overflow="hidden"
         borderWidth="1px"
-        borderColor="gray.200"
-        bg="white"
+        borderColor="border.default"
+        bg="bg.secondary"
       >
         <Table variant="simple">
-          <Thead bg="orange.50">
+          <Thead bg="bg.primary">
             <Tr>
               <Th>Team</Th>
               <Th>Active Castaways</Th>
@@ -88,7 +88,9 @@ export function CastawayRetentionTab({
               return (
                 <Tr
                   key={team.id}
-                  bg={team.isCurrentUser ? 'orange.50' : undefined}
+                  bg={team.isCurrentUser ? 'bg.overlay' : undefined}
+                  borderLeftWidth={team.isCurrentUser ? '4px' : '0'}
+                  borderLeftColor={team.isCurrentUser ? 'brand.primary' : undefined}
                 >
                   <Td fontWeight={team.isCurrentUser ? 'semibold' : 'normal'}>
                     {team.name}
@@ -110,7 +112,7 @@ export function CastawayRetentionTab({
                           </WrapItem>
                         ))
                       ) : (
-                        <Text fontSize="sm" color="gray.500">
+                        <Text fontSize="sm" color="text.secondary">
                           No active castaways
                         </Text>
                       )}

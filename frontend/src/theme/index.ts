@@ -215,6 +215,44 @@ export const theme = extendTheme({
         color: 'brand.primary',
       },
     },
+    Alert: {
+      baseStyle: {
+        container: {
+          bg: 'bg.secondary',
+          borderWidth: '1px',
+          borderColor: 'border.default',
+        },
+        title: {
+          color: 'text.primary',
+        },
+        description: {
+          color: 'text.secondary',
+        },
+        icon: {
+          color: 'text.primary',
+        },
+      },
+      variants: {
+        subtle: (props: { status: string }) => {
+          const { status } = props;
+          const colorMap: Record<string, string> = {
+            info: 'blue.500',
+            warning: 'orange.500',
+            success: 'green.500',
+            error: 'red.500',
+          };
+          return {
+            container: {
+              bg: 'bg.secondary',
+              borderColor: colorMap[status] || 'border.default',
+            },
+          };
+        },
+      },
+      defaultProps: {
+        variant: 'subtle',
+      },
+    },
   },
 });
 

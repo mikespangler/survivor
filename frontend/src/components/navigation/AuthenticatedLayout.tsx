@@ -82,6 +82,15 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
     }
   };
 
+  // Update last viewed league when league context changes
+  useEffect(() => {
+    if (league?.id) {
+      api.updateLastViewedLeague(league.id).catch((err) => {
+        console.error('Failed to update last viewed league:', err);
+      });
+    }
+  }, [league?.id]);
+
   if (!isLoaded || loading) {
     return (
       <Box

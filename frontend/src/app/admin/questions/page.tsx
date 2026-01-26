@@ -274,7 +274,7 @@ export default function AdminQuestionsPage() {
         <Heading size="lg" mb={4}>
           Access Restricted
         </Heading>
-        <Text color="gray.600">
+        <Text color="text.secondary">
           You must be signed in as a system administrator to view this page.
         </Text>
       </Container>

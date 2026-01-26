@@ -381,8 +381,8 @@ export default function CommissionerQuestionsPage() {
     return (
       <Box as="main" minH="100vh" bg="transparent" py={20}>
         <Container maxW="container.md">
-          <Box bg="red.50" borderColor="red.200" borderWidth="1px" borderRadius="md" p={4}>
-            <Text color="red.700">{error}</Text>
+          <Box bg="bg.secondary" borderColor="red.500" borderWidth="1px" borderRadius="md" p={4}>
+            <Text color="red.500">{error}</Text>
           </Box>
         </Container>
       </Box>
@@ -402,7 +402,7 @@ export default function CommissionerQuestionsPage() {
                 Weekly Questions
               </Heading>
               {league && activeSeason && (
-                <Text fontSize="lg" color="gray.600">
+                <Text fontSize="lg" color="text.secondary">
                   {league.name} - {activeSeason.name}
                 </Text>
               )}
@@ -677,14 +677,14 @@ export default function CommissionerQuestionsPage() {
                     </HStack>
                   </HStack>
                   {template.category && (
-                    <Text fontSize="sm" color="gray.500" ml={6}>
+                    <Text fontSize="sm" color="text.secondary" ml={6}>
                       {template.category}
                     </Text>
                   )}
                 </Box>
               ))}
               {templates.length === 0 && (
-                <Text color="gray.500">No templates available. Create some in the admin panel.</Text>
+                <Text color="text.secondary">No templates available. Create some in the admin panel.</Text>
               )}
             </Stack>
           </ModalBody>
@@ -751,7 +751,7 @@ export default function CommissionerQuestionsPage() {
                         placeholder="Enter correct answer"
                       />
                     )}
-                    <Text fontSize="sm" color="gray.500" mt={1}>
+                    <Text fontSize="sm" color="text.secondary" mt={1}>
                       {question.answers?.length || 0} answer(s) submitted
                     </Text>
                   </Box>

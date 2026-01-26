@@ -8,21 +8,24 @@ datasource db {
 }
 
 model User {
-  id                String             @id @default(uuid())
-  clerkId           String             @unique
-  email             String?            @unique
-  name              String?
-  systemRole        String             @default("user")
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  ownedLeagues      League[]
-  teams             Team[]
-  memberLeagues     League[]           @relation("LeagueMembers")
-  commissionerLeagues League[]         @relation("LeagueCommissioners")
-  questionTemplates QuestionTemplate[]
+  id                  String             @id @default(uuid())
+  clerkId             String             @unique
+  email               String?            @unique
+  name                String?
+  systemRole          String             @default("user")
+  lastViewedLeagueId  String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  ownedLeagues        League[]
+  teams               Team[]
+  memberLeagues       League[]           @relation("LeagueMembers")
+  commissionerLeagues League[]           @relation("LeagueCommissioners")
+  questionTemplates   QuestionTemplate[]
   createdInviteTokens InviteToken[]
+  lastViewedLeague    League?            @relation("LastViewedLeague", fields: [lastViewedLeagueId], references: [id], onDelete: SetNull)
 
   @@index([clerkId])
+  @@index([lastViewedLeagueId])
 }
 
 model League {
@@ -36,6 +39,7 @@ model League {
   members       User[]         @relation("LeagueMembers")
   commissioners User[]         @relation("LeagueCommissioners")
   inviteTokens  InviteToken[]
+  lastViewedBy  User[]         @relation("LastViewedLeague")
 }
 
 model LeagueSeason {

@@ -71,7 +71,7 @@ export function WagerSlider({
           </SliderTrack>
           <SliderThumb
             boxSize="24px"
-            bg="white"
+            bg="bg.secondary"
             border="2px solid"
             borderColor="brand.primary"
             _focus={{ boxShadow: 'none' }}

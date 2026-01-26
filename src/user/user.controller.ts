@@ -34,6 +34,19 @@ export class UserController {
     return user;
   }
 
+  @Get('me/last-viewed-league')
+  async getLastViewedLeague(@CurrentUser() user: any) {
+    return this.userService.getLastViewedLeague(user.id);
+  }
+
+  @Patch('me/last-viewed-league')
+  async updateLastViewedLeague(
+    @CurrentUser() user: any,
+    @Body() body: { leagueId: string | null },
+  ) {
+    return this.userService.updateLastViewedLeague(user.id, body.leagueId);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userService.findOne(id);

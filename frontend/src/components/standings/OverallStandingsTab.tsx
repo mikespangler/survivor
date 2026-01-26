@@ -51,7 +51,7 @@ export function OverallStandingsTab({ teams, currentEpisode }: OverallStandingsT
       );
     }
     return (
-      <Text fontSize="sm" color="gray.500">
+      <Text fontSize="sm" color="text.secondary">
         -
       </Text>
     );
@@ -69,11 +69,11 @@ export function OverallStandingsTab({ teams, currentEpisode }: OverallStandingsT
       borderRadius="24px"
       overflow="hidden"
       borderWidth="1px"
-      borderColor="gray.200"
-      bg="white"
+      borderColor="border.default"
+      bg="bg.secondary"
     >
       <Table variant="simple">
-        <Thead bg="orange.50">
+        <Thead bg="bg.primary">
           <Tr>
             <Th>Rank</Th>
             <Th>Team</Th>
@@ -91,7 +91,9 @@ export function OverallStandingsTab({ teams, currentEpisode }: OverallStandingsT
             return (
               <Tr
                 key={team.id}
-                bg={team.isCurrentUser ? 'orange.50' : undefined}
+                bg={team.isCurrentUser ? 'bg.overlay' : undefined}
+                borderLeftWidth={team.isCurrentUser ? '4px' : '0'}
+                borderLeftColor={team.isCurrentUser ? 'brand.primary' : undefined}
                 fontWeight={team.isCurrentUser ? 'semibold' : 'normal'}
               >
                 <Td>
@@ -111,7 +113,7 @@ export function OverallStandingsTab({ teams, currentEpisode }: OverallStandingsT
                   </HStack>
                 </Td>
                 <Td>
-                  <Text color="gray.600">{team.owner.name || team.owner.email}</Text>
+                  <Text color="text.secondary">{team.owner.name || team.owner.email}</Text>
                 </Td>
                 <Td isNumeric>
                   <Text fontSize="lg" fontWeight="bold">
@@ -119,7 +121,7 @@ export function OverallStandingsTab({ teams, currentEpisode }: OverallStandingsT
                   </Text>
                 </Td>
                 <Td isNumeric>
-                  <Text fontSize="md" color={thisWeekPoints > 0 ? 'green.600' : 'gray.500'}>
+                  <Text fontSize="md" color={thisWeekPoints > 0 ? 'green.600' : 'text.secondary'}>
                     {thisWeekPoints > 0 ? `+${thisWeekPoints}` : thisWeekPoints}
                   </Text>
                 </Td>

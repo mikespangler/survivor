@@ -1,10 +1,12 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AddCastawayDto } from './dto/add-castaway.dto';
+import { BulkAddCastawaysDto } from './dto/bulk-add-castaways.dto';
 
 @Injectable()
 export class TeamService {
@@ -120,11 +122,89 @@ export class TeamService {
             castaway: true,
           },
           where: {
-             endEpisode: null 
+             endEpisode: null
           }
         },
         owner: true,
       }
+    });
+  }
+
+  async bulkAddCastaways(teamId: string, bulkDto: BulkAddCastawaysDto) {
+    // 1. Get team with season to find activeEpisode
+    const team = await this.prisma.team.findUnique({
+      where: { id: teamId },
+      include: {
+        leagueSeason: {
+          include: { season: true }
+        }
+      }
+    });
+
+    if (!team) {
+      throw new NotFoundException('Team not found');
+    }
+
+    const activeEpisode = team.leagueSeason.season.activeEpisode;
+
+    // 2. Check for existing roster entries (prevent duplicates)
+    const existingRoster = await this.prisma.teamCastaway.findMany({
+      where: {
+        teamId,
+        castawayId: { in: bulkDto.castawayIds },
+        endEpisode: null
+      }
+    });
+
+    if (existingRoster.length > 0) {
+      throw new ConflictException('Some castaways already on team');
+    }
+
+    // 3. Bulk create in transaction
+    return this.prisma.$transaction(
+      bulkDto.castawayIds.map(castawayId =>
+        this.prisma.teamCastaway.create({
+          data: {
+            teamId,
+            castawayId,
+            startEpisode: activeEpisode
+          },
+          include: { castaway: true }
+        })
+      )
+    );
+  }
+
+  async replaceCastaways(
+    teamId: string,
+    bulkDto: BulkAddCastawaysDto,
+    currentEpisode: number
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Close all existing active roster entries
+      await tx.teamCastaway.updateMany({
+        where: {
+          teamId,
+          endEpisode: null
+        },
+        data: {
+          endEpisode: currentEpisode - 1
+        }
+      });
+
+      // 2. Create new roster entries
+      return Promise.all(
+        bulkDto.castawayIds.map(castawayId =>
+          tx.teamCastaway.create({
+            data: {
+              teamId,
+              castawayId,
+              startEpisode: currentEpisode
+            },
+            include: { castaway: true }
+          })
+        )
+      );
     });
   }
 }

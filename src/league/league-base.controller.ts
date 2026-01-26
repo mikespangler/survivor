@@ -19,10 +19,14 @@ import { LeagueCommissionerOrAdminGuard } from '../auth/guards/league-owner-or-a
 import { LeagueMemberGuard } from '../auth/guards/league-member.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
+import { UserService } from '../user/user.service';
 
 @Controller('leagues')
 export class LeagueBaseController {
-  constructor(private readonly leagueService: LeagueService) {}
+  constructor(
+    private readonly leagueService: LeagueService,
+    private readonly userService: UserService,
+  ) {}
 
   @Get()
   async getLeagues(@CurrentUser() user: any) {
@@ -31,7 +35,16 @@ export class LeagueBaseController {
 
   @Get(':id')
   async getLeague(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.leagueService.getLeague(id, user.id);
+    const league = await this.leagueService.getLeague(id, user.id);
+
+    // Update last viewed league (fire and forget)
+    this.userService
+      .updateLastViewedLeague(user.id, id)
+      .catch((err) =>
+        console.error('Failed to update last viewed league:', err),
+      );
+
+    return league;
   }
 
   @Post()

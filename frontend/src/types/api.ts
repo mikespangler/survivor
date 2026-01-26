@@ -541,3 +541,29 @@ export interface DetailedStandingsResponse {
   teams: DetailedStandingsTeam[];
 }
 
+// Draft page types
+export interface TeamProgress {
+  teamId: string;
+  teamName: string;
+  ownerName: string;
+  hasCompleted: boolean;
+  rosterCount: number;
+}
+
+export interface DraftPageData {
+  draftConfig: DraftConfig;
+  castaways: Castaway[];
+  userTeam: {
+    id: string;
+    name: string;
+    ownerId: string;
+  };
+  currentRoster: TeamCastawayWithDetails[];
+  leagueProgress: TeamProgress[];
+}
+
+export interface SubmitDraftDto {
+  castawayIds: string[];
+  roundNumber: number;
+}
+

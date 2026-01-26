@@ -148,7 +148,7 @@ export default function CreateLeaguePage() {
                       onChange={(e) => setInviteEmails(e.target.value)}
                       placeholder="email1@example.com, email2@example.com"
                     />
-                    <Text fontSize="sm" color="gray.500" mt={2}>
+                    <Text fontSize="sm" color="text.secondary" mt={2}>
                       Enter email addresses separated by commas. Invite functionality
                       is coming soon and will not be processed yet.
                     </Text>
