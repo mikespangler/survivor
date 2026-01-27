@@ -87,6 +87,7 @@ model Castaway {
   name     String
   seasonId String
   status   String
+  imageUrl String?
   season   Season         @relation(fields: [seasonId], references: [id], onDelete: Cascade)
   teams    TeamCastaway[]
 }

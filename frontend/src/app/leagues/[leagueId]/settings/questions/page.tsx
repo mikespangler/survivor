@@ -123,7 +123,7 @@ export default function CommissionerQuestionsPage() {
       );
 
       if (!active) {
-        setError('No active season found');
+        setError('No active or upcoming season found');
         setIsLoading(false);
         return;
       }

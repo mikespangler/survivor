@@ -56,17 +56,19 @@ export default function DraftPage() {
     setError(null);
 
     try {
-      // Get active season (assumption: active season is available)
+      // Get active or upcoming season (drafting can happen for upcoming seasons)
       const seasons = await api.getSeasons();
       const activeSeason = seasons.find((s) => s.status === 'ACTIVE');
+      const upcomingSeason = !activeSeason ? seasons.find((s) => s.status === 'UPCOMING') : null;
+      const currentSeason = activeSeason || upcomingSeason;
 
-      if (!activeSeason) {
-        setError('No active season found');
+      if (!currentSeason) {
+        setError('No active or upcoming season found');
         setLoading(false);
         return;
       }
 
-      const data = await api.getDraftPageData(leagueId, activeSeason.id, 1);
+      const data = await api.getDraftPageData(leagueId, currentSeason.id, 1);
       setDraftData(data);
 
       // Pre-populate with current roster if exists
@@ -164,12 +166,14 @@ export default function DraftPage() {
     try {
       const seasons = await api.getSeasons();
       const activeSeason = seasons.find((s) => s.status === 'ACTIVE');
+      const upcomingSeason = !activeSeason ? seasons.find((s) => s.status === 'UPCOMING') : null;
+      const currentSeason = activeSeason || upcomingSeason;
 
-      if (!activeSeason) {
-        throw new Error('No active season found');
+      if (!currentSeason) {
+        throw new Error('No active or upcoming season found');
       }
 
-      await api.submitDraft(leagueId, activeSeason.id, {
+      await api.submitDraft(leagueId, currentSeason.id, {
         castawayIds: Array.from(selectedCastawayIds),
         roundNumber: draftData.draftConfig.roundNumber,
       });
@@ -341,7 +345,7 @@ export default function DraftPage() {
                 />
 
                 <Button
-                  isFullWidth
+                  width="full"
                   size="lg"
                   colorScheme="orange"
                   isDisabled={!canSubmit}

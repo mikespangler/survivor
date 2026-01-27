@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import {
+  Avatar,
   Box,
   Button,
   Container,
@@ -9,6 +10,7 @@ import {
   FormControl,
   FormLabel,
   Heading,
+  HStack,
   Input,
   Select,
   Spinner,
@@ -25,6 +27,7 @@ import {
 import { useUser } from '@clerk/nextjs';
 import { api } from '@/lib/api';
 import { AuthenticatedLayout } from '@/components/navigation';
+import { ImageUpload } from '@/components/common/ImageUpload';
 import type {
   Castaway,
   Season,
@@ -117,6 +120,7 @@ export default function AdminPage() {
   const [isSubmittingSeason, setIsSubmittingSeason] = useState(false);
   const [isSubmittingCastaway, setIsSubmittingCastaway] = useState(false);
   const [isSubmittingEpisode, setIsSubmittingEpisode] = useState(false);
+  const [uploadingImageId, setUploadingImageId] = useState<string | null>(null);
 
   const loadSeasons = useCallback(async () => {
     setIsLoadingSeasons(true);
@@ -717,6 +721,43 @@ export default function AdminPage() {
                   ))}
                 </Select>
               </FormControl>
+              {castawayForm.id && (
+                <FormControl>
+                  <FormLabel>Profile Image</FormLabel>
+                  <ImageUpload
+                    currentImageUrl={
+                      castaways.find((c) => c.id === castawayForm.id)?.imageUrl
+                    }
+                    onUpload={async (file) => {
+                      setUploadingImageId(castawayForm.id);
+                      try {
+                        await api.uploadCastawayImage(castawayForm.id, file);
+                        const updated = await api.getCastaways(selectedSeasonId);
+                        setCastaways(updated);
+                      } catch (error) {
+                        console.error('Upload failed:', error);
+                      } finally {
+                        setUploadingImageId(null);
+                      }
+                    }}
+                    onDelete={async () => {
+                      if (!confirm('Delete this image?')) return;
+                      setUploadingImageId(castawayForm.id);
+                      try {
+                        await api.deleteCastawayImage(castawayForm.id);
+                        const updated = await api.getCastaways(selectedSeasonId);
+                        setCastaways(updated);
+                      } catch (error) {
+                        console.error('Delete failed:', error);
+                      } finally {
+                        setUploadingImageId(null);
+                      }
+                    }}
+                    isUploading={uploadingImageId === castawayForm.id}
+                    maxSizeInMB={5}
+                  />
+                </FormControl>
+              )}
               <Stack direction="row" spacing={3}>
                 <Button
                   type="submit"
@@ -755,7 +796,16 @@ export default function AdminPage() {
                 <Tbody>
                   {castaways.map((castaway) => (
                     <Tr key={castaway.id}>
-                      <Td>{castaway.name}</Td>
+                      <Td>
+                        <HStack spacing={3}>
+                          <Avatar
+                            size="sm"
+                            name={castaway.name}
+                            src={castaway.imageUrl || undefined}
+                          />
+                          <Text>{castaway.name}</Text>
+                        </HStack>
+                      </Td>
                       <Td>{castaway.status}</Td>
                       <Td>
                         <Stack direction="row" spacing={2}>

@@ -211,6 +211,7 @@ function CastawayCell({ member, showRightBorder, points }: CastawayCellProps) {
       <Avatar
         size="lg"
         name={member.castaway.name}
+        src={member.castaway.imageUrl || undefined}
         boxSize="60px"
         border="2px solid"
         borderColor={isEliminated ? 'text.secondary' : 'brand.primary'}

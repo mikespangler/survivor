@@ -57,6 +57,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 class ApiClient {
   private baseUrl: string;
   private getToken: (() => Promise<string | null>) | null = null;
+  private onUnauthorized: (() => void) | null = null;
 
   constructor(baseUrl: string = API_URL) {
     this.baseUrl = baseUrl;
@@ -65,6 +66,11 @@ class ApiClient {
   // Set the token getter function (to be called from a component with useAuth)
   setTokenGetter(getToken: () => Promise<string | null>) {
     this.getToken = getToken;
+  }
+
+  // Set the redirect callback for 401 errors
+  setRedirectCallback(callback: () => void) {
+    this.onUnauthorized = callback;
   }
 
   private async request<T>(
@@ -118,7 +124,13 @@ class ApiClient {
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Handle unauthorized - could redirect to sign-in
+          // Call redirect callback if available
+          if (this.onUnauthorized) {
+            this.onUnauthorized();
+            // Return never-resolving promise to prevent further execution
+            return new Promise(() => {});
+          }
+          // Fallback behavior
           throw new Error('Unauthorized. Please sign in.');
         }
         if (response.status === 403) {
@@ -283,6 +295,45 @@ class ApiClient {
 
   async deleteCastaway(id: string): Promise<void> {
     return this.request<void>(`/castaways/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async uploadCastawayImage(id: string, file: File): Promise<Castaway> {
+    const formData = new FormData();
+    formData.append('image', file);
+
+    let token: string | null = null;
+    if (this.getToken) {
+      token = await this.getToken();
+    }
+
+    const url = `${this.baseUrl}/castaways/${id}/image`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        if (this.onUnauthorized) {
+          this.onUnauthorized();
+          return new Promise(() => {});
+        }
+        throw new Error('Unauthorized. Please sign in.');
+      }
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `Upload failed: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async deleteCastawayImage(id: string): Promise<Castaway> {
+    return this.request<Castaway>(`/castaways/${id}/image`, {
       method: 'DELETE',
     });
   }

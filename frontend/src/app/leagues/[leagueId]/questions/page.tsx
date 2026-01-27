@@ -105,12 +105,18 @@ export default function PlayerQuestionsPage() {
       );
 
       if (!active) {
-        setError('No active season found');
+        setError('No active or upcoming season found');
         setIsLoading(false);
         return;
       }
 
       setActiveSeason(active);
+
+      // For UPCOMING seasons, don't load questions - they don't exist yet
+      if (active.status === 'UPCOMING') {
+        setIsLoading(false);
+        return;
+      }
 
       // Load questions for current episode
       const data = await api.getEpisodeQuestions(
@@ -322,8 +328,10 @@ export default function PlayerQuestionsPage() {
     );
   }
 
-  // No questions state
+  // Upcoming season or no questions state
   if (!questionsData || questionsData.questions.length === 0) {
+    const isUpcoming = activeSeason?.status === 'UPCOMING';
+
     return (
       <AuthenticatedLayout>
         <Box as="main" minH="100vh" bg="transparent" py={10}>
@@ -339,28 +347,35 @@ export default function PlayerQuestionsPage() {
                 >
                   Weekly Questions
                 </Text>
-                {league && activeSeason && (
-                  <Text fontSize="18px" color="text.secondary" fontWeight="medium">
-                    {league.name} - {activeSeason.name}
-                  </Text>
-                )}
               </Box>
 
-              <Alert status="info" borderRadius="md">
-                <AlertIcon />
-                <AlertTitle>No Questions Yet</AlertTitle>
-                <AlertDescription>
-                  Questions for this episode haven&apos;t been set up yet. Check
-                  back later!
-                </AlertDescription>
+              <Alert
+                status={isUpcoming ? "info" : "info"}
+                borderRadius="24px"
+                bg="linear-gradient(169.729deg, rgb(33, 38, 48) 2.5008%, rgb(25, 29, 36) 97.499%)"
+                border="2px solid"
+                borderColor="rgba(43, 48, 59, 0.5)"
+                p={6}
+              >
+                <AlertIcon color={isUpcoming ? "brand.primary" : "blue.400"} />
+                <Box>
+                  <AlertTitle color="text.primary" fontSize="18px" mb={2}>
+                    {isUpcoming ? 'Season Coming Soon' : 'No Questions Yet'}
+                  </AlertTitle>
+                  <AlertDescription color="text.secondary" fontSize="16px">
+                    {isUpcoming
+                      ? 'Questions will be available after Week 1 airs. Check back after the season starts to make your predictions!'
+                      : "Questions for this episode haven't been set up yet. Check back later!"}
+                  </AlertDescription>
+                </Box>
               </Alert>
 
               <Button
                 variant="link"
                 color="brand.primary"
-                onClick={() => router.push(`/leagues/${leagueId}/questions/results`)}
+                onClick={() => router.push(`/leagues/${leagueId}/dashboard`)}
               >
-                View Past Results
+                ← Back to Dashboard
               </Button>
             </VStack>
           </Container>

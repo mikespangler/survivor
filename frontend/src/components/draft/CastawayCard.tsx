@@ -73,6 +73,7 @@ export function CastawayCard({
         <Avatar
           size="lg"
           name={castaway.name}
+          src={castaway.imageUrl || undefined}
           borderWidth="2px"
           borderColor={isSelected ? 'brand.primary' : 'border.default'}
         />

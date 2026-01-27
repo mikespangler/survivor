@@ -23,6 +23,7 @@ import {
   WeeklyQuestionsCTA,
   WeekResultsCard,
   FireIcon,
+  UpcomingSeasonCard,
 } from '@/components/dashboard';
 import type {
   League,
@@ -57,6 +58,24 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
     loadDashboardData();
   }, [isLoaded, isSignedIn, leagueId]);
 
+  // Auto-refresh for near-start upcoming seasons
+  useEffect(() => {
+    if (seasonMetadata?.status === 'UPCOMING' && seasonMetadata.startDate) {
+      const target = new Date(seasonMetadata.startDate);
+      const now = new Date();
+      const hoursUntil = (target.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+      // Auto-refresh every 60 seconds if within 2 hours of start
+      if (hoursUntil <= 2 && hoursUntil > 0) {
+        const interval = setInterval(() => {
+          loadDashboardData();
+        }, 60000);
+
+        return () => clearInterval(interval);
+      }
+    }
+  }, [seasonMetadata]);
+
   const loadDashboardData = async () => {
     try {
       setLoading(true);
@@ -77,19 +96,31 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
         (ls: any) => ls.isActive || ls.season?.status === 'ACTIVE'
       );
 
-      if (!activeSeason) {
-        setError('No active season found for this league');
+      // If no active season, look for upcoming season
+      const upcomingSeason = !activeSeason
+        ? currentLeague.leagueSeasons?.find(
+            (ls: any) => ls.season?.status === 'UPCOMING'
+          )
+        : null;
+
+      // Error only if neither active nor upcoming season exists
+      if (!activeSeason && !upcomingSeason) {
+        setError('No active or upcoming season found for this league');
         setLoading(false);
         return;
       }
 
-      setActiveSeasonId(activeSeason.seasonId);
+      // Use whichever season we found
+      const currentSeasonRef = (activeSeason || upcomingSeason)!;
+      setActiveSeasonId(currentSeasonRef.seasonId);
 
-      // Load season metadata, standings, and user's team in parallel
+      // Load season metadata, standings, and team data
+      // Note: Load standings for BOTH active and upcoming seasons
+      // Upcoming seasons will show all teams with 0 points (like fantasy football pre-season)
       const [metadata, standingsData, teamData] = await Promise.all([
-        api.getSeasonMetadata(activeSeason.seasonId),
-        api.getLeagueStandings(leagueId, activeSeason.seasonId),
-        api.getMyTeam(leagueId, activeSeason.seasonId),
+        api.getSeasonMetadata(currentSeasonRef.seasonId),
+        api.getLeagueStandings(leagueId, currentSeasonRef.seasonId),
+        api.getMyTeam(leagueId, currentSeasonRef.seasonId),
       ]);
 
       setSeasonMetadata(metadata);
@@ -162,58 +193,77 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
                 letterSpacing="-1.2px"
                 lineHeight="48px"
               >
-                Welcome Back, {user?.firstName || 'Player'}
+                Come on in, {user?.firstName || 'Player'}
               </Heading>
-              <Badge
-                bg="rgba(240, 101, 66, 0.15)"
-                border="1px solid"
-                borderColor="rgba(240, 101, 66, 0.2)"
-                color="brand.primary"
-                px={4}
-                py={3}
-                borderRadius="full"
-                fontWeight="bold"
-                fontSize="14px"
-                display="flex"
-                alignItems="center"
-                gap={1}
-              >
-                <FireIcon boxSize="14px" />
-                Week {seasonMetadata?.activeEpisode || '—'}
-              </Badge>
+              {seasonMetadata?.status === 'ACTIVE' && (
+                <Badge
+                  bg="rgba(240, 101, 66, 0.15)"
+                  border="1px solid"
+                  borderColor="rgba(240, 101, 66, 0.2)"
+                  color="brand.primary"
+                  px={4}
+                  py={3}
+                  borderRadius="full"
+                  fontWeight="bold"
+                  fontSize="14px"
+                  display="flex"
+                  alignItems="center"
+                  gap={1}
+                >
+                  <FireIcon boxSize="14px" />
+                  Week {seasonMetadata?.activeEpisode || '—'}
+                </Badge>
+              )}
             </HStack>
             <Text color="text.secondary" fontSize="16px" fontWeight="medium">
-              Here&apos;s your league status and what needs your attention.
+              {seasonMetadata?.status === 'UPCOMING'
+                ? "Get ready! The season is starting soon."
+                : "Here's your league status and what needs your attention."}
             </Text>
           </Box>
 
-          {/* Stats Cards */}
-          <Grid templateColumns="repeat(4, 1fr)" gap={6}>
-            <StatCard
-              type="episode"
-              value={`Ep. ${seasonMetadata?.activeEpisode || '—'}`}
+          {/* Show UpcomingSeasonCard if season is UPCOMING */}
+          {seasonMetadata?.status === 'UPCOMING' && (
+            <UpcomingSeasonCard
+              seasonMetadata={seasonMetadata}
+              leagueId={leagueId}
             />
-            <StatCard
-              type="deadline"
-              value={formatDeadline(seasonMetadata?.currentEpisode?.airDate || null)}
-            />
-            <StatCard
-              type="rank"
-              value={`#${myTeam?.rank || '—'}`}
-              subValue={`/${myTeam?.totalTeams || '—'}`}
-            />
-            <StatCard
-              type="points"
-              value={myTeam?.totalPoints?.toString() || '0'}
-            />
-          </Grid>
-
-          {/* Weekly Questions CTA */}
-          {activeSeasonId && (
-            <WeeklyQuestionsCTA leagueId={leagueId} seasonId={activeSeasonId} />
           )}
 
-          {/* Two Column Layout: Standings & My Team */}
+          {/* Show stat cards ONLY for ACTIVE seasons */}
+          {seasonMetadata?.status === 'ACTIVE' && (
+            <Grid templateColumns="repeat(4, 1fr)" gap={6}>
+              <StatCard
+                type="episode"
+                value={`Ep. ${seasonMetadata?.activeEpisode || '—'}`}
+              />
+              <StatCard
+                type="deadline"
+                value={formatDeadline(seasonMetadata?.currentEpisode?.airDate || null)}
+              />
+              <StatCard
+                type="rank"
+                value={`#${myTeam?.rank || '—'}`}
+                subValue={`/${myTeam?.totalTeams || '—'}`}
+              />
+              <StatCard
+                type="points"
+                value={myTeam?.totalPoints?.toString() || '0'}
+              />
+            </Grid>
+          )}
+
+          {/* Show Weekly Questions CTA for both ACTIVE and UPCOMING seasons */}
+          {activeSeasonId && (
+            <WeeklyQuestionsCTA
+              leagueId={leagueId}
+              seasonId={activeSeasonId}
+              seasonStatus={seasonMetadata?.status}
+            />
+          )}
+
+          {/* Show standings for BOTH active and upcoming seasons */}
+          {/* For upcoming: Shows all teams with 0 points (fantasy football style) */}
           <Grid templateColumns="repeat(2, 1fr)" gap={6}>
             {standings && (
               <LeagueStandingsCard
@@ -227,8 +277,8 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
             )}
           </Grid>
 
-          {/* Week Results */}
-          <WeekResultsCard />
+          {/* Show Week Results ONLY for ACTIVE seasons */}
+          {seasonMetadata?.status === 'ACTIVE' && <WeekResultsCard />}
         </VStack>
       </Box>
     </AuthenticatedLayout>

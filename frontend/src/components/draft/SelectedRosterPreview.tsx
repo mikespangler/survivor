@@ -73,7 +73,11 @@ export function SelectedRosterPreview({
               />
 
               <VStack gap={2}>
-                <Avatar size="sm" name={castaway.name} />
+                <Avatar
+                  size="sm"
+                  name={castaway.name}
+                  src={castaway.imageUrl || undefined}
+                />
                 <Text fontSize="xs" fontWeight="bold" textAlign="center">
                   {castaway.name}
                 </Text>

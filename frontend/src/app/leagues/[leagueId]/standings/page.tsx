@@ -45,20 +45,22 @@ export default function StandingsPage() {
     setError(null);
 
     try {
-      // Get active season
+      // Get active season, or upcoming season if no active season
       const seasons = await api.getSeasons();
       const active = seasons.find((s) => s.status === 'ACTIVE');
+      const upcoming = !active ? seasons.find((s) => s.status === 'UPCOMING') : null;
+      const currentSeason = active || upcoming;
 
-      if (!active) {
-        setError('No active season found');
+      if (!currentSeason) {
+        setError('No active or upcoming season found');
         setIsLoading(false);
         return;
       }
 
-      setActiveSeason(active);
+      setActiveSeason(currentSeason);
 
-      // Get detailed standings
-      const data = await api.getDetailedStandings(leagueId, active.id);
+      // Get detailed standings (will show all teams with 0 points for upcoming seasons)
+      const data = await api.getDetailedStandings(leagueId, currentSeason.id);
       setStandingsData(data);
     } catch (err) {
       console.error('Failed to load standings:', err);

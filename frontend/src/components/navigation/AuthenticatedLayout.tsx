@@ -21,6 +21,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
   const [league, setLeague] = useState<League | null>(null);
   const [seasonMetadata, setSeasonMetadata] = useState<SeasonMetadata | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userLeagues, setUserLeagues] = useState<League[]>([]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -50,6 +51,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
       if (leagueId) {
         // Fetch league data
         const userLeagues = await api.getLeagues();
+        setUserLeagues(userLeagues);
         const currentLeague = userLeagues.find((l) => l.id === leagueId);
 
         if (currentLeague) {
@@ -57,7 +59,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
 
           // Find active season
           const activeSeason = currentLeague.leagueSeasons?.find(
-            (ls: any) => ls.isActive || ls.season?.status === 'ACTIVE'
+            (ls: any) => ls.season?.status === 'ACTIVE'
           );
 
           if (activeSeason) {
@@ -70,6 +72,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
         // Not on a league page - clear league context
         setLeague(null);
         setSeasonMetadata(null);
+        setUserLeagues([]);
       }
     } catch (error) {
       console.error('Failed to load layout data:', error);
@@ -112,6 +115,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
         seasonMetadata={seasonMetadata}
         isAdmin={isAdmin}
         currentLeagueId={league?.id}
+        userLeagues={userLeagues}
       />
       <Box flex="1" overflowY="auto">
         {children}

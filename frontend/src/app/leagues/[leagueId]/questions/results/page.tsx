@@ -93,13 +93,19 @@ export default function QuestionsResultsPage() {
       );
 
       if (!active) {
-        setError('No active season found');
+        setError('No active or upcoming season found');
         setIsLoading(false);
         return;
       }
 
       setActiveSeason(active);
       setSelectedEpisode(active.activeEpisode || 1);
+
+      // For UPCOMING seasons, don't load results - they don't exist yet
+      if (active.status === 'UPCOMING') {
+        setIsLoading(false);
+        return;
+      }
 
       // Load results for current episode
       const data = await api.getEpisodeResults(
@@ -179,13 +185,16 @@ export default function QuestionsResultsPage() {
     );
   }
 
+  // Check if season is upcoming
+  const isUpcoming = activeSeason?.status === 'UPCOMING';
+
   return (
     <Box as="main" minH="100vh" py={10}>
       <Container maxW="container.lg">
         <VStack gap={6} align="stretch">
           <HStack justify="space-between" align="flex-start">
             <Box>
-              <Heading as="h1" size="xl">
+              <Heading as="h1" size="xl" color="text.primary">
                 Question Results
               </Heading>
               {league && activeSeason && (
@@ -196,49 +205,71 @@ export default function QuestionsResultsPage() {
             </Box>
             <Button
               variant="primary"
-              onClick={() => router.push(`/leagues/${leagueId}/questions`)}
+              onClick={() => router.push(`/leagues/${leagueId}/dashboard`)}
             >
-              Answer Questions
+              Back to Dashboard
             </Button>
           </HStack>
 
-          {/* Episode Selector */}
-          <HStack>
-            <FormControl maxW="200px">
-              <FormLabel>Episode</FormLabel>
-              <Select
-                value={selectedEpisode}
-                onChange={(e) => setSelectedEpisode(parseInt(e.target.value, 10))}
-              >
-                {Array.from({ length: 14 }, (_, i) => i + 1).map((num) => (
-                  <option key={num} value={num}>
-                    Episode {num}
-                  </option>
-                ))}
-              </Select>
-            </FormControl>
-            {resultsData && (
-              <Box pt={8}>
-                {!resultsData.deadlinePassed ? (
-                  <Badge colorScheme="yellow">Submissions Open</Badge>
-                ) : resultsData.isFullyScored ? (
-                  <Badge colorScheme="green">Fully Scored</Badge>
-                ) : (
-                  <Badge colorScheme="orange">Awaiting Scoring</Badge>
-                )}
+          {/* Show upcoming season message */}
+          {isUpcoming ? (
+            <Alert
+              status="info"
+              borderRadius="24px"
+              bg="linear-gradient(169.729deg, rgb(33, 38, 48) 2.5008%, rgb(25, 29, 36) 97.499%)"
+              border="2px solid"
+              borderColor="rgba(43, 48, 59, 0.5)"
+              p={6}
+            >
+              <AlertIcon color="brand.primary" />
+              <Box>
+                <AlertTitle color="text.primary" fontSize="18px" mb={2}>
+                  Season Coming Soon
+                </AlertTitle>
+                <AlertDescription color="text.secondary" fontSize="16px">
+                  Question results will be available after Week 1 airs. Check back after the season starts!
+                </AlertDescription>
               </Box>
-            )}
-          </HStack>
-
-          {!resultsData || resultsData.questions.length === 0 ? (
-            <Alert status="info" borderRadius="md">
-              <AlertIcon />
-              <AlertTitle>No Questions</AlertTitle>
-              <AlertDescription>
-                No questions have been set for this episode yet.
-              </AlertDescription>
             </Alert>
           ) : (
+            <>
+              {/* Episode Selector */}
+              <HStack>
+                <FormControl maxW="200px">
+                  <FormLabel>Episode</FormLabel>
+                  <Select
+                    value={selectedEpisode}
+                    onChange={(e) => setSelectedEpisode(parseInt(e.target.value, 10))}
+                  >
+                    {Array.from({ length: 14 }, (_, i) => i + 1).map((num) => (
+                      <option key={num} value={num}>
+                        Episode {num}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+                {resultsData && (
+                  <Box pt={8}>
+                    {!resultsData.deadlinePassed ? (
+                      <Badge colorScheme="yellow">Submissions Open</Badge>
+                    ) : resultsData.isFullyScored ? (
+                      <Badge colorScheme="green">Fully Scored</Badge>
+                    ) : (
+                      <Badge colorScheme="orange">Awaiting Scoring</Badge>
+                    )}
+                  </Box>
+                )}
+              </HStack>
+
+              {!resultsData || resultsData.questions.length === 0 ? (
+                <Alert status="info" borderRadius="md">
+                  <AlertIcon />
+                  <AlertTitle>No Questions</AlertTitle>
+                  <AlertDescription>
+                    No questions have been set for this episode yet.
+                  </AlertDescription>
+                </Alert>
+              ) : (
             <Tabs>
               <TabList>
                 <Tab>Leaderboard</Tab>
@@ -432,6 +463,8 @@ export default function QuestionsResultsPage() {
                 </TabPanel>
               </TabPanels>
             </Tabs>
+          )}
+            </>
           )}
         </VStack>
       </Container>

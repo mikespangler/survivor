@@ -81,6 +81,7 @@ export interface Castaway {
   seasonId: string;
   season?: Season;
   status: 'ACTIVE' | 'ELIMINATED' | 'JURY';
+  imageUrl?: string | null;
   teams?: TeamCastaway[];
 }
 

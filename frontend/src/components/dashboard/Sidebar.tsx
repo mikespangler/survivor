@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useClerk, UserButton } from '@clerk/nextjs';
 import {
@@ -9,6 +10,12 @@ import {
   Text,
   Button,
   Flex,
+  Badge,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  Portal,
 } from '@chakra-ui/react';
 import {
   DashboardIcon,
@@ -29,6 +36,7 @@ interface SidebarProps {
   seasonMetadata?: SeasonMetadata | null;
   isAdmin?: boolean;
   currentLeagueId?: string;
+  userLeagues?: League[];
 }
 
 interface NavLinkProps {
@@ -36,43 +44,77 @@ interface NavLinkProps {
   icon: React.ReactNode;
   children: React.ReactNode;
   isActive?: boolean;
+  isCollapsed?: boolean;
 }
 
-const NavLink = ({ href, icon, children, isActive = false }: NavLinkProps) => (
-  <Button
-    as="a"
-    href={href}
-    variant="ghost"
-    justifyContent="flex-start"
-    bg={isActive ? 'rgba(240, 101, 66, 0.1)' : 'transparent'}
-    border={isActive ? '1px solid' : 'none'}
-    borderColor={isActive ? 'rgba(240, 101, 66, 0.2)' : 'transparent'}
-    color={isActive ? 'brand.primary' : 'text.secondary'}
-    fontWeight={isActive ? 'extrabold' : 'medium'}
-    borderRadius="12px"
-    px={3}
-    py={2.5}
-    h="40px"
-    w="full"
-    _hover={{
-      bg: isActive ? 'rgba(240, 101, 66, 0.1)' : 'rgba(240, 101, 66, 0.05)',
-    }}
-  >
-    <HStack gap={3}>
-      <Box boxSize="20px">{icon}</Box>
-      <Text fontSize="14px" fontFamily="body">
-        {children}
-      </Text>
-    </HStack>
-  </Button>
-);
+const NavLink = ({ href, icon, children, isActive = false, isCollapsed = false }: NavLinkProps) => {
+  const router = useRouter();
 
-export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: SidebarProps) {
+  return (
+    <Button
+      variant="ghost"
+      justifyContent={isCollapsed ? "center" : "flex-start"}
+      onClick={() => router.push(href)}
+      bg={isActive ? 'rgba(240, 101, 66, 0.1)' : 'transparent'}
+      border={isActive ? '1px solid' : 'none'}
+      borderColor={isActive ? 'rgba(240, 101, 66, 0.2)' : 'transparent'}
+      color={isActive ? 'brand.primary' : 'text.secondary'}
+      fontWeight={isActive ? 'extrabold' : 'medium'}
+      borderRadius="12px"
+      px={3}
+      py={2.5}
+      h="40px"
+      w="full"
+      cursor="pointer"
+      _hover={{
+        bg: isActive ? 'rgba(240, 101, 66, 0.1)' : 'rgba(240, 101, 66, 0.05)',
+      }}
+    >
+      <HStack gap={3} w="full" align="center">
+        <Box boxSize="20px" flexShrink={0}>{icon}</Box>
+        {!isCollapsed && (
+          typeof children === 'string' ? (
+            <Text fontSize="14px" fontFamily="body">
+              {children}
+            </Text>
+          ) : (
+            children
+          )
+        )}
+      </HStack>
+    </Button>
+  );
+};
+
+export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, userLeagues = [] }: SidebarProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { signOut } = useClerk();
 
   const baseUrl = league ? `/leagues/${league.id}` : '';
+
+  // Get season number - try metadata first, then fallback to league's season data
+  const getSeasonNumber = () => {
+    if (seasonMetadata?.number) {
+      return seasonMetadata.number;
+    }
+    // Fallback: get from league's active season or most recent season
+    if (league?.leagueSeasons && league.leagueSeasons.length > 0) {
+      // Try to find active season
+      const activeSeason = league.leagueSeasons.find(
+        (ls: any) => ls.season?.status === 'ACTIVE'
+      );
+      if (activeSeason?.season?.number) {
+        return activeSeason.season.number;
+      }
+      // If no active season, use the most recent one (first in list since ordered by number desc)
+      return league.leagueSeasons[0]?.season?.number || null;
+    }
+    return null;
+  };
+
+  const seasonNumber = league ? getSeasonNumber() : null;
 
   const isActive = (path: string) => {
     if (!league) {
@@ -90,14 +132,19 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
     signOut({ redirectUrl: '/' });
   };
 
-  const handleLeagueChange = () => {
-    router.push('/leagues/select');
+  const handleLeagueSwitch = (newLeagueId: string) => {
+    // Navigate to the new league's dashboard
+    router.push(`/leagues/${newLeagueId}/dashboard`);
+  };
+
+  const handleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
   };
 
   return (
     <Box
-      w="256px"
-      minW="256px"
+      w={isCollapsed ? "80px" : "256px"}
+      minW={isCollapsed ? "80px" : "256px"}
       bg="bg.secondary"
       borderRight="1px solid"
       borderColor="rgba(48, 53, 65, 0.5)"
@@ -106,6 +153,8 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
       h="100vh"
       display="flex"
       flexDirection="column"
+      transition="all 0.3s ease"
+      overflow="hidden"
     >
       <VStack align="stretch" flex="1" px={1} py={8} gap={3}>
         {/* Logo Section */}
@@ -115,6 +164,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
           pb={4}
           borderBottom="2px solid"
           borderColor="rgba(48, 53, 65, 0.5)"
+          justify={isCollapsed ? "center" : "flex-start"}
         >
           <Box
             w="53px"
@@ -129,26 +179,28 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
               SFL
             </Text>
           </Box>
-          <VStack align="start" gap={0}>
-            <Text
-              fontFamily="heading"
-              fontSize="16px"
-              color="text.primary"
-              letterSpacing="0.5px"
-            >
-              SURVIVOR
-            </Text>
-            <Text
-              fontFamily="body"
-              fontSize="10px"
-              fontWeight="medium"
-              color="text.secondary"
-              textTransform="uppercase"
-              letterSpacing="1px"
-            >
-              Fantasy League
-            </Text>
-          </VStack>
+          {!isCollapsed && (
+            <VStack align="start" gap={0}>
+              <Text
+                fontFamily="heading"
+                fontSize="16px"
+                color="text.primary"
+                letterSpacing="0.5px"
+              >
+                SURVIVOR
+              </Text>
+              <Text
+                fontFamily="body"
+                fontSize="10px"
+                fontWeight="medium"
+                color="text.secondary"
+                textTransform="uppercase"
+                letterSpacing="1px"
+              >
+                Fantasy League
+              </Text>
+            </VStack>
+          )}
         </HStack>
 
         {/* League Selector - Only show if in league context */}
@@ -159,20 +211,136 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
             borderBottom="2px solid"
             borderColor="rgba(48, 53, 65, 0.5)"
           >
-            <Button
-              w="full"
-              h="51px"
-              bg="brand.primary"
-              color="text.button"
-              borderRadius="20px"
-              boxShadow="0px 6px 0px 0px #C34322"
-              _hover={{ bg: '#E85A3A' }}
-              _active={{ transform: 'translateY(2px)', boxShadow: '0px 3px 0px 0px #C34322' }}
-              onClick={handleLeagueChange}
-              px={3}
-            >
-              <HStack w="full" justify="space-between">
-                <HStack gap={2}>
+            {userLeagues.length > 1 ? (
+              // Multiple leagues: Show dropdown menu
+              <Menu placement="bottom-end">
+                <MenuButton
+                  as={Button}
+                  w="full"
+                  h="51px"
+                  bg="brand.primary"
+                  color="text.button"
+                  borderRadius="20px"
+                  boxShadow="0px 6px 0px 0px #C34322"
+                  _hover={{ bg: '#E85A3A' }}
+                  _active={{ transform: 'translateY(2px)', boxShadow: '0px 3px 0px 0px #C34322' }}
+                  px={3}
+                >
+                  {isCollapsed ? (
+                    <Flex
+                      bg="rgba(254, 254, 254, 0.2)"
+                      borderRadius="full"
+                      boxSize="32px"
+                      align="center"
+                      justify="center"
+                    >
+                      <Text fontFamily="body" fontSize="12px" fontWeight="bold" color="#1D222A">
+                        {league.name.slice(0, 2).toUpperCase()}
+                      </Text>
+                    </Flex>
+                  ) : (
+                    <HStack w="full" justify="space-between">
+                      <HStack gap={2}>
+                        <Flex
+                          bg="rgba(254, 254, 254, 0.2)"
+                          borderRadius="full"
+                          boxSize="32px"
+                          align="center"
+                          justify="center"
+                        >
+                          <Text fontFamily="body" fontSize="12px" fontWeight="bold" color="#1D222A">
+                            {league.name.slice(0, 2).toUpperCase()}
+                          </Text>
+                        </Flex>
+                        <VStack align="start" gap={0}>
+                          <Text fontFamily="heading" fontSize="14px" color="#14181F">
+                            {league.name}
+                          </Text>
+                          <Text
+                            fontFamily="body"
+                            fontSize="12px"
+                            fontWeight="bold"
+                            color="rgba(20, 24, 31, 0.65)"
+                          >
+                            Season {seasonNumber || '—'}
+                          </Text>
+                        </VStack>
+                      </HStack>
+                      <ChevronDownIcon boxSize="16px" color="#14181F" />
+                    </HStack>
+                  )}
+                </MenuButton>
+                <Portal>
+                  <MenuList
+                    bg="bg.secondary"
+                    borderColor="rgba(48, 53, 65, 0.5)"
+                    minW="240px"
+                    py={2}
+                  >
+                    {userLeagues.map((l) => (
+                      <MenuItem
+                        key={l.id}
+                        onClick={() => handleLeagueSwitch(l.id)}
+                        bg={l.id === league.id ? 'rgba(240, 101, 66, 0.1)' : 'transparent'}
+                        _hover={{ bg: 'rgba(240, 101, 66, 0.05)' }}
+                        px={4}
+                        py={3}
+                      >
+                        <HStack gap={3} w="full">
+                          <Flex
+                            bg={l.id === league.id ? 'brand.primary' : 'rgba(254, 254, 254, 0.1)'}
+                            borderRadius="full"
+                            boxSize="32px"
+                            align="center"
+                            justify="center"
+                          >
+                            <Text
+                              fontFamily="body"
+                              fontSize="12px"
+                              fontWeight="bold"
+                              color={l.id === league.id ? '#1D222A' : 'text.secondary'}
+                            >
+                              {l.name.slice(0, 2).toUpperCase()}
+                            </Text>
+                          </Flex>
+                          <VStack align="start" gap={0} flex="1">
+                            <Text
+                              fontFamily="heading"
+                              fontSize="14px"
+                              color="text.primary"
+                              fontWeight={l.id === league.id ? 'bold' : 'medium'}
+                            >
+                              {l.name}
+                            </Text>
+                          </VStack>
+                          {l.id === league.id && (
+                            <Box
+                              boxSize="8px"
+                              borderRadius="full"
+                              bg="brand.primary"
+                            />
+                          )}
+                        </HStack>
+                      </MenuItem>
+                    ))}
+                  </MenuList>
+                </Portal>
+              </Menu>
+            ) : (
+              // Single league: Non-interactive display
+              <Box
+                w="full"
+                h="51px"
+                bg="brand.primary"
+                color="text.button"
+                borderRadius="20px"
+                boxShadow="0px 6px 0px 0px #C34322"
+                px={3}
+                display="flex"
+                alignItems="center"
+                cursor="default"
+              >
+                {isCollapsed ? (
                   <Flex
                     bg="rgba(254, 254, 254, 0.2)"
                     borderRadius="full"
@@ -184,23 +352,37 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
                       {league.name.slice(0, 2).toUpperCase()}
                     </Text>
                   </Flex>
-                  <VStack align="start" gap={0}>
-                    <Text fontFamily="heading" fontSize="14px" color="#14181F">
-                      {league.name}
-                    </Text>
-                    <Text
-                      fontFamily="body"
-                      fontSize="12px"
-                      fontWeight="bold"
-                      color="rgba(20, 24, 31, 0.65)"
+                ) : (
+                  <HStack gap={2} w="full">
+                    <Flex
+                      bg="rgba(254, 254, 254, 0.2)"
+                      borderRadius="full"
+                      boxSize="32px"
+                      align="center"
+                      justify="center"
+                      flexShrink={0}
                     >
-                      Season {seasonMetadata?.number || '—'}
-                    </Text>
-                  </VStack>
-                </HStack>
-                <ChevronDownIcon boxSize="16px" color="#14181F" />
-              </HStack>
-            </Button>
+                      <Text fontFamily="body" fontSize="12px" fontWeight="bold" color="#1D222A">
+                        {league.name.slice(0, 2).toUpperCase()}
+                      </Text>
+                    </Flex>
+                    <VStack align="start" gap={0} flex="1">
+                      <Text fontFamily="heading" fontSize="14px" color="#14181F">
+                        {league.name}
+                      </Text>
+                      <Text
+                        fontFamily="body"
+                        fontSize="12px"
+                        fontWeight="bold"
+                        color="rgba(20, 24, 31, 0.65)"
+                      >
+                        Season {seasonNumber || '—'}
+                      </Text>
+                    </VStack>
+                  </HStack>
+                )}
+              </Box>
+            )}
           </Box>
         )}
 
@@ -212,6 +394,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
                 href={`${baseUrl}/dashboard`}
                 icon={<DashboardIcon boxSize="20px" />}
                 isActive={isActive(`${baseUrl}/dashboard`)}
+                isCollapsed={isCollapsed}
               >
                 Dashboard
               </NavLink>
@@ -219,6 +402,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
                 href={`${baseUrl}/standings`}
                 icon={<StandingsIcon boxSize="20px" />}
                 isActive={isActive(`${baseUrl}/standings`)}
+                isCollapsed={isCollapsed}
               >
                 Standings
               </NavLink>
@@ -226,13 +410,31 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
                 href={`${baseUrl}/questions`}
                 icon={<WeeklyQuestionsIcon boxSize="20px" />}
                 isActive={isActive(`${baseUrl}/questions`)}
+                isCollapsed={isCollapsed}
               >
-                Weekly Team Questions
+                <HStack justify="space-between" flex="1" gap={2}>
+                  <Text fontSize="14px" fontFamily="body">Weekly Team Questions</Text>
+                  {seasonMetadata?.status === 'UPCOMING' && (
+                    <Badge
+                      fontSize="10px"
+                      px={2}
+                      py={0.5}
+                      borderRadius="full"
+                      bg="rgba(240, 101, 66, 0.15)"
+                      color="brand.primary"
+                      fontWeight="bold"
+                      flexShrink={0}
+                    >
+                      SOON
+                    </Badge>
+                  )}
+                </HStack>
               </NavLink>
               <NavLink
                 href={`${baseUrl}/draft`}
                 icon={<DraftIcon boxSize="20px" />}
                 isActive={isActive(`${baseUrl}/draft`)}
+                isCollapsed={isCollapsed}
               >
                 Draft
               </NavLink>
@@ -240,6 +442,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
                 href={`${baseUrl}/history`}
                 icon={<HistoryIcon boxSize="20px" />}
                 isActive={isActive(`${baseUrl}/history`)}
+                isCollapsed={isCollapsed}
               >
                 History
               </NavLink>
@@ -263,6 +466,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
             h="40px"
             display="flex"
             alignItems="center"
+            justifyContent={isCollapsed ? "center" : "flex-start"}
             gap={3}
           >
             <UserButton
@@ -274,9 +478,11 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
                 },
               }}
             />
-            <Text fontSize="14px" fontFamily="body" color="text.secondary" fontWeight="medium">
-              Profile
-            </Text>
+            {!isCollapsed && (
+              <Text fontSize="14px" fontFamily="body" color="text.secondary" fontWeight="medium">
+                Profile
+              </Text>
+            )}
           </Box>
 
           {/* Create League Button */}
@@ -284,6 +490,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
             href="/leagues/create"
             icon={<Box fontSize="20px">🏝️</Box>}
             isActive={pathname === '/leagues/create'}
+            isCollapsed={isCollapsed}
           >
             Create League
           </NavLink>
@@ -293,6 +500,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
             href="/leagues/join"
             icon={<Box fontSize="20px">🤝</Box>}
             isActive={pathname === '/leagues/join'}
+            isCollapsed={isCollapsed}
           >
             Join League
           </NavLink>
@@ -303,6 +511,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
               href="/admin"
               icon={<AdminIcon boxSize="20px" />}
               isActive={isActive('/admin')}
+              isCollapsed={isCollapsed}
             >
               Admin
             </NavLink>
@@ -314,6 +523,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
               href={`${baseUrl}/settings`}
               icon={<SettingsIcon boxSize="20px" />}
               isActive={isActive(`${baseUrl}/settings`)}
+              isCollapsed={isCollapsed}
             >
               Settings
             </NavLink>
@@ -322,7 +532,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
           {/* Logout */}
           <Button
             variant="ghost"
-            justifyContent="flex-start"
+            justifyContent={isCollapsed ? "center" : "flex-start"}
             color="text.secondary"
             fontWeight="medium"
             borderRadius="12px"
@@ -332,19 +542,22 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
             w="full"
             _hover={{ bg: 'rgba(240, 101, 66, 0.05)' }}
             onClick={handleLogout}
+            cursor="pointer"
           >
             <HStack gap={3}>
               <LogoutIcon boxSize="20px" />
-              <Text fontSize="14px" fontFamily="body">
-                Logout
-              </Text>
+              {!isCollapsed && (
+                <Text fontSize="14px" fontFamily="body">
+                  Logout
+                </Text>
+              )}
             </HStack>
           </Button>
 
           {/* Collapse */}
           <Button
             variant="ghost"
-            justifyContent="flex-end"
+            justifyContent={isCollapsed ? "center" : "flex-start"}
             color="text.secondary"
             fontWeight="normal"
             borderRadius="12px"
@@ -353,12 +566,20 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId }: Si
             h="36px"
             w="full"
             _hover={{ bg: 'rgba(240, 101, 66, 0.05)' }}
+            onClick={handleCollapse}
+            cursor="pointer"
           >
-            <HStack gap={2}>
-              <CollapseIcon boxSize="20px" />
-              <Text fontSize="14px" fontFamily="body">
-                Collapse
-              </Text>
+            <HStack gap={3}>
+              <CollapseIcon
+                boxSize="20px"
+                transform={isCollapsed ? 'rotate(180deg)' : 'none'}
+                transition="transform 0.3s ease"
+              />
+              {!isCollapsed && (
+                <Text fontSize="14px" fontFamily="body">
+                  Collapse
+                </Text>
+              )}
             </HStack>
           </Button>
         </VStack>

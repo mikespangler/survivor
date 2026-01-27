@@ -6,10 +6,14 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCastawayDto } from './dto/create-castaway.dto';
 import { UpdateCastawayDto } from './dto/update-castaway.dto';
+import { CloudinaryService } from './cloudinary.service';
 
 @Injectable()
 export class CastawayService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   async create(createCastawayDto: CreateCastawayDto) {
     const season = await this.prisma.season.findUnique({
@@ -74,6 +78,41 @@ export class CastawayService {
     await this.findOne(id);
     return this.prisma.castaway.delete({
       where: { id },
+    });
+  }
+
+  async uploadImage(id: string, file: Express.Multer.File) {
+    const castaway = await this.findOne(id);
+
+    // Delete old image if exists
+    if (castaway.imageUrl) {
+      await this.cloudinaryService.deleteImage(castaway.imageUrl);
+    }
+
+    // Upload new image
+    const imageUrl = await this.cloudinaryService.uploadImage(file, id);
+
+    // Update database
+    return this.prisma.castaway.update({
+      where: { id },
+      data: { imageUrl },
+      include: { season: true },
+    });
+  }
+
+  async deleteImage(id: string) {
+    const castaway = await this.findOne(id);
+
+    if (!castaway.imageUrl) {
+      throw new BadRequestException('Castaway has no image to delete');
+    }
+
+    await this.cloudinaryService.deleteImage(castaway.imageUrl);
+
+    return this.prisma.castaway.update({
+      where: { id },
+      data: { imageUrl: null },
+      include: { season: true },
     });
   }
 }
