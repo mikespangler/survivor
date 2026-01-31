@@ -184,6 +184,7 @@ export interface TeamCastawayWithDetails {
     id: string;
     name: string;
     status: 'ACTIVE' | 'ELIMINATED' | 'JURY';
+    imageUrl?: string | null;
   };
   startEpisode: number;
   endEpisode: number | null;
@@ -566,5 +567,15 @@ export interface DraftPageData {
 export interface SubmitDraftDto {
   castawayIds: string[];
   roundNumber: number;
+}
+
+export interface AdminUsersResponse {
+  users: User[];
+  total: number;
+}
+
+export interface AdminLeaguesResponse {
+  leagues: League[];
+  total: number;
 }
 

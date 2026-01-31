@@ -166,6 +166,7 @@ interface CastawayCellProps {
       id: string;
       name: string;
       status: 'ACTIVE' | 'ELIMINATED' | 'JURY';
+      imageUrl?: string | null;
     };
     isActive: boolean;
   };

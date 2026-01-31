@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Box,
   Table,
@@ -10,10 +10,10 @@ import {
   Th,
   Td,
   Text,
-  Select,
   VStack,
   HStack,
 } from '@chakra-ui/react';
+import { ArrowUpIcon, ArrowDownIcon } from '../dashboard/icons';
 import type { DetailedStandingsTeam } from '@/types/api';
 
 interface EpisodeSummaryTabProps {
@@ -21,102 +21,165 @@ interface EpisodeSummaryTabProps {
   currentEpisode: number;
 }
 
+type SortColumn = 'team' | number | 'total';
+type SortDirection = 'asc' | 'desc';
+
 export function EpisodeSummaryTab({ teams, currentEpisode }: EpisodeSummaryTabProps) {
-  const [selectedEpisode, setSelectedEpisode] = useState<number | 'all'>('all');
+  const [sortColumn, setSortColumn] = useState<SortColumn>('total');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   const episodes = Array.from({ length: currentEpisode }, (_, i) => i + 1);
 
-  const getEpisodeData = (team: DetailedStandingsTeam, episodeNum: number) => {
-    return team.episodeHistory.find((ep) => ep.episodeNumber === episodeNum);
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection(column === 'team' ? 'asc' : 'desc');
+    }
   };
 
-  const renderEpisodeData = (episodeNum: number) => {
-    return (
-      <Box key={episodeNum} mb={6}>
-        <Text fontSize="lg" fontWeight="bold" mb={4}>
-          Episode {episodeNum}
-        </Text>
-        <Box
-          borderRadius="24px"
-          overflow="hidden"
-          borderWidth="1px"
-          borderColor="border.default"
-          bg="bg.secondary"
-        >
-          <Table variant="simple">
-            <Thead bg="bg.primary">
-              <Tr>
-                <Th>Team</Th>
-                <Th isNumeric>Question Points</Th>
-                <Th isNumeric>Retention Points</Th>
-                <Th isNumeric>Episode Total</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {teams.map((team) => {
-                const episodeData = getEpisodeData(team, episodeNum);
+  const sortedTeams = useMemo(() => {
+    const sorted = [...teams];
 
-                return (
-                  <Tr
-                    key={team.id}
-                    bg={team.isCurrentUser ? 'bg.overlay' : undefined}
-                    borderLeftWidth={team.isCurrentUser ? '4px' : '0'}
-                    borderLeftColor={team.isCurrentUser ? 'brand.primary' : undefined}
-                  >
-                    <Td fontWeight={team.isCurrentUser ? 'semibold' : 'normal'}>
-                      {team.name}
-                    </Td>
-                    <Td isNumeric>{episodeData?.questionPoints || 0}</Td>
-                    <Td isNumeric>{episodeData?.retentionPoints || 0}</Td>
-                    <Td isNumeric fontWeight="bold">
-                      {episodeData?.totalEpisodePoints || 0}
-                    </Td>
-                  </Tr>
-                );
-              })}
-            </Tbody>
-          </Table>
-        </Box>
-      </Box>
-    );
-  };
+    sorted.sort((a, b) => {
+      let aValue: string | number;
+      let bValue: string | number;
 
-  const renderAllEpisodes = () => {
-    return (
-      <VStack align="stretch" gap={6}>
-        {episodes.map((episodeNum) => renderEpisodeData(episodeNum))}
-      </VStack>
+      if (sortColumn === 'team') {
+        aValue = a.name.toLowerCase();
+        bValue = b.name.toLowerCase();
+      } else if (sortColumn === 'total') {
+        aValue = a.totalPoints;
+        bValue = b.totalPoints;
+      } else {
+        // Episode number
+        const aEpisode = a.episodeHistory.find((ep) => ep.episodeNumber === sortColumn);
+        const bEpisode = b.episodeHistory.find((ep) => ep.episodeNumber === sortColumn);
+        aValue = aEpisode?.totalEpisodePoints || 0;
+        bValue = bEpisode?.totalEpisodePoints || 0;
+      }
+
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortDirection === 'asc'
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+
+      return sortDirection === 'asc'
+        ? (aValue as number) - (bValue as number)
+        : (bValue as number) - (aValue as number);
+    });
+
+    return sorted;
+  }, [teams, sortColumn, sortDirection]);
+
+  const SortIndicator = ({ column }: { column: SortColumn }) => {
+    if (sortColumn !== column) return null;
+
+    return sortDirection === 'asc' ? (
+      <ArrowUpIcon boxSize="12px" />
+    ) : (
+      <ArrowDownIcon boxSize="12px" />
     );
   };
 
   return (
-    <VStack align="stretch" gap={6}>
-      <HStack justify="space-between" align="center">
-        <Text fontSize="lg" fontWeight="semibold">
-          Episode Performance
-        </Text>
-        <Select
-          value={selectedEpisode}
-          onChange={(e) =>
-            setSelectedEpisode(
-              e.target.value === 'all' ? 'all' : parseInt(e.target.value, 10),
-            )
-          }
-          maxW="250px"
-          borderRadius="12px"
-        >
-          <option value="all">All Episodes</option>
-          {episodes.map((ep) => (
-            <option key={ep} value={ep}>
-              Episode {ep}
-            </option>
-          ))}
-        </Select>
-      </HStack>
+    <VStack align="stretch" gap={4}>
+      <Text fontSize="md" fontWeight="semibold">
+        Episode Performance
+      </Text>
 
-      {selectedEpisode === 'all'
-        ? renderAllEpisodes()
-        : renderEpisodeData(selectedEpisode as number)}
+      <Box
+        borderRadius="16px"
+        overflow="hidden"
+        borderWidth="1px"
+        borderColor="border.default"
+        bg="bg.secondary"
+        overflowX="auto"
+      >
+        <Table variant="simple" size="sm">
+          <Thead bg="bg.primary">
+            <Tr>
+              <Th
+                py={2}
+                fontSize="xs"
+                textTransform="uppercase"
+                cursor="pointer"
+                onClick={() => handleSort('team')}
+                _hover={{ bg: 'bg.overlay' }}
+              >
+                <HStack gap={1}>
+                  <Text>Team</Text>
+                  <SortIndicator column="team" />
+                </HStack>
+              </Th>
+              {episodes.map((ep) => (
+                <Th
+                  key={ep}
+                  py={2}
+                  fontSize="xs"
+                  textTransform="uppercase"
+                  isNumeric
+                  cursor="pointer"
+                  onClick={() => handleSort(ep)}
+                  _hover={{ bg: 'bg.overlay' }}
+                >
+                  <HStack gap={1} justify="flex-end">
+                    <Text>Ep {ep}</Text>
+                    <SortIndicator column={ep} />
+                  </HStack>
+                </Th>
+              ))}
+              <Th
+                py={2}
+                fontSize="xs"
+                textTransform="uppercase"
+                isNumeric
+                cursor="pointer"
+                onClick={() => handleSort('total')}
+                _hover={{ bg: 'bg.overlay' }}
+              >
+                <HStack gap={1} justify="flex-end">
+                  <Text>Total</Text>
+                  <SortIndicator column="total" />
+                </HStack>
+              </Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {sortedTeams.map((team) => {
+              return (
+                <Tr
+                  key={team.id}
+                  bg={team.isCurrentUser ? 'bg.overlay' : undefined}
+                  borderLeftWidth={team.isCurrentUser ? '3px' : '0'}
+                  borderLeftColor={team.isCurrentUser ? 'brand.primary' : undefined}
+                >
+                  <Td py={2} fontWeight={team.isCurrentUser ? 'semibold' : 'normal'} fontSize="sm">
+                    {team.name}
+                  </Td>
+                  {episodes.map((episodeNum) => {
+                    const episodeData = team.episodeHistory.find(
+                      (ep) => ep.episodeNumber === episodeNum
+                    );
+                    const points = episodeData?.totalEpisodePoints || 0;
+
+                    return (
+                      <Td key={episodeNum} py={2} isNumeric fontSize="sm">
+                        {points}
+                      </Td>
+                    );
+                  })}
+                  <Td py={2} isNumeric fontWeight="bold" fontSize="sm">
+                    {team.totalPoints}
+                  </Td>
+                </Tr>
+              );
+            })}
+          </Tbody>
+        </Table>
+      </Box>
     </VStack>
   );
 }

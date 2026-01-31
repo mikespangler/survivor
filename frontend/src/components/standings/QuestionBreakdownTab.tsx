@@ -75,7 +75,7 @@ export function QuestionBreakdownTab({
 
   if (error) {
     return (
-      <Alert status="error" borderRadius="24px">
+      <Alert status="error" borderRadius="16px">
         <AlertIcon />
         {error}
       </Alert>
@@ -84,7 +84,7 @@ export function QuestionBreakdownTab({
 
   if (!results || results.questions.length === 0) {
     return (
-      <Alert status="info" borderRadius="24px">
+      <Alert status="info" borderRadius="16px">
         <AlertIcon />
         No questions available for this episode.
       </Alert>
@@ -92,16 +92,17 @@ export function QuestionBreakdownTab({
   }
 
   return (
-    <VStack align="stretch" gap={6}>
+    <VStack align="stretch" gap={4}>
       <HStack justify="space-between" align="center">
-        <Text fontSize="lg" fontWeight="semibold">
+        <Text fontSize="md" fontWeight="semibold">
           Question Breakdown
         </Text>
         <Select
           value={selectedEpisode}
           onChange={(e) => setSelectedEpisode(parseInt(e.target.value, 10))}
-          maxW="250px"
-          borderRadius="12px"
+          maxW="200px"
+          size="sm"
+          borderRadius="8px"
         >
           {episodes.map((ep) => (
             <option key={ep} value={ep}>
@@ -116,21 +117,21 @@ export function QuestionBreakdownTab({
           <AccordionItem
             key={question.id}
             borderWidth="1px"
-            borderRadius="16px"
-            mb={4}
+            borderRadius="12px"
+            mb={3}
             overflow="hidden"
           >
             <h2>
               <AccordionButton
                 bg="bg.secondary"
                 _hover={{ bg: 'bg.overlay' }}
-                py={4}
+                py={2.5}
               >
                 <Box flex="1" textAlign="left">
-                  <HStack gap={4}>
-                    <Text fontWeight="semibold">Q{index + 1}:</Text>
-                    <Text>{question.text}</Text>
-                    <Badge colorScheme="orange" fontSize="xs">
+                  <HStack gap={3}>
+                    <Text fontWeight="semibold" fontSize="sm">Q{index + 1}:</Text>
+                    <Text fontSize="sm">{question.text}</Text>
+                    <Badge colorScheme="orange" fontSize="2xs" px={1.5} py={0.5}>
                       {question.pointValue} pts
                     </Badge>
                   </HStack>
@@ -140,20 +141,20 @@ export function QuestionBreakdownTab({
             </h2>
             <AccordionPanel p={0}>
               {question.isScored && question.correctAnswer && (
-                <Box px={6} py={3} bg="green.50" borderBottomWidth="1px">
-                  <Text fontSize="sm" fontWeight="semibold" color="green.700">
+                <Box px={4} py={2} bg="green.50" borderBottomWidth="1px">
+                  <Text fontSize="xs" fontWeight="semibold" color="green.700">
                     Correct Answer: {question.correctAnswer}
                   </Text>
                 </Box>
               )}
 
-              <Table variant="simple">
+              <Table variant="simple" size="sm">
                 <Thead>
                   <Tr>
-                    <Th>Team</Th>
-                    <Th>Answer</Th>
-                    <Th textAlign="center">Result</Th>
-                    <Th isNumeric>Points</Th>
+                    <Th py={2} fontSize="xs" textTransform="uppercase">Team</Th>
+                    <Th py={2} fontSize="xs" textTransform="uppercase">Answer</Th>
+                    <Th py={2} fontSize="xs" textTransform="uppercase" textAlign="center">Result</Th>
+                    <Th py={2} fontSize="xs" textTransform="uppercase" isNumeric>Points</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
@@ -167,29 +168,29 @@ export function QuestionBreakdownTab({
                       <Tr
                         key={answer.teamId}
                         bg={answer.isCurrentUser ? 'bg.overlay' : undefined}
-                        borderLeftWidth={answer.isCurrentUser ? '4px' : '0'}
+                        borderLeftWidth={answer.isCurrentUser ? '3px' : '0'}
                         borderLeftColor={answer.isCurrentUser ? 'brand.primary' : undefined}
                       >
-                        <Td fontWeight={answer.isCurrentUser ? 'semibold' : 'normal'}>
+                        <Td py={2} fontWeight={answer.isCurrentUser ? 'semibold' : 'normal'} fontSize="sm">
                           {answer.teamName}
                         </Td>
-                        <Td>
+                        <Td py={2} fontSize="sm">
                           <Text>{answer.answer || '-'}</Text>
                         </Td>
-                        <Td textAlign="center">
+                        <Td py={2} textAlign="center">
                           {question.isScored ? (
                             isCorrect ? (
-                              <CheckIcon color="green.500" />
+                              <CheckIcon boxSize="14px" color="green.500" />
                             ) : (
-                              <CloseIcon color="red.500" />
+                              <CloseIcon boxSize="14px" color="red.500" />
                             )
                           ) : (
-                            <Text fontSize="sm" color="text.secondary">
+                            <Text fontSize="xs" color="text.secondary">
                               Not scored
                             </Text>
                           )}
                         </Td>
-                        <Td isNumeric fontWeight="semibold">
+                        <Td py={2} isNumeric fontWeight="semibold" fontSize="sm">
                           {answer.pointsEarned !== null && answer.pointsEarned !== undefined
                             ? answer.pointsEarned
                             : '-'}

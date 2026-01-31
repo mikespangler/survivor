@@ -477,8 +477,8 @@ class ApiClient {
   async getMyTeam(
     leagueId: string,
     seasonId: string,
-  ): Promise<MyTeamResponse> {
-    return this.request<MyTeamResponse>(
+  ): Promise<MyTeamResponse | null> {
+    return this.request<MyTeamResponse | null>(
       `/leagues/${leagueId}/seasons/${seasonId}/my-team`,
     );
   }
@@ -803,6 +803,29 @@ class ApiClient {
     return this.request<CommissionersResponse>(
       `/leagues/${leagueId}/commissioners`,
     );
+  }
+
+  // Admin endpoints
+  async getAdminUsers(
+    skip = 0,
+    take = 50,
+  ): Promise<{ users: User[]; total: number }> {
+    return this.request<{ users: User[]; total: number }>(
+      `/admin/users?skip=${skip}&take=${take}`,
+    );
+  }
+
+  async getAdminLeagues(
+    skip = 0,
+    take = 50,
+  ): Promise<{ leagues: League[]; total: number }> {
+    return this.request<{ leagues: League[]; total: number }>(
+      `/admin/leagues?skip=${skip}&take=${take}`,
+    );
+  }
+
+  async getAdminLeague(id: string): Promise<League> {
+    return this.request<League>(`/admin/leagues/${id}`);
   }
 }
 

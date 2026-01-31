@@ -37,21 +37,21 @@ export function OverallStandingsTab({ teams, currentEpisode }: OverallStandingsT
   const getRankChangeIndicator = (rankChange: number) => {
     if (rankChange > 0) {
       return (
-        <HStack gap={1} color="green.500">
-          <ArrowUpIcon />
-          <Text fontSize="sm">{rankChange}</Text>
+        <HStack gap={0.5} color="green.500">
+          <ArrowUpIcon boxSize="12px" />
+          <Text fontSize="xs" fontWeight="medium">{rankChange}</Text>
         </HStack>
       );
     } else if (rankChange < 0) {
       return (
-        <HStack gap={1} color="red.500">
-          <ArrowDownIcon />
-          <Text fontSize="sm">{Math.abs(rankChange)}</Text>
+        <HStack gap={0.5} color="red.500">
+          <ArrowDownIcon boxSize="12px" />
+          <Text fontSize="xs" fontWeight="medium">{Math.abs(rankChange)}</Text>
         </HStack>
       );
     }
     return (
-      <Text fontSize="sm" color="text.secondary">
+      <Text fontSize="xs" color="text.secondary">
         -
       </Text>
     );
@@ -66,21 +66,21 @@ export function OverallStandingsTab({ teams, currentEpisode }: OverallStandingsT
 
   return (
     <Box
-      borderRadius="24px"
+      borderRadius="16px"
       overflow="hidden"
       borderWidth="1px"
       borderColor="border.default"
       bg="bg.secondary"
     >
-      <Table variant="simple">
+      <Table variant="simple" size="sm">
         <Thead bg="bg.primary">
           <Tr>
-            <Th>Rank</Th>
-            <Th>Team</Th>
-            <Th>Owner</Th>
-            <Th isNumeric>Total Points</Th>
-            <Th isNumeric>This Week</Th>
-            <Th textAlign="center">Change</Th>
+            <Th py={2} fontSize="xs" textTransform="uppercase">Rank</Th>
+            <Th py={2} fontSize="xs" textTransform="uppercase">Team</Th>
+            <Th py={2} fontSize="xs" textTransform="uppercase">Owner</Th>
+            <Th py={2} fontSize="xs" textTransform="uppercase" isNumeric>Total Points</Th>
+            <Th py={2} fontSize="xs" textTransform="uppercase" isNumeric>This Week</Th>
+            <Th py={2} fontSize="xs" textTransform="uppercase" textAlign="center">Change</Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -92,40 +92,40 @@ export function OverallStandingsTab({ teams, currentEpisode }: OverallStandingsT
               <Tr
                 key={team.id}
                 bg={team.isCurrentUser ? 'bg.overlay' : undefined}
-                borderLeftWidth={team.isCurrentUser ? '4px' : '0'}
+                borderLeftWidth={team.isCurrentUser ? '3px' : '0'}
                 borderLeftColor={team.isCurrentUser ? 'brand.primary' : undefined}
                 fontWeight={team.isCurrentUser ? 'semibold' : 'normal'}
               >
-                <Td>
-                  <HStack gap={2}>
-                    {medal && <Text fontSize="xl">{medal}</Text>}
-                    <Text>{team.rank}</Text>
+                <Td py={2}>
+                  <HStack gap={1.5}>
+                    {medal && <Text fontSize="md">{medal}</Text>}
+                    <Text fontSize="sm">{team.rank}</Text>
                   </HStack>
                 </Td>
-                <Td>
+                <Td py={2}>
                   <HStack gap={2}>
-                    <Text>{team.name}</Text>
+                    <Text fontSize="sm">{team.name}</Text>
                     {team.isCurrentUser && (
-                      <Badge colorScheme="orange" fontSize="xs">
+                      <Badge colorScheme="orange" fontSize="2xs" px={1.5} py={0.5}>
                         You
                       </Badge>
                     )}
                   </HStack>
                 </Td>
-                <Td>
-                  <Text color="text.secondary">{team.owner.name || team.owner.email}</Text>
+                <Td py={2}>
+                  <Text fontSize="sm" color="text.secondary">{team.owner.name || team.owner.email}</Text>
                 </Td>
-                <Td isNumeric>
-                  <Text fontSize="lg" fontWeight="bold">
+                <Td py={2} isNumeric>
+                  <Text fontSize="md" fontWeight="bold">
                     {team.totalPoints}
                   </Text>
                 </Td>
-                <Td isNumeric>
-                  <Text fontSize="md" color={thisWeekPoints > 0 ? 'green.600' : 'text.secondary'}>
+                <Td py={2} isNumeric>
+                  <Text fontSize="sm" color={thisWeekPoints > 0 ? 'green.600' : 'text.secondary'}>
                     {thisWeekPoints > 0 ? `+${thisWeekPoints}` : thisWeekPoints}
                   </Text>
                 </Td>
-                <Td textAlign="center">{getRankChangeIndicator(team.rankChange)}</Td>
+                <Td py={2} textAlign="center">{getRankChangeIndicator(team.rankChange)}</Td>
               </Tr>
             );
           })}

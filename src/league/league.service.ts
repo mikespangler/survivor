@@ -70,10 +70,22 @@ export class LeagueService {
   }
 
   async getLeague(leagueId: string, userId: string) {
+    // Get user to check if they're a system admin
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { systemRole: true },
+    });
+
+    // System admins can view any league
+    const isAdmin = user?.systemRole === 'admin';
+
     const league = await this.prisma.league.findFirst({
       where: {
         id: leagueId,
-        OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
+        // Admins can view any league, others must be owner or member
+        ...(isAdmin ? {} : {
+          OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
+        }),
       },
       include: {
         owner: true,
@@ -591,6 +603,17 @@ export class LeagueService {
     });
 
     if (!team) {
+      // Check if user is a system admin - admins can view leagues without having a team
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { systemRole: true },
+      });
+
+      if (user?.systemRole === 'admin') {
+        // Return null for admins who don't have a team (they're just viewing)
+        return null;
+      }
+
       throw new NotFoundException(
         'You do not have a team in this league season',
       );
@@ -830,14 +853,18 @@ export class LeagueService {
 
       // Get previous episode running total to calculate previous rank
       let previousRank = currentRank;
+      let rankChange = 0;
 
-      if (currentEpisode > 1) {
+      // Only calculate rank change if we have a current episode and it's > 1
+      if (currentEpisode && currentEpisode > 1) {
         const previousEpisodePoints = team.episodePoints.find(
           (ep) => ep.episodeNumber === currentEpisode - 1,
         );
 
         if (previousEpisodePoints) {
           const previousTotal = previousEpisodePoints.runningTotal;
+
+          // Count how many teams had higher points in the previous episode
           const teamsWithHigherPreviousTotal = teams.filter((t) => {
             const prevEp = t.episodePoints.find(
               (ep) => ep.episodeNumber === currentEpisode - 1,
@@ -846,10 +873,9 @@ export class LeagueService {
           }).length;
 
           previousRank = teamsWithHigherPreviousTotal + 1;
+          rankChange = previousRank - currentRank;
         }
       }
-
-      const rankChange = previousRank - currentRank;
 
       return {
         id: team.id,

@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   Avatar,
+  Badge,
   Box,
   Button,
   Container,
@@ -16,6 +17,11 @@ import {
   Spinner,
   Stack,
   Table,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
   Tbody,
   Td,
   Text,
@@ -25,9 +31,11 @@ import {
   useToast,
 } from '@chakra-ui/react';
 import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { AuthenticatedLayout } from '@/components/navigation';
 import { ImageUpload } from '@/components/common/ImageUpload';
+import { DateTimePicker } from '@/components/common/DateTimePicker';
 import type {
   Castaway,
   Season,
@@ -38,6 +46,8 @@ import type {
   UpdateCastawayDto,
   CreateEpisodeDto,
   UpdateEpisodeDto,
+  League,
+  User as ApiUser,
 } from '@/types/api';
 
 const SEASON_STATUSES: CreateSeasonDto['status'][] = [
@@ -94,9 +104,12 @@ const initialEpisodeForm: EpisodeFormState = {
   title: '',
 };
 
+const PAGE_SIZE = 50;
+
 export default function AdminPage() {
   const { isSignedIn } = useUser();
   const toast = useToast();
+  const router = useRouter();
 
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -105,6 +118,20 @@ export default function AdminPage() {
   const [castaways, setCastaways] = useState<Castaway[]>([]);
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState('');
+
+  // Leagues state
+  const [leagues, setLeagues] = useState<League[]>([]);
+  const [leaguesTotal, setLeaguesTotal] = useState(0);
+  const [leaguesPage, setLeaguesPage] = useState(0);
+  const [leaguesSearchQuery, setLeaguesSearchQuery] = useState('');
+  const [isLoadingLeagues, setIsLoadingLeagues] = useState(false);
+
+  // Users state
+  const [users, setUsers] = useState<ApiUser[]>([]);
+  const [usersTotal, setUsersTotal] = useState(0);
+  const [usersPage, setUsersPage] = useState(0);
+  const [usersSearchQuery, setUsersSearchQuery] = useState('');
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
   const [seasonForm, setSeasonForm] = useState<SeasonFormState>(
     initialSeasonForm,
@@ -202,6 +229,77 @@ export default function AdminPage() {
     [toast],
   );
 
+  const loadLeagues = useCallback(
+    async (page: number) => {
+      setIsLoadingLeagues(true);
+      try {
+        const data = await api.getAdminLeagues(page * PAGE_SIZE, PAGE_SIZE);
+        setLeagues(data.leagues);
+        setLeaguesTotal(data.total);
+      } catch (error) {
+        console.error('Failed to load leagues', error);
+        toast({
+          title: 'Failed to load leagues',
+          description:
+            error instanceof Error
+              ? error.message
+              : 'Unexpected error occurred',
+          status: 'error',
+        });
+      } finally {
+        setIsLoadingLeagues(false);
+      }
+    },
+    [toast],
+  );
+
+  const loadUsers = useCallback(
+    async (page: number) => {
+      setIsLoadingUsers(true);
+      try {
+        const data = await api.getAdminUsers(page * PAGE_SIZE, PAGE_SIZE);
+        setUsers(data.users);
+        setUsersTotal(data.total);
+      } catch (error) {
+        console.error('Failed to load users', error);
+        toast({
+          title: 'Failed to load users',
+          description:
+            error instanceof Error
+              ? error.message
+              : 'Unexpected error occurred',
+          status: 'error',
+        });
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    },
+    [toast],
+  );
+
+  // Client-side filtering
+  const filteredLeagues = useMemo(() => {
+    if (!leaguesSearchQuery) return leagues;
+    const query = leaguesSearchQuery.toLowerCase();
+    return leagues.filter(
+      (league) =>
+        league.name.toLowerCase().includes(query) ||
+        league.description?.toLowerCase().includes(query) ||
+        league.owner?.name?.toLowerCase().includes(query) ||
+        league.owner?.email?.toLowerCase().includes(query),
+    );
+  }, [leagues, leaguesSearchQuery]);
+
+  const filteredUsers = useMemo(() => {
+    if (!usersSearchQuery) return users;
+    const query = usersSearchQuery.toLowerCase();
+    return users.filter(
+      (user) =>
+        user.name?.toLowerCase().includes(query) ||
+        user.email?.toLowerCase().includes(query),
+    );
+  }, [users, usersSearchQuery]);
+
   useEffect(() => {
     let isActive = true;
 
@@ -254,6 +352,18 @@ export default function AdminPage() {
       setEpisodes([]);
     }
   }, [isAdmin, selectedSeasonId, loadCastaways, loadEpisodes]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      void loadLeagues(leaguesPage);
+    }
+  }, [isAdmin, leaguesPage, loadLeagues]);
+
+  useEffect(() => {
+    if (isAdmin) {
+      void loadUsers(usersPage);
+    }
+  }, [isAdmin, usersPage, loadUsers]);
 
   const handleSeasonSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -503,514 +613,700 @@ export default function AdminPage() {
   return (
     <AuthenticatedLayout>
       <Container maxW="container.xl" py={10}>
-      <Heading mb={8}>Admin Dashboard</Heading>
+        <Heading mb={8}>Admin Dashboard</Heading>
 
-      <Stack spacing={12}>
-        <Box>
-          <Heading size="md" mb={4}>
-            Seasons
-          </Heading>
+        <Tabs colorScheme="orange" isLazy>
+          <TabList>
+            <Tab>Seasons</Tab>
+            <Tab>Castaways</Tab>
+            <Tab>Episodes</Tab>
+            <Tab>Leagues</Tab>
+            <Tab>Users</Tab>
+          </TabList>
 
-          <Box as="form" onSubmit={handleSeasonSubmit}>
-            <Stack
-              spacing={4}
-              p={5}
-              borderWidth="1px"
-              borderRadius="lg"
-              mb={6}
-            >
-              <Heading size="sm">
-                {seasonForm.id ? 'Edit Season' : 'Create Season'}
-              </Heading>
-              <FormControl isRequired>
-                <FormLabel>Season Number</FormLabel>
-                <Input
-                  type="number"
-                  value={seasonForm.number}
-                  onChange={(event) =>
-                    setSeasonForm((prev) => ({
-                      ...prev,
-                      number: event.target.value,
-                    }))
-                  }
-                />
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>Season Name</FormLabel>
-                <Input
-                  value={seasonForm.name}
-                  onChange={(event) =>
-                    setSeasonForm((prev) => ({
-                      ...prev,
-                      name: event.target.value,
-                    }))
-                  }
-                />
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>Status</FormLabel>
-                <Select
-                  value={seasonForm.status}
-                  onChange={(event) =>
-                    setSeasonForm((prev) => ({
-                      ...prev,
-                      status: event.target.value as CreateSeasonDto['status'],
-                    }))
-                  }
-                >
-                  {SEASON_STATUSES.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl>
-                <FormLabel>Start Date</FormLabel>
-                <Input
-                  type="date"
-                  value={seasonForm.startDate}
-                  onChange={(event) =>
-                    setSeasonForm((prev) => ({
-                      ...prev,
-                      startDate: event.target.value,
-                    }))
-                  }
-                />
-              </FormControl>
-              <Stack direction="row" spacing={3}>
-                <Button
-                  type="submit"
-                  colorScheme="orange"
-                  isLoading={isSubmittingSeason}
-                >
-                  {seasonForm.id ? 'Update Season' : 'Create Season'}
-                </Button>
-                {seasonForm.id && (
-                  <Button
-                    variant="ghost"
-                    onClick={() => setSeasonForm(initialSeasonForm)}
+          <TabPanels>
+            {/* Seasons Tab */}
+            <TabPanel>
+              <Stack spacing={6}>
+                <Box as="form" onSubmit={handleSeasonSubmit}>
+                  <Stack
+                    spacing={4}
+                    p={5}
+                    borderWidth="1px"
+                    borderRadius="lg"
+                    mb={6}
                   >
-                    Cancel
-                  </Button>
-                )}
-              </Stack>
-            </Stack>
-          </Box>
-
-          <Box borderWidth="1px" borderRadius="lg" overflowX="auto">
-            {isLoadingSeasons ? (
-              <Box py={6} textAlign="center">
-                <Spinner />
-              </Box>
-            ) : (
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>#</Th>
-                    <Th>Name</Th>
-                    <Th>Status</Th>
-                    <Th>Start Date</Th>
-                    <Th>Actions</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {seasons.map((season) => (
-                    <Tr key={season.id}>
-                      <Td>{season.number}</Td>
-                      <Td>{season.name}</Td>
-                      <Td>{season.status}</Td>
-                      <Td>
-                        {season.startDate
-                          ? new Date(season.startDate).toLocaleDateString()
-                          : '—'}
-                      </Td>
-                      <Td>
+                    <Heading size="sm">
+                      {seasonForm.id ? 'Edit Season' : 'Create Season'}
+                    </Heading>
+                    <FormControl isRequired>
+                      <FormLabel>Season Number</FormLabel>
+                      <Input
+                        type="number"
+                        value={seasonForm.number}
+                        onChange={(event) =>
+                          setSeasonForm((prev) => ({
+                            ...prev,
+                            number: event.target.value,
+                          }))
+                        }
+                      />
+                    </FormControl>
+                    <FormControl isRequired>
+                      <FormLabel>Season Name</FormLabel>
+                      <Input
+                        value={seasonForm.name}
+                        onChange={(event) =>
+                          setSeasonForm((prev) => ({
+                            ...prev,
+                            name: event.target.value,
+                          }))
+                        }
+                      />
+                    </FormControl>
+                    <FormControl isRequired>
+                      <FormLabel>Status</FormLabel>
+                      <Select
+                        value={seasonForm.status}
+                        onChange={(event) =>
+                          setSeasonForm((prev) => ({
+                            ...prev,
+                            status: event.target.value as CreateSeasonDto['status'],
+                          }))
+                        }
+                      >
+                        {SEASON_STATUSES.map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel>Start Date</FormLabel>
+                      <DateTimePicker
+                        selected={seasonForm.startDate ? new Date(seasonForm.startDate) : null}
+                        onChange={(date) =>
+                          setSeasonForm((prev) => ({
+                            ...prev,
+                            startDate: date ? date.toISOString().slice(0, 10) : '',
+                          }))
+                        }
+                        placeholderText="Select start date"
+                      />
+                    </FormControl>
+                    <Stack direction="row" spacing={3}>
+                      <Button
+                        type="submit"
+                        colorScheme="orange"
+                        isLoading={isSubmittingSeason}
+                      >
+                        {seasonForm.id ? 'Update Season' : 'Create Season'}
+                      </Button>
+                      {seasonForm.id && (
                         <Button
-                          size="sm"
-                          colorScheme="orange"
-                          variant="outline"
-                          onClick={() => handleSeasonEdit(season)}
+                          variant="ghost"
+                          onClick={() => setSeasonForm(initialSeasonForm)}
                         >
-                          Edit
+                          Cancel
                         </Button>
-                      </Td>
-                    </Tr>
-                  ))}
-                  {seasons.length === 0 && (
-                    <Tr>
-                      <Td colSpan={5} textAlign="center" py={6}>
-                        No seasons created yet.
-                      </Td>
-                    </Tr>
+                      )}
+                    </Stack>
+                  </Stack>
+                </Box>
+
+                <Box borderWidth="1px" borderRadius="lg" overflowX="auto">
+                  {isLoadingSeasons ? (
+                    <Box py={6} textAlign="center">
+                      <Spinner />
+                    </Box>
+                  ) : (
+                    <Table>
+                      <Thead>
+                        <Tr>
+                          <Th>#</Th>
+                          <Th>Name</Th>
+                          <Th>Status</Th>
+                          <Th>Start Date</Th>
+                          <Th>Actions</Th>
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {seasons.map((season) => (
+                          <Tr key={season.id}>
+                            <Td>{season.number}</Td>
+                            <Td>{season.name}</Td>
+                            <Td>{season.status}</Td>
+                            <Td>
+                              {season.startDate
+                                ? new Date(season.startDate).toLocaleDateString()
+                                : '—'}
+                            </Td>
+                            <Td>
+                              <Button
+                                size="sm"
+                                colorScheme="orange"
+                                variant="outline"
+                                onClick={() => handleSeasonEdit(season)}
+                              >
+                                Edit
+                              </Button>
+                            </Td>
+                          </Tr>
+                        ))}
+                        {seasons.length === 0 && (
+                          <Tr>
+                            <Td colSpan={5} textAlign="center" py={6}>
+                              No seasons created yet.
+                            </Td>
+                          </Tr>
+                        )}
+                      </Tbody>
+                    </Table>
                   )}
-                </Tbody>
-              </Table>
-            )}
-          </Box>
-        </Box>
+                </Box>
+              </Stack>
+            </TabPanel>
 
-        <Divider />
-
-        <Box>
-          <Stack direction="row" align="center" mb={4} spacing={4}>
-            <Heading size="md">Castaways</Heading>
-            <Select
-              value={selectedSeasonId}
-              onChange={(event) => {
-                setSelectedSeasonId(event.target.value);
-                setCastawayForm(initialCastawayForm);
-              }}
-              maxW="300px"
-            >
-              {seasons.map((season) => (
-                <option key={season.id} value={season.id}>
-                  Season {season.number}: {season.name}
-                </option>
-              ))}
-              {seasons.length === 0 && (
-                <option value="">No seasons available</option>
-              )}
-            </Select>
-          </Stack>
-
-          <Box
-            as="form"
-            onSubmit={handleCastawaySubmit}
-            opacity={selectedSeasonId ? 1 : 0.6}
-          >
-            <Stack
-              spacing={4}
-              p={5}
-              borderWidth="1px"
-              borderRadius="lg"
-              mb={6}
-            >
-              <Heading size="sm">
-                {castawayForm.id ? 'Edit Castaway' : 'Create Castaway'}
-              </Heading>
-              <FormControl isRequired>
-                <FormLabel>Castaway Name</FormLabel>
-                <Input
-                  value={castawayForm.name}
-                  onChange={(event) =>
-                    setCastawayForm((prev) => ({
-                      ...prev,
-                      name: event.target.value,
-                    }))
-                  }
-                  isDisabled={!selectedSeasonId}
-                />
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>Status</FormLabel>
-                <Select
-                  value={castawayForm.status}
-                  onChange={(event) =>
-                    setCastawayForm((prev) => ({
-                      ...prev,
-                      status: event.target.value as Castaway['status'],
-                    }))
-                  }
-                  isDisabled={!selectedSeasonId}
-                >
-                  {CASTAWAY_STATUSES.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </Select>
-              </FormControl>
-              {castawayForm.id && (
+            {/* Castaways Tab */}
+            <TabPanel>
+              <Stack spacing={6}>
                 <FormControl>
-                  <FormLabel>Profile Image</FormLabel>
-                  <ImageUpload
-                    currentImageUrl={
-                      castaways.find((c) => c.id === castawayForm.id)?.imageUrl
-                    }
-                    onUpload={async (file) => {
-                      setUploadingImageId(castawayForm.id);
-                      try {
-                        await api.uploadCastawayImage(castawayForm.id, file);
-                        const updated = await api.getCastaways(selectedSeasonId);
-                        setCastaways(updated);
-                      } catch (error) {
-                        console.error('Upload failed:', error);
-                      } finally {
-                        setUploadingImageId(null);
-                      }
+                  <FormLabel>Select Season</FormLabel>
+                  <Select
+                    value={selectedSeasonId}
+                    onChange={(event) => {
+                      setSelectedSeasonId(event.target.value);
+                      setCastawayForm(initialCastawayForm);
                     }}
-                    onDelete={async () => {
-                      if (!confirm('Delete this image?')) return;
-                      setUploadingImageId(castawayForm.id);
-                      try {
-                        await api.deleteCastawayImage(castawayForm.id);
-                        const updated = await api.getCastaways(selectedSeasonId);
-                        setCastaways(updated);
-                      } catch (error) {
-                        console.error('Delete failed:', error);
-                      } finally {
-                        setUploadingImageId(null);
-                      }
-                    }}
-                    isUploading={uploadingImageId === castawayForm.id}
-                    maxSizeInMB={5}
-                  />
+                    maxW="400px"
+                  >
+                    {seasons.map((season) => (
+                      <option key={season.id} value={season.id}>
+                        Season {season.number}: {season.name}
+                      </option>
+                    ))}
+                    {seasons.length === 0 && (
+                      <option value="">No seasons available</option>
+                    )}
+                  </Select>
                 </FormControl>
-              )}
-              <Stack direction="row" spacing={3}>
-                <Button
-                  type="submit"
-                  colorScheme="orange"
-                  isDisabled={!selectedSeasonId}
-                  isLoading={isSubmittingCastaway}
+
+                <Box
+                  as="form"
+                  onSubmit={handleCastawaySubmit}
+                  opacity={selectedSeasonId ? 1 : 0.6}
                 >
-                  {castawayForm.id ? 'Update Castaway' : 'Create Castaway'}
-                </Button>
-                {castawayForm.id && (
-                  <Button
-                    variant="ghost"
-                    onClick={() => setCastawayForm(initialCastawayForm)}
+                  <Stack
+                    spacing={4}
+                    p={5}
+                    borderWidth="1px"
+                    borderRadius="lg"
+                    mb={6}
                   >
-                    Cancel
-                  </Button>
-                )}
-              </Stack>
-            </Stack>
-          </Box>
+                    <Heading size="sm">
+                      {castawayForm.id ? 'Edit Castaway' : 'Create Castaway'}
+                    </Heading>
+                    <FormControl isRequired>
+                      <FormLabel>Castaway Name</FormLabel>
+                      <Input
+                        value={castawayForm.name}
+                        onChange={(event) =>
+                          setCastawayForm((prev) => ({
+                            ...prev,
+                            name: event.target.value,
+                          }))
+                        }
+                        isDisabled={!selectedSeasonId}
+                      />
+                    </FormControl>
+                    <FormControl isRequired>
+                      <FormLabel>Status</FormLabel>
+                      <Select
+                        value={castawayForm.status}
+                        onChange={(event) =>
+                          setCastawayForm((prev) => ({
+                            ...prev,
+                            status: event.target.value as Castaway['status'],
+                          }))
+                        }
+                        isDisabled={!selectedSeasonId}
+                      >
+                        {CASTAWAY_STATUSES.map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    {castawayForm.id && (
+                      <FormControl>
+                        <FormLabel>Profile Image</FormLabel>
+                        <ImageUpload
+                          currentImageUrl={
+                            castaways.find((c) => c.id === castawayForm.id)?.imageUrl
+                          }
+                          onUpload={async (file) => {
+                            setUploadingImageId(castawayForm.id);
+                            try {
+                              await api.uploadCastawayImage(castawayForm.id, file);
+                              const updated = await api.getCastaways(selectedSeasonId);
+                              setCastaways(updated);
+                            } catch (error) {
+                              console.error('Upload failed:', error);
+                            } finally {
+                              setUploadingImageId(null);
+                            }
+                          }}
+                          onDelete={async () => {
+                            if (!confirm('Delete this image?')) return;
+                            setUploadingImageId(castawayForm.id);
+                            try {
+                              await api.deleteCastawayImage(castawayForm.id);
+                              const updated = await api.getCastaways(selectedSeasonId);
+                              setCastaways(updated);
+                            } catch (error) {
+                              console.error('Delete failed:', error);
+                            } finally {
+                              setUploadingImageId(null);
+                            }
+                          }}
+                          isUploading={uploadingImageId === castawayForm.id}
+                          maxSizeInMB={5}
+                        />
+                      </FormControl>
+                    )}
+                    <Stack direction="row" spacing={3}>
+                      <Button
+                        type="submit"
+                        colorScheme="orange"
+                        isDisabled={!selectedSeasonId}
+                        isLoading={isSubmittingCastaway}
+                      >
+                        {castawayForm.id ? 'Update Castaway' : 'Create Castaway'}
+                      </Button>
+                      {castawayForm.id && (
+                        <Button
+                          variant="ghost"
+                          onClick={() => setCastawayForm(initialCastawayForm)}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </Stack>
+                  </Stack>
+                </Box>
 
-          <Box borderWidth="1px" borderRadius="lg" overflowX="auto">
-            {isLoadingCastaways ? (
-              <Box py={6} textAlign="center">
-                <Spinner />
-              </Box>
-            ) : (
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>Name</Th>
-                    <Th>Status</Th>
-                    <Th>Actions</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {castaways.map((castaway) => (
-                    <Tr key={castaway.id}>
-                      <Td>
-                        <HStack spacing={3}>
-                          <Avatar
-                            size="sm"
-                            name={castaway.name}
-                            src={castaway.imageUrl || undefined}
-                          />
-                          <Text>{castaway.name}</Text>
-                        </HStack>
-                      </Td>
-                      <Td>{castaway.status}</Td>
-                      <Td>
-                        <Stack direction="row" spacing={2}>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleCastawayEdit(castaway)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            colorScheme="red"
-                            variant="ghost"
-                            onClick={() => handleCastawayDelete(castaway)}
-                          >
-                            Delete
-                          </Button>
-                        </Stack>
-                      </Td>
-                    </Tr>
-                  ))}
-                  {castaways.length === 0 && (
-                    <Tr>
-                      <Td colSpan={3} textAlign="center" py={6}>
-                        {selectedSeasonId
-                          ? 'No castaways for this season yet.'
-                          : 'Select a season to view castaways.'}
-                      </Td>
-                    </Tr>
+                <Box borderWidth="1px" borderRadius="lg" overflowX="auto">
+                  {isLoadingCastaways ? (
+                    <Box py={6} textAlign="center">
+                      <Spinner />
+                    </Box>
+                  ) : (
+                    <Table>
+                      <Thead>
+                        <Tr>
+                          <Th>Name</Th>
+                          <Th>Status</Th>
+                          <Th>Actions</Th>
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {castaways.map((castaway) => (
+                          <Tr key={castaway.id}>
+                            <Td>
+                              <HStack spacing={3}>
+                                <Avatar
+                                  size="sm"
+                                  name={castaway.name}
+                                  src={castaway.imageUrl || undefined}
+                                />
+                                <Text>{castaway.name}</Text>
+                              </HStack>
+                            </Td>
+                            <Td>{castaway.status}</Td>
+                            <Td>
+                              <Stack direction="row" spacing={2}>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleCastawayEdit(castaway)}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  colorScheme="red"
+                                  variant="ghost"
+                                  onClick={() => handleCastawayDelete(castaway)}
+                                >
+                                  Delete
+                                </Button>
+                              </Stack>
+                            </Td>
+                          </Tr>
+                        ))}
+                        {castaways.length === 0 && (
+                          <Tr>
+                            <Td colSpan={3} textAlign="center" py={6}>
+                              {selectedSeasonId
+                                ? 'No castaways for this season yet.'
+                                : 'Select a season to view castaways.'}
+                            </Td>
+                          </Tr>
+                        )}
+                      </Tbody>
+                    </Table>
                   )}
-                </Tbody>
-              </Table>
-            )}
-          </Box>
-        </Box>
+                </Box>
+              </Stack>
+            </TabPanel>
 
-        <Divider />
+            {/* Episodes Tab */}
+            <TabPanel>
+              <Stack spacing={6}>
+                <FormControl>
+                  <FormLabel>Select Season</FormLabel>
+                  <Select
+                    value={selectedSeasonId}
+                    onChange={(event) => {
+                      setSelectedSeasonId(event.target.value);
+                      setEpisodeForm(initialEpisodeForm);
+                    }}
+                    maxW="400px"
+                  >
+                    {seasons.map((season) => (
+                      <option key={season.id} value={season.id}>
+                        Season {season.number}: {season.name}
+                      </option>
+                    ))}
+                    {seasons.length === 0 && (
+                      <option value="">No seasons available</option>
+                    )}
+                  </Select>
+                </FormControl>
 
-        <Box>
-          <Stack direction="row" align="center" mb={4} spacing={4}>
-            <Heading size="md">Episodes</Heading>
-            <Select
-              value={selectedSeasonId}
-              onChange={(event) => {
-                setSelectedSeasonId(event.target.value);
-                setEpisodeForm(initialEpisodeForm);
-              }}
-              maxW="300px"
-            >
-              {seasons.map((season) => (
-                <option key={season.id} value={season.id}>
-                  Season {season.number}: {season.name}
-                </option>
-              ))}
-              {seasons.length === 0 && (
-                <option value="">No seasons available</option>
-              )}
-            </Select>
-          </Stack>
-
-          <Box
-            as="form"
-            onSubmit={handleEpisodeSubmit}
-            opacity={selectedSeasonId ? 1 : 0.6}
-          >
-            <Stack
-              spacing={4}
-              p={5}
-              borderWidth="1px"
-              borderRadius="lg"
-              mb={6}
-            >
-              <Heading size="sm">
-                {episodeForm.id ? 'Edit Episode' : 'Create Episode'}
-              </Heading>
-              <FormControl isRequired>
-                <FormLabel>Episode Number</FormLabel>
-                <Input
-                  type="number"
-                  min={1}
-                  value={episodeForm.number}
-                  onChange={(event) =>
-                    setEpisodeForm((prev) => ({
-                      ...prev,
-                      number: event.target.value,
-                    }))
-                  }
-                  isDisabled={!selectedSeasonId}
-                />
-              </FormControl>
-              <FormControl>
-                <FormLabel>Air Date & Time</FormLabel>
-                <Input
-                  type="datetime-local"
-                  value={episodeForm.airDate}
-                  onChange={(event) =>
-                    setEpisodeForm((prev) => ({
-                      ...prev,
-                      airDate: event.target.value,
-                    }))
-                  }
-                  isDisabled={!selectedSeasonId}
-                />
-                <Text mt={1} fontSize="sm" color="text.secondary">
-                  This is used as the deadline for weekly questions
-                </Text>
-              </FormControl>
-              <FormControl>
-                <FormLabel>Title (optional)</FormLabel>
-                <Input
-                  value={episodeForm.title}
-                  onChange={(event) =>
-                    setEpisodeForm((prev) => ({
-                      ...prev,
-                      title: event.target.value,
-                    }))
-                  }
-                  placeholder="e.g., Premiere, Merge, Finale"
-                  isDisabled={!selectedSeasonId}
-                />
-              </FormControl>
-              <Stack direction="row" spacing={3}>
-                <Button
-                  type="submit"
-                  colorScheme="orange"
-                  isDisabled={!selectedSeasonId}
-                  isLoading={isSubmittingEpisode}
+                <Box
+                  as="form"
+                  onSubmit={handleEpisodeSubmit}
+                  opacity={selectedSeasonId ? 1 : 0.6}
                 >
-                  {episodeForm.id ? 'Update Episode' : 'Create Episode'}
-                </Button>
-                {episodeForm.id && (
-                  <Button
-                    variant="ghost"
-                    onClick={() => setEpisodeForm(initialEpisodeForm)}
+                  <Stack
+                    spacing={4}
+                    p={5}
+                    borderWidth="1px"
+                    borderRadius="lg"
+                    mb={6}
                   >
-                    Cancel
-                  </Button>
-                )}
-              </Stack>
-            </Stack>
-          </Box>
+                    <Heading size="sm">
+                      {episodeForm.id ? 'Edit Episode' : 'Create Episode'}
+                    </Heading>
+                    <FormControl isRequired>
+                      <FormLabel>Episode Number</FormLabel>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={episodeForm.number}
+                        onChange={(event) =>
+                          setEpisodeForm((prev) => ({
+                            ...prev,
+                            number: event.target.value,
+                          }))
+                        }
+                        isDisabled={!selectedSeasonId}
+                      />
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel>Air Date & Time</FormLabel>
+                      <DateTimePicker
+                        selected={episodeForm.airDate ? new Date(episodeForm.airDate) : null}
+                        onChange={(date) =>
+                          setEpisodeForm((prev) => ({
+                            ...prev,
+                            airDate: date ? date.toISOString().slice(0, 16) : '',
+                          }))
+                        }
+                        showTimeSelect
+                        placeholderText="Select air date and time"
+                        isDisabled={!selectedSeasonId}
+                      />
+                      <Text mt={1} fontSize="sm" color="text.secondary">
+                        This is used as the deadline for weekly questions
+                      </Text>
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel>Title (optional)</FormLabel>
+                      <Input
+                        value={episodeForm.title}
+                        onChange={(event) =>
+                          setEpisodeForm((prev) => ({
+                            ...prev,
+                            title: event.target.value,
+                          }))
+                        }
+                        placeholder="e.g., Premiere, Merge, Finale"
+                        isDisabled={!selectedSeasonId}
+                      />
+                    </FormControl>
+                    <Stack direction="row" spacing={3}>
+                      <Button
+                        type="submit"
+                        colorScheme="orange"
+                        isDisabled={!selectedSeasonId}
+                        isLoading={isSubmittingEpisode}
+                      >
+                        {episodeForm.id ? 'Update Episode' : 'Create Episode'}
+                      </Button>
+                      {episodeForm.id && (
+                        <Button
+                          variant="ghost"
+                          onClick={() => setEpisodeForm(initialEpisodeForm)}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                    </Stack>
+                  </Stack>
+                </Box>
 
-          <Box borderWidth="1px" borderRadius="lg" overflowX="auto">
-            {isLoadingEpisodes ? (
-              <Box py={6} textAlign="center">
-                <Spinner />
-              </Box>
-            ) : (
-              <Table>
-                <Thead>
-                  <Tr>
-                    <Th>#</Th>
-                    <Th>Title</Th>
-                    <Th>Air Date</Th>
-                    <Th>Actions</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {episodes.map((episode) => (
-                    <Tr key={episode.id}>
-                      <Td>{episode.number}</Td>
-                      <Td>{episode.title || '—'}</Td>
-                      <Td>
-                        {episode.airDate
-                          ? new Date(episode.airDate).toLocaleString()
-                          : '—'}
-                      </Td>
-                      <Td>
-                        <Stack direction="row" spacing={2}>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEpisodeEdit(episode)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            colorScheme="red"
-                            variant="ghost"
-                            onClick={() => handleEpisodeDelete(episode)}
-                          >
-                            Delete
-                          </Button>
-                        </Stack>
-                      </Td>
-                    </Tr>
-                  ))}
-                  {episodes.length === 0 && (
-                    <Tr>
-                      <Td colSpan={4} textAlign="center" py={6}>
-                        {selectedSeasonId
-                          ? 'No episodes for this season yet.'
-                          : 'Select a season to view episodes.'}
-                      </Td>
-                    </Tr>
+                <Box borderWidth="1px" borderRadius="lg" overflowX="auto">
+                  {isLoadingEpisodes ? (
+                    <Box py={6} textAlign="center">
+                      <Spinner />
+                    </Box>
+                  ) : (
+                    <Table>
+                      <Thead>
+                        <Tr>
+                          <Th>#</Th>
+                          <Th>Title</Th>
+                          <Th>Air Date</Th>
+                          <Th>Actions</Th>
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {episodes.map((episode) => (
+                          <Tr key={episode.id}>
+                            <Td>{episode.number}</Td>
+                            <Td>{episode.title || '—'}</Td>
+                            <Td>
+                              {episode.airDate
+                                ? new Date(episode.airDate).toLocaleString()
+                                : '—'}
+                            </Td>
+                            <Td>
+                              <Stack direction="row" spacing={2}>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEpisodeEdit(episode)}
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  colorScheme="red"
+                                  variant="ghost"
+                                  onClick={() => handleEpisodeDelete(episode)}
+                                >
+                                  Delete
+                                </Button>
+                              </Stack>
+                            </Td>
+                          </Tr>
+                        ))}
+                        {episodes.length === 0 && (
+                          <Tr>
+                            <Td colSpan={4} textAlign="center" py={6}>
+                              {selectedSeasonId
+                                ? 'No episodes for this season yet.'
+                                : 'Select a season to view episodes.'}
+                            </Td>
+                          </Tr>
+                        )}
+                      </Tbody>
+                    </Table>
                   )}
-                </Tbody>
-              </Table>
-            )}
-          </Box>
-        </Box>
-      </Stack>
-    </Container>
+                </Box>
+              </Stack>
+            </TabPanel>
+
+            {/* Leagues Tab */}
+            <TabPanel>
+              <Stack spacing={6}>
+                <Input
+                  placeholder="Search leagues by name, description, or owner..."
+                  value={leaguesSearchQuery}
+                  onChange={(e) => setLeaguesSearchQuery(e.target.value)}
+                />
+
+                <Box borderWidth="1px" borderRadius="lg" overflowX="auto">
+                  {isLoadingLeagues ? (
+                    <Box py={6} textAlign="center">
+                      <Spinner />
+                    </Box>
+                  ) : (
+                    <Table>
+                      <Thead>
+                        <Tr>
+                          <Th>Name</Th>
+                          <Th>Owner</Th>
+                          <Th>Members</Th>
+                          <Th>Active Season</Th>
+                          <Th>Created</Th>
+                          <Th>Actions</Th>
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {filteredLeagues.map((league) => (
+                          <Tr key={league.id}>
+                            <Td>{league.name}</Td>
+                            <Td>{league.owner?.name || league.owner?.email || '—'}</Td>
+                            <Td>{league.members?.length || 0}</Td>
+                            <Td>
+                              {league.leagueSeasons?.[0]?.season?.name || '—'}
+                            </Td>
+                            <Td>
+                              {new Date(league.createdAt).toLocaleDateString()}
+                            </Td>
+                            <Td>
+                              <Button
+                                size="sm"
+                                colorScheme="orange"
+                                onClick={() => router.push(`/leagues/${league.id}`)}
+                              >
+                                View
+                              </Button>
+                            </Td>
+                          </Tr>
+                        ))}
+                        {filteredLeagues.length === 0 && (
+                          <Tr>
+                            <Td colSpan={6} textAlign="center" py={6}>
+                              {leaguesSearchQuery
+                                ? 'No leagues match your search.'
+                                : 'No leagues found.'}
+                            </Td>
+                          </Tr>
+                        )}
+                      </Tbody>
+                    </Table>
+                  )}
+                </Box>
+
+                <HStack justify="space-between">
+                  <Text>
+                    Showing {leaguesPage * PAGE_SIZE + 1} to{' '}
+                    {Math.min((leaguesPage + 1) * PAGE_SIZE, leaguesTotal)} of{' '}
+                    {leaguesTotal} leagues
+                  </Text>
+                  <HStack>
+                    <Button
+                      size="sm"
+                      onClick={() => setLeaguesPage((p) => p - 1)}
+                      isDisabled={leaguesPage === 0}
+                    >
+                      Previous
+                    </Button>
+                    <Text>Page {leaguesPage + 1}</Text>
+                    <Button
+                      size="sm"
+                      onClick={() => setLeaguesPage((p) => p + 1)}
+                      isDisabled={(leaguesPage + 1) * PAGE_SIZE >= leaguesTotal}
+                    >
+                      Next
+                    </Button>
+                  </HStack>
+                </HStack>
+              </Stack>
+            </TabPanel>
+
+            {/* Users Tab */}
+            <TabPanel>
+              <Stack spacing={6}>
+                <Input
+                  placeholder="Search users by name or email..."
+                  value={usersSearchQuery}
+                  onChange={(e) => setUsersSearchQuery(e.target.value)}
+                />
+
+                <Box borderWidth="1px" borderRadius="lg" overflowX="auto">
+                  {isLoadingUsers ? (
+                    <Box py={6} textAlign="center">
+                      <Spinner />
+                    </Box>
+                  ) : (
+                    <Table>
+                      <Thead>
+                        <Tr>
+                          <Th>Name</Th>
+                          <Th>Email</Th>
+                          <Th>Role</Th>
+                          <Th>Joined</Th>
+                        </Tr>
+                      </Thead>
+                      <Tbody>
+                        {filteredUsers.map((user) => (
+                          <Tr key={user.id}>
+                            <Td>{user.name || '—'}</Td>
+                            <Td>{user.email || '—'}</Td>
+                            <Td>
+                              <Badge
+                                colorScheme={
+                                  user.systemRole === 'admin' ? 'orange' : 'gray'
+                                }
+                              >
+                                {user.systemRole}
+                              </Badge>
+                            </Td>
+                            <Td>
+                              {new Date(user.createdAt).toLocaleDateString()}
+                            </Td>
+                          </Tr>
+                        ))}
+                        {filteredUsers.length === 0 && (
+                          <Tr>
+                            <Td colSpan={4} textAlign="center" py={6}>
+                              {usersSearchQuery
+                                ? 'No users match your search.'
+                                : 'No users found.'}
+                            </Td>
+                          </Tr>
+                        )}
+                      </Tbody>
+                    </Table>
+                  )}
+                </Box>
+
+                <HStack justify="space-between">
+                  <Text>
+                    Showing {usersPage * PAGE_SIZE + 1} to{' '}
+                    {Math.min((usersPage + 1) * PAGE_SIZE, usersTotal)} of{' '}
+                    {usersTotal} users
+                  </Text>
+                  <HStack>
+                    <Button
+                      size="sm"
+                      onClick={() => setUsersPage((p) => p - 1)}
+                      isDisabled={usersPage === 0}
+                    >
+                      Previous
+                    </Button>
+                    <Text>Page {usersPage + 1}</Text>
+                    <Button
+                      size="sm"
+                      onClick={() => setUsersPage((p) => p + 1)}
+                      isDisabled={(usersPage + 1) * PAGE_SIZE >= usersTotal}
+                    >
+                      Next
+                    </Button>
+                  </HStack>
+                </HStack>
+              </Stack>
+            </TabPanel>
+          </TabPanels>
+        </Tabs>
+      </Container>
     </AuthenticatedLayout>
   );
 }

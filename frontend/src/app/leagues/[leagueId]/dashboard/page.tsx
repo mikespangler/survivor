@@ -81,14 +81,31 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
       setLoading(true);
       setError(null);
 
-      // Load user's leagues to find this one
-      const userLeagues = await api.getLeagues();
-      const currentLeague = userLeagues.find((l) => l.id === leagueId);
+      // Check if user is admin
+      const currentUser = await api.getCurrentUser();
+      const isAdmin = currentUser.systemRole === 'admin';
 
-      if (!currentLeague) {
-        setError('League not found or you are not a member');
-        setLoading(false);
-        return;
+      let currentLeague;
+
+      if (isAdmin) {
+        // Admin can view any league
+        try {
+          currentLeague = await api.getAdminLeague(leagueId);
+        } catch (err) {
+          setError('League not found');
+          setLoading(false);
+          return;
+        }
+      } else {
+        // Regular users can only view their own leagues
+        const userLeagues = await api.getLeagues();
+        currentLeague = userLeagues.find((l) => l.id === leagueId);
+
+        if (!currentLeague) {
+          setError('League not found or you are not a member');
+          setLoading(false);
+          return;
+        }
       }
 
       // Find active season for this league
@@ -117,11 +134,19 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
       // Load season metadata, standings, and team data
       // Note: Load standings for BOTH active and upcoming seasons
       // Upcoming seasons will show all teams with 0 points (like fantasy football pre-season)
-      const [metadata, standingsData, teamData] = await Promise.all([
+      const promises: Promise<any>[] = [
         api.getSeasonMetadata(currentSeasonRef.seasonId),
         api.getLeagueStandings(leagueId, currentSeasonRef.seasonId),
-        api.getMyTeam(leagueId, currentSeasonRef.seasonId),
-      ]);
+      ];
+
+      // Load team data if available (both admins and regular users may not have teams)
+      // - Admins viewing non-member leagues won't have a team
+      // - Regular users may not have joined the current season yet
+      promises.push(
+        api.getMyTeam(leagueId, currentSeasonRef.seasonId).catch(() => null)
+      );
+
+      const [metadata, standingsData, teamData] = await Promise.all(promises);
 
       setSeasonMetadata(metadata);
       setStandings(standingsData);
@@ -278,7 +303,15 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
           </Grid>
 
           {/* Show Week Results ONLY for ACTIVE seasons */}
-          {seasonMetadata?.status === 'ACTIVE' && <WeekResultsCard />}
+          {seasonMetadata?.status === 'ACTIVE' &&
+           activeSeasonId &&
+           seasonMetadata.activeEpisode && (
+            <WeekResultsCard
+              leagueId={leagueId}
+              seasonId={activeSeasonId}
+              episodeNumber={seasonMetadata.activeEpisode}
+            />
+          )}
         </VStack>
       </Box>
     </AuthenticatedLayout>

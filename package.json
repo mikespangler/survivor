@@ -23,7 +23,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "db:reset": "npx prisma migrate reset --force"
+    "db:reset": "npx prisma migrate reset --force",
+    "db:seed": "ts-node prisma/seed-midseason.ts",
+    "db:add-me": "ts-node prisma/add-user-to-league.ts"
   },
   "dependencies": {
     "@clerk/clerk-sdk-node": "^4.13.23",

@@ -13,6 +13,7 @@ import { CastawayModule } from './castaway/castaway.module';
 import { TeamModule } from './team/team.module';
 import { QuestionModule } from './question/question.module';
 import { EpisodeModule } from './episode/episode.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { EpisodeModule } from './episode/episode.module';
     TeamModule,
     QuestionModule,
     EpisodeModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [

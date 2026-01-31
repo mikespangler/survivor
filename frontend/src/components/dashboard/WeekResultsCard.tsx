@@ -1,13 +1,19 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Box,
   VStack,
   HStack,
   Text,
   Flex,
+  Alert,
+  AlertIcon,
+  Skeleton,
 } from '@chakra-ui/react';
 import { CheckIcon, CloseIcon } from './icons';
+import { api } from '@/lib/api';
+import type { EpisodeResultsResponse } from '@/types/api';
 
 interface QuestionResult {
   text: string;
@@ -16,35 +22,133 @@ interface QuestionResult {
 }
 
 interface WeekResultsCardProps {
-  // These would come from an API in production
-  weekNumber?: number;
-  pointsEarned?: number;
-  correctPredictions?: number;
-  totalPredictions?: number;
-  questions?: QuestionResult[];
+  leagueId: string;
+  seasonId: string;
+  episodeNumber: number;
 }
 
-// Mock data for week results
-const mockWeekResults = {
-  weekNumber: 6,
-  pointsEarned: 60,
-  correctPredictions: 3,
-  totalPredictions: 4,
-  questions: [
-    { text: 'Who will be voted out?', correct: true, points: 25 },
-    { text: 'Will there be a blindside?', correct: true, points: 15 },
-    { text: 'Will an immunity idol be played?', correct: true, points: 15 },
-    { text: 'Who finds the immunity idol?', correct: false, points: 0 },
-  ],
-};
+interface TransformedResults {
+  weekNumber: number;
+  pointsEarned: number;
+  correctPredictions: number;
+  totalPredictions: number;
+  questions: QuestionResult[];
+}
+
+function transformResults(data: EpisodeResultsResponse): TransformedResults {
+  // Filter questions for current user's answers
+  const userQuestions = data.questions
+    .map(q => {
+      const userAnswer = q.answers.find(a => a.isCurrentUser);
+      if (!userAnswer) return null;
+
+      const isCorrect = q.isScored &&
+        userAnswer.answer.toLowerCase().trim() ===
+        q.correctAnswer?.toLowerCase().trim();
+
+      return {
+        text: q.text,
+        correct: isCorrect,
+        points: userAnswer.pointsEarned || 0
+      };
+    })
+    .filter((q): q is QuestionResult => q !== null);
+
+  const pointsEarned = userQuestions.reduce((sum, q) => sum + q.points, 0);
+  const correctPredictions = userQuestions.filter(q => q.correct).length;
+
+  return {
+    weekNumber: data.episodeNumber,
+    pointsEarned,
+    correctPredictions,
+    totalPredictions: userQuestions.length,
+    questions: userQuestions
+  };
+}
 
 export function WeekResultsCard({
-  weekNumber = mockWeekResults.weekNumber,
-  pointsEarned = mockWeekResults.pointsEarned,
-  correctPredictions = mockWeekResults.correctPredictions,
-  totalPredictions = mockWeekResults.totalPredictions,
-  questions = mockWeekResults.questions,
+  leagueId,
+  seasonId,
+  episodeNumber,
 }: WeekResultsCardProps) {
+  const [results, setResults] = useState<EpisodeResultsResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadResults = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const data = await api.getEpisodeResults(leagueId, seasonId, episodeNumber);
+        setResults(data);
+      } catch (err) {
+        console.error('Failed to load episode results:', err);
+        setError('Failed to load week results');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadResults();
+  }, [leagueId, seasonId, episodeNumber]);
+
+  if (isLoading) {
+    return (
+      <VStack align="stretch" gap={4} w="full">
+        <Skeleton height="32px" width="200px" />
+        <Skeleton height="120px" width="100%" />
+        <Skeleton height="58px" width="100%" />
+        <Skeleton height="58px" width="100%" />
+      </VStack>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert status="error" borderRadius="24px">
+        <AlertIcon />
+        {error}
+      </Alert>
+    );
+  }
+
+  // No results or no questions
+  if (!results || results.questions.length === 0) {
+    return null;
+  }
+
+  // Not fully scored yet
+  if (!results.isFullyScored) {
+    return (
+      <Box bg="bg.secondary" p={4} borderRadius="16px">
+        <Text color="text.secondary">
+          Week {episodeNumber} results pending - questions not yet scored
+        </Text>
+      </Box>
+    );
+  }
+
+  // User has no team (e.g., admins viewing leagues they're not in)
+  const hasUserAnswers = results.questions.some(q =>
+    q.answers.some(a => a.isCurrentUser)
+  );
+
+  if (!hasUserAnswers) {
+    return null;
+  }
+
+  const transformedData = transformResults(results);
+
+  const {
+    weekNumber,
+    pointsEarned,
+    correctPredictions,
+    totalPredictions,
+    questions
+  } = transformedData;
+
   return (
     <VStack align="stretch" gap={4} w="full">
       {/* Header */}

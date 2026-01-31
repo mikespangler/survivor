@@ -44,6 +44,7 @@ import {
 import { useUser } from '@clerk/nextjs';
 import { api } from '@/lib/api';
 import type { League, Season, EpisodeResultsResponse } from '@/types/api';
+import { AuthenticatedLayout } from '@/components/navigation/AuthenticatedLayout';
 
 function CheckIcon() {
   return (
@@ -160,28 +161,32 @@ export default function QuestionsResultsPage() {
 
   if (isLoading && !resultsData) {
     return (
-      <Box as="main" minH="100vh" py={20}>
-        <Container maxW="container.lg">
-          <VStack gap={4}>
-            <Spinner size="xl" />
-            <Text>Loading results...</Text>
-          </VStack>
-        </Container>
-      </Box>
+      <AuthenticatedLayout>
+        <Box as="main" minH="100vh" py={20}>
+          <Container maxW="container.lg">
+            <VStack gap={4}>
+              <Spinner size="xl" />
+              <Text>Loading results...</Text>
+            </VStack>
+          </Container>
+        </Box>
+      </AuthenticatedLayout>
     );
   }
 
   if (error) {
     return (
-      <Box as="main" minH="100vh" py={20}>
-        <Container maxW="container.lg">
-          <Alert status="error" borderRadius="md">
-            <AlertIcon />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        </Container>
-      </Box>
+      <AuthenticatedLayout>
+        <Box as="main" minH="100vh" py={20}>
+          <Container maxW="container.lg">
+            <Alert status="error" borderRadius="md">
+              <AlertIcon />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          </Container>
+        </Box>
+      </AuthenticatedLayout>
     );
   }
 
@@ -189,285 +194,287 @@ export default function QuestionsResultsPage() {
   const isUpcoming = activeSeason?.status === 'UPCOMING';
 
   return (
-    <Box as="main" minH="100vh" py={10}>
-      <Container maxW="container.lg">
-        <VStack gap={6} align="stretch">
-          <HStack justify="space-between" align="flex-start">
-            <Box>
-              <Heading as="h1" size="xl" color="text.primary">
-                Question Results
-              </Heading>
-              {league && activeSeason && (
-                <Text fontSize="lg" color="text.secondary">
-                  {league.name} - {activeSeason.name}
-                </Text>
-              )}
-            </Box>
-            <Button
-              variant="primary"
-              onClick={() => router.push(`/leagues/${leagueId}/dashboard`)}
-            >
-              Back to Dashboard
-            </Button>
-          </HStack>
-
-          {/* Show upcoming season message */}
-          {isUpcoming ? (
-            <Alert
-              status="info"
-              borderRadius="24px"
-              bg="linear-gradient(169.729deg, rgb(33, 38, 48) 2.5008%, rgb(25, 29, 36) 97.499%)"
-              border="2px solid"
-              borderColor="rgba(43, 48, 59, 0.5)"
-              p={6}
-            >
-              <AlertIcon color="brand.primary" />
+    <AuthenticatedLayout>
+      <Box as="main" minH="100vh" py={10}>
+        <Container maxW="container.lg">
+          <VStack gap={6} align="stretch">
+            <HStack justify="space-between" align="flex-start">
               <Box>
-                <AlertTitle color="text.primary" fontSize="18px" mb={2}>
-                  Season Coming Soon
-                </AlertTitle>
-                <AlertDescription color="text.secondary" fontSize="16px">
-                  Question results will be available after Week 1 airs. Check back after the season starts!
-                </AlertDescription>
-              </Box>
-            </Alert>
-          ) : (
-            <>
-              {/* Episode Selector */}
-              <HStack>
-                <FormControl maxW="200px">
-                  <FormLabel>Episode</FormLabel>
-                  <Select
-                    value={selectedEpisode}
-                    onChange={(e) => setSelectedEpisode(parseInt(e.target.value, 10))}
-                  >
-                    {Array.from({ length: 14 }, (_, i) => i + 1).map((num) => (
-                      <option key={num} value={num}>
-                        Episode {num}
-                      </option>
-                    ))}
-                  </Select>
-                </FormControl>
-                {resultsData && (
-                  <Box pt={8}>
-                    {!resultsData.deadlinePassed ? (
-                      <Badge colorScheme="yellow">Submissions Open</Badge>
-                    ) : resultsData.isFullyScored ? (
-                      <Badge colorScheme="green">Fully Scored</Badge>
-                    ) : (
-                      <Badge colorScheme="orange">Awaiting Scoring</Badge>
-                    )}
-                  </Box>
+                <Heading as="h1" size="xl" color="text.primary">
+                  Question Results
+                </Heading>
+                {league && activeSeason && (
+                  <Text fontSize="lg" color="text.secondary">
+                    {league.name} - {activeSeason.name}
+                  </Text>
                 )}
-              </HStack>
+              </Box>
+              <Button
+                variant="primary"
+                onClick={() => router.push(`/leagues/${leagueId}/dashboard`)}
+              >
+                Back to Dashboard
+              </Button>
+            </HStack>
 
-              {!resultsData || resultsData.questions.length === 0 ? (
-                <Alert status="info" borderRadius="md">
-                  <AlertIcon />
-                  <AlertTitle>No Questions</AlertTitle>
-                  <AlertDescription>
-                    No questions have been set for this episode yet.
+            {/* Show upcoming season message */}
+            {isUpcoming ? (
+              <Alert
+                status="info"
+                borderRadius="24px"
+                bg="linear-gradient(169.729deg, rgb(33, 38, 48) 2.5008%, rgb(25, 29, 36) 97.499%)"
+                border="2px solid"
+                borderColor="rgba(43, 48, 59, 0.5)"
+                p={6}
+              >
+                <AlertIcon color="brand.primary" />
+                <Box>
+                  <AlertTitle color="text.primary" fontSize="18px" mb={2}>
+                    Season Coming Soon
+                  </AlertTitle>
+                  <AlertDescription color="text.secondary" fontSize="16px">
+                    Question results will be available after Week 1 airs. Check back after the season starts!
                   </AlertDescription>
-                </Alert>
-              ) : (
-            <Tabs>
-              <TabList>
-                <Tab>Leaderboard</Tab>
-                <Tab>Questions</Tab>
-              </TabList>
-
-              <TabPanels>
-                {/* Leaderboard Tab */}
-                <TabPanel px={0}>
-                  {resultsData.leaderboard.length === 0 ? (
-                    <Alert status="info" borderRadius="md">
-                      <AlertIcon />
-                      <AlertDescription>
-                        {resultsData.isFullyScored
-                          ? 'No answers have been submitted for this episode.'
-                          : 'Results will appear here after questions are scored.'}
-                      </AlertDescription>
-                    </Alert>
-                  ) : (
-                    <Card>
-                      <CardHeader>
-                        <Heading size="md">Episode {selectedEpisode} Standings</Heading>
-                      </CardHeader>
-                      <CardBody pt={0}>
-                        <Table>
-                          <Thead>
-                            <Tr>
-                              <Th>Rank</Th>
-                              <Th>Team</Th>
-                              <Th isNumeric>Points</Th>
-                            </Tr>
-                          </Thead>
-                          <Tbody>
-                            {resultsData.leaderboard.map((entry) => (
-                              <Tr
-                                key={entry.teamId}
-                                bg={entry.isCurrentUser ? 'orange.50' : undefined}
-                                fontWeight={entry.isCurrentUser ? 'bold' : undefined}
-                              >
-                                <Td>
-                                  {entry.rank === 1 && '🥇 '}
-                                  {entry.rank === 2 && '🥈 '}
-                                  {entry.rank === 3 && '🥉 '}
-                                  {entry.rank}
-                                </Td>
-                                <Td>
-                                  {entry.teamName}
-                                  {entry.isCurrentUser && (
-                                    <Badge ml={2} colorScheme="orange">
-                                      You
-                                    </Badge>
-                                  )}
-                                </Td>
-                                <Td isNumeric>{entry.points}</Td>
-                              </Tr>
-                            ))}
-                          </Tbody>
-                        </Table>
-                      </CardBody>
-                    </Card>
+                </Box>
+              </Alert>
+            ) : (
+              <>
+                {/* Episode Selector */}
+                <HStack>
+                  <FormControl maxW="200px">
+                    <FormLabel>Episode</FormLabel>
+                    <Select
+                      value={selectedEpisode}
+                      onChange={(e) => setSelectedEpisode(parseInt(e.target.value, 10))}
+                    >
+                      {Array.from({ length: 14 }, (_, i) => i + 1).map((num) => (
+                        <option key={num} value={num}>
+                          Episode {num}
+                        </option>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  {resultsData && (
+                    <Box pt={8}>
+                      {!resultsData.deadlinePassed ? (
+                        <Badge colorScheme="yellow">Submissions Open</Badge>
+                      ) : resultsData.isFullyScored ? (
+                        <Badge colorScheme="green">Fully Scored</Badge>
+                      ) : (
+                        <Badge colorScheme="orange">Awaiting Scoring</Badge>
+                      )}
+                    </Box>
                   )}
-                </TabPanel>
+                </HStack>
 
-                {/* Questions Tab */}
-                <TabPanel px={0}>
-                  {!resultsData.deadlinePassed ? (
-                    <Alert status="warning" borderRadius="md" mb={4}>
-                      <AlertIcon />
-                      <AlertDescription>
-                        Full answers will be visible after the submission deadline passes.
-                      </AlertDescription>
-                    </Alert>
-                  ) : null}
+                {!resultsData || resultsData.questions.length === 0 ? (
+                  <Alert status="info" borderRadius="md">
+                    <AlertIcon />
+                    <AlertTitle>No Questions</AlertTitle>
+                    <AlertDescription>
+                      No questions have been set for this episode yet.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+              <Tabs>
+                <TabList>
+                  <Tab>Leaderboard</Tab>
+                  <Tab>Questions</Tab>
+                </TabList>
 
-                  <Accordion allowMultiple defaultIndex={[0]}>
-                    {resultsData.questions.map((question, index) => (
-                      <AccordionItem key={question.id}>
-                        <h2>
-                          <AccordionButton>
-                            <HStack flex="1" justify="space-between" pr={4}>
-                              <HStack>
-                                <Text fontWeight="bold">Q{index + 1}.</Text>
-                                <Text noOfLines={1}>{question.text}</Text>
-                              </HStack>
-                              <HStack>
-                                <Badge colorScheme="blue">{question.pointValue} pt</Badge>
-                                {question.isScored ? (
-                                  <Badge colorScheme="green">Scored</Badge>
-                                ) : (
-                                  <Badge colorScheme="yellow">Pending</Badge>
-                                )}
-                              </HStack>
-                            </HStack>
-                            <AccordionIcon />
-                          </AccordionButton>
-                        </h2>
-                        <AccordionPanel pb={4}>
-                          <VStack align="stretch" spacing={4}>
-                            <Box>
-                              <Text fontWeight="bold" mb={2}>
-                                {question.text}
-                              </Text>
-                              {question.type === 'MULTIPLE_CHOICE' && question.options && (
-                                <HStack spacing={2} flexWrap="wrap">
-                                  {(question.options as string[]).map((opt) => (
-                                    <Badge
-                                      key={opt}
-                                      colorScheme={
-                                        question.isScored && question.correctAnswer === opt
-                                          ? 'green'
-                                          : 'gray'
-                                      }
-                                      variant={
-                                        question.isScored && question.correctAnswer === opt
-                                          ? 'solid'
-                                          : 'outline'
-                                      }
-                                    >
-                                      {opt}
-                                    </Badge>
-                                  ))}
+                <TabPanels>
+                  {/* Leaderboard Tab */}
+                  <TabPanel px={0}>
+                    {resultsData.leaderboard.length === 0 ? (
+                      <Alert status="info" borderRadius="md">
+                        <AlertIcon />
+                        <AlertDescription>
+                          {resultsData.isFullyScored
+                            ? 'No answers have been submitted for this episode.'
+                            : 'Results will appear here after questions are scored.'}
+                        </AlertDescription>
+                      </Alert>
+                    ) : (
+                      <Card>
+                        <CardHeader>
+                          <Heading size="md">Episode {selectedEpisode} Standings</Heading>
+                        </CardHeader>
+                        <CardBody pt={0}>
+                          <Table>
+                            <Thead>
+                              <Tr>
+                                <Th>Rank</Th>
+                                <Th>Team</Th>
+                                <Th isNumeric>Points</Th>
+                              </Tr>
+                            </Thead>
+                            <Tbody>
+                              {resultsData.leaderboard.map((entry) => (
+                                <Tr
+                                  key={entry.teamId}
+                                  bg={entry.isCurrentUser ? 'orange.50' : undefined}
+                                  fontWeight={entry.isCurrentUser ? 'bold' : undefined}
+                                >
+                                  <Td>
+                                    {entry.rank === 1 && '🥇 '}
+                                    {entry.rank === 2 && '🥈 '}
+                                    {entry.rank === 3 && '🥉 '}
+                                    {entry.rank}
+                                  </Td>
+                                  <Td>
+                                    {entry.teamName}
+                                    {entry.isCurrentUser && (
+                                      <Badge ml={2} colorScheme="orange">
+                                        You
+                                      </Badge>
+                                    )}
+                                  </Td>
+                                  <Td isNumeric>{entry.points}</Td>
+                                </Tr>
+                              ))}
+                            </Tbody>
+                          </Table>
+                        </CardBody>
+                      </Card>
+                    )}
+                  </TabPanel>
+
+                  {/* Questions Tab */}
+                  <TabPanel px={0}>
+                    {!resultsData.deadlinePassed ? (
+                      <Alert status="warning" borderRadius="md" mb={4}>
+                        <AlertIcon />
+                        <AlertDescription>
+                          Full answers will be visible after the submission deadline passes.
+                        </AlertDescription>
+                      </Alert>
+                    ) : null}
+
+                    <Accordion allowMultiple defaultIndex={[0]}>
+                      {resultsData.questions.map((question, index) => (
+                        <AccordionItem key={question.id}>
+                          <h2>
+                            <AccordionButton>
+                              <HStack flex="1" justify="space-between" pr={4}>
+                                <HStack>
+                                  <Text fontWeight="bold">Q{index + 1}.</Text>
+                                  <Text noOfLines={1}>{question.text}</Text>
                                 </HStack>
-                              )}
-                            </Box>
-
-                            {question.isScored && (
-                              <Box p={3} bg="green.50" borderRadius="md">
-                                <Text fontWeight="bold" color="green.700">
-                                  Correct Answer: {question.correctAnswer}
+                                <HStack>
+                                  <Badge colorScheme="blue">{question.pointValue} pt</Badge>
+                                  {question.isScored ? (
+                                    <Badge colorScheme="green">Scored</Badge>
+                                  ) : (
+                                    <Badge colorScheme="yellow">Pending</Badge>
+                                  )}
+                                </HStack>
+                              </HStack>
+                              <AccordionIcon />
+                            </AccordionButton>
+                          </h2>
+                          <AccordionPanel pb={4}>
+                            <VStack align="stretch" spacing={4}>
+                              <Box>
+                                <Text fontWeight="bold" mb={2}>
+                                  {question.text}
                                 </Text>
-                              </Box>
-                            )}
-
-                            {question.answers.length > 0 ? (
-                              <Table size="sm">
-                                <Thead>
-                                  <Tr>
-                                    <Th>Team</Th>
-                                    <Th>Answer</Th>
-                                    {question.isScored && <Th isNumeric>Points</Th>}
-                                  </Tr>
-                                </Thead>
-                                <Tbody>
-                                  {question.answers.map((answer) => {
-                                    const isCorrect =
-                                      question.isScored &&
-                                      answer.answer?.toLowerCase().trim() ===
-                                        question.correctAnswer?.toLowerCase().trim();
-
-                                    return (
-                                      <Tr
-                                        key={answer.teamId}
-                                        bg={answer.isCurrentUser ? 'orange.50' : undefined}
+                                {question.type === 'MULTIPLE_CHOICE' && question.options && (
+                                  <HStack spacing={2} flexWrap="wrap">
+                                    {(question.options as string[]).map((opt) => (
+                                      <Badge
+                                        key={opt}
+                                        colorScheme={
+                                          question.isScored && question.correctAnswer === opt
+                                            ? 'green'
+                                            : 'gray'
+                                        }
+                                        variant={
+                                          question.isScored && question.correctAnswer === opt
+                                            ? 'solid'
+                                            : 'outline'
+                                        }
                                       >
-                                        <Td>
-                                          {answer.teamName}
-                                          {answer.isCurrentUser && (
-                                            <Badge ml={2} colorScheme="orange" size="sm">
-                                              You
-                                            </Badge>
-                                          )}
-                                        </Td>
-                                        <Td>
-                                          <HStack>
-                                            <Text>{answer.answer}</Text>
-                                            {question.isScored && (
-                                              isCorrect ? <CheckIcon /> : <XIcon />
+                                        {opt}
+                                      </Badge>
+                                    ))}
+                                  </HStack>
+                                )}
+                              </Box>
+
+                              {question.isScored && (
+                                <Box p={3} bg="green.50" borderRadius="md">
+                                  <Text fontWeight="bold" color="green.700">
+                                    Correct Answer: {question.correctAnswer}
+                                  </Text>
+                                </Box>
+                              )}
+
+                              {question.answers.length > 0 ? (
+                                <Table size="sm">
+                                  <Thead>
+                                    <Tr>
+                                      <Th>Team</Th>
+                                      <Th>Answer</Th>
+                                      {question.isScored && <Th isNumeric>Points</Th>}
+                                    </Tr>
+                                  </Thead>
+                                  <Tbody>
+                                    {question.answers.map((answer) => {
+                                      const isCorrect =
+                                        question.isScored &&
+                                        answer.answer?.toLowerCase().trim() ===
+                                          question.correctAnswer?.toLowerCase().trim();
+
+                                      return (
+                                        <Tr
+                                          key={answer.teamId}
+                                          bg={answer.isCurrentUser ? 'orange.50' : undefined}
+                                        >
+                                          <Td>
+                                            {answer.teamName}
+                                            {answer.isCurrentUser && (
+                                              <Badge ml={2} colorScheme="orange" size="sm">
+                                                You
+                                              </Badge>
                                             )}
-                                          </HStack>
-                                        </Td>
-                                        {question.isScored && (
-                                          <Td isNumeric fontWeight="bold">
-                                            {answer.pointsEarned ?? 0}
                                           </Td>
-                                        )}
-                                      </Tr>
-                                    );
-                                  })}
-                                </Tbody>
-                              </Table>
-                            ) : (
-                              <Text color="text.secondary" fontStyle="italic">
-                                No answers submitted yet.
-                              </Text>
-                            )}
-                          </VStack>
-                        </AccordionPanel>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                </TabPanel>
-              </TabPanels>
-            </Tabs>
-          )}
-            </>
-          )}
-        </VStack>
-      </Container>
-    </Box>
+                                          <Td>
+                                            <HStack>
+                                              <Text>{answer.answer}</Text>
+                                              {question.isScored && (
+                                                isCorrect ? <CheckIcon /> : <XIcon />
+                                              )}
+                                            </HStack>
+                                          </Td>
+                                          {question.isScored && (
+                                            <Td isNumeric fontWeight="bold">
+                                              {answer.pointsEarned ?? 0}
+                                            </Td>
+                                          )}
+                                        </Tr>
+                                      );
+                                    })}
+                                  </Tbody>
+                                </Table>
+                              ) : (
+                                <Text color="text.secondary" fontStyle="italic">
+                                  No answers submitted yet.
+                                </Text>
+                              )}
+                            </VStack>
+                          </AccordionPanel>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  </TabPanel>
+                </TabPanels>
+              </Tabs>
+            )}
+              </>
+            )}
+          </VStack>
+        </Container>
+      </Box>
+    </AuthenticatedLayout>
   );
 }

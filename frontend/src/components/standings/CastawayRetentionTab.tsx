@@ -46,16 +46,17 @@ export function CastawayRetentionTab({
   };
 
   return (
-    <VStack align="stretch" gap={6}>
+    <VStack align="stretch" gap={4}>
       <HStack justify="space-between" align="center">
-        <Text fontSize="lg" fontWeight="semibold">
+        <Text fontSize="md" fontWeight="semibold">
           Castaway Retention by Episode
         </Text>
         <Select
           value={selectedEpisode}
           onChange={(e) => setSelectedEpisode(parseInt(e.target.value, 10))}
-          maxW="250px"
-          borderRadius="12px"
+          maxW="200px"
+          size="sm"
+          borderRadius="8px"
         >
           {episodes.map((ep) => (
             <option key={ep} value={ep}>
@@ -66,18 +67,18 @@ export function CastawayRetentionTab({
       </HStack>
 
       <Box
-        borderRadius="24px"
+        borderRadius="16px"
         overflow="hidden"
         borderWidth="1px"
         borderColor="border.default"
         bg="bg.secondary"
       >
-        <Table variant="simple">
+        <Table variant="simple" size="sm">
           <Thead bg="bg.primary">
             <Tr>
-              <Th>Team</Th>
-              <Th>Active Castaways</Th>
-              <Th isNumeric>Retention Points</Th>
+              <Th py={2} fontSize="xs" textTransform="uppercase">Team</Th>
+              <Th py={2} fontSize="xs" textTransform="uppercase">Active Castaways</Th>
+              <Th py={2} fontSize="xs" textTransform="uppercase" isNumeric>Retention Points</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -89,36 +90,36 @@ export function CastawayRetentionTab({
                 <Tr
                   key={team.id}
                   bg={team.isCurrentUser ? 'bg.overlay' : undefined}
-                  borderLeftWidth={team.isCurrentUser ? '4px' : '0'}
+                  borderLeftWidth={team.isCurrentUser ? '3px' : '0'}
                   borderLeftColor={team.isCurrentUser ? 'brand.primary' : undefined}
                 >
-                  <Td fontWeight={team.isCurrentUser ? 'semibold' : 'normal'}>
+                  <Td py={2} fontWeight={team.isCurrentUser ? 'semibold' : 'normal'} fontSize="sm">
                     {team.name}
                   </Td>
-                  <Td>
-                    <Wrap>
+                  <Td py={2}>
+                    <Wrap gap={1.5}>
                       {activeCastaways.length > 0 ? (
                         activeCastaways.map((castaway) => (
                           <WrapItem key={castaway.id}>
                             <Badge
                               colorScheme={castaway.isActive ? 'green' : 'gray'}
-                              fontSize="sm"
-                              px={2}
-                              py={1}
-                              borderRadius="8px"
+                              fontSize="xs"
+                              px={1.5}
+                              py={0.5}
+                              borderRadius="6px"
                             >
                               {castaway.castawayName}
                             </Badge>
                           </WrapItem>
                         ))
                       ) : (
-                        <Text fontSize="sm" color="text.secondary">
+                        <Text fontSize="xs" color="text.secondary">
                           No active castaways
                         </Text>
                       )}
                     </Wrap>
                   </Td>
-                  <Td isNumeric fontWeight="bold">
+                  <Td py={2} isNumeric fontWeight="bold" fontSize="sm">
                     {retentionPoints}
                   </Td>
                 </Tr>
