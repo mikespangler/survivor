@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import {
   Box,
   Container,
@@ -13,8 +14,18 @@ import {
   Image,
 } from '@chakra-ui/react';
 import Link from 'next/link';
+import { api } from '@/lib/api';
 
 export const HeroSection = () => {
+  const [activeSeasonNumber, setActiveSeasonNumber] = useState<number | null>(null);
+
+  useEffect(() => {
+    api
+      .getActiveSeason()
+      .then((season) => (season ? setActiveSeasonNumber(season.number) : null))
+      .catch(() => {});
+  }, []);
+
   return (
     <Box
       as="section"
@@ -115,7 +126,9 @@ export const HeroSection = () => {
             mb={8}
           >
             <Image src="/landing/icon-fire.svg" alt="" w="16px" h="16px" />
-            Season 48 Now Live!
+            {activeSeasonNumber != null
+              ? `Season ${activeSeasonNumber} Now Live!`
+              : 'Now Live!'}
           </Badge>
 
           {/* Main Headline */}

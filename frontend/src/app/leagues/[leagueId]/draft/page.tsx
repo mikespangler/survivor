@@ -240,13 +240,6 @@ export default function DraftPage() {
         <VStack spacing={8} align="stretch">
           {/* Header */}
           <Box>
-            <Button
-              variant="ghost"
-              onClick={() => router.push(`/leagues/${leagueId}/dashboard`)}
-              mb={4}
-            >
-              ← Back to Dashboard
-            </Button>
             <Heading size="2xl" fontWeight="bold" color="text.primary">
               Build Your Roster
             </Heading>

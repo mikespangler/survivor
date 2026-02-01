@@ -8,10 +8,11 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { Public } from '../auth/decorators/public.decorator';
+import { SystemAdminGuard } from '../auth/guards/system-admin.guard';
 import { SeasonService } from './season.service';
 import { CreateSeasonDto } from './dto/create-season.dto';
 import { UpdateSeasonDto } from './dto/update-season.dto';
-import { SystemAdminGuard } from '../auth/guards/system-admin.guard';
 
 @Controller('seasons')
 export class SeasonController {
@@ -20,6 +21,12 @@ export class SeasonController {
   @Get()
   findAll() {
     return this.seasonService.findAll();
+  }
+
+  @Get('active')
+  @Public()
+  getActiveSeason() {
+    return this.seasonService.getActiveSeason();
   }
 
   @Get(':id/metadata')

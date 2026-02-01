@@ -209,12 +209,6 @@ export default function QuestionsResultsPage() {
                   </Text>
                 )}
               </Box>
-              <Button
-                variant="primary"
-                onClick={() => router.push(`/leagues/${leagueId}/dashboard`)}
-              >
-                Back to Dashboard
-              </Button>
             </HStack>
 
             {/* Show upcoming season message */}
@@ -278,7 +272,7 @@ export default function QuestionsResultsPage() {
                 ) : (
               <Tabs>
                 <TabList>
-                  <Tab>Leaderboard</Tab>
+                  <Tab>Episode Leaderboard</Tab>
                   <Tab>Questions</Tab>
                 </TabList>
 

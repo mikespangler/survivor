@@ -127,7 +127,8 @@ export function LeagueStandingsCard({
               <VStack gap={4}>
                 <Avatar
                   size="lg"
-                  name={team.owner.name || team.owner.email || 'User'}
+                  name={team.name}
+                  src={team.logoImageUrl || undefined}
                   borderRadius="12px"
                   bg="rgba(48, 53, 65, 0.5)"
                 />

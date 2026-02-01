@@ -1170,13 +1170,22 @@ export default function AdminPage() {
                               {new Date(league.createdAt).toLocaleDateString()}
                             </Td>
                             <Td>
-                              <Button
-                                size="sm"
-                                colorScheme="orange"
-                                onClick={() => router.push(`/leagues/${league.id}`)}
-                              >
-                                View
-                              </Button>
+                              <HStack spacing={2}>
+                                <Button
+                                  size="sm"
+                                  colorScheme="orange"
+                                  onClick={() => router.push(`/leagues/${league.id}`)}
+                                >
+                                  View
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  colorScheme="blue"
+                                  onClick={() => router.push(`/admin/leagues/${league.id}/members`)}
+                                >
+                                  Manage Members
+                                </Button>
+                              </HStack>
                             </Td>
                           </Tr>
                         ))}

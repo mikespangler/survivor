@@ -83,6 +83,15 @@ export class SeasonService {
     });
   }
 
+  async getActiveSeason(): Promise<{ number: number; name: string } | null> {
+    const season = await this.prisma.season.findFirst({
+      where: { status: 'ACTIVE' },
+      orderBy: { number: 'desc' },
+      select: { number: true, name: true },
+    });
+    return season;
+  }
+
   async getMetadata(id: string) {
     const season = await this.prisma.season.findUnique({
       where: { id },

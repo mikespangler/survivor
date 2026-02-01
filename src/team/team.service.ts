@@ -207,5 +207,40 @@ export class TeamService {
       );
     });
   }
+
+  async updateName(teamId: string, name: string) {
+    return this.prisma.team.update({
+      where: { id: teamId },
+      data: { name },
+    });
+  }
+
+  async updateLogo(teamId: string, logoImageUrl: string | null) {
+    return this.prisma.team.update({
+      where: { id: teamId },
+      data: { logoImageUrl },
+    });
+  }
+
+  async findOne(teamId: string) {
+    const team = await this.prisma.team.findUnique({
+      where: { id: teamId },
+      include: {
+        owner: true,
+        leagueSeason: {
+          include: {
+            league: true,
+            season: true,
+          },
+        },
+      },
+    });
+
+    if (!team) {
+      throw new NotFoundException(`Team with ID ${teamId} not found`);
+    }
+
+    return team;
+  }
 }
 

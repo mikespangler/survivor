@@ -67,6 +67,7 @@ export interface DraftConfig {
 export interface Team {
   id: string;
   name: string;
+  logoImageUrl?: string | null;
   leagueSeasonId: string;
   leagueSeason?: LeagueSeason;
   ownerId: string;
@@ -153,6 +154,7 @@ export interface LeagueStandings {
 export interface StandingsTeam {
   id: string;
   name: string;
+  logoImageUrl?: string | null;
   totalPoints: number;
   rank: number;
   owner: {
@@ -517,6 +519,7 @@ export interface TeamEpisodePoints {
 export interface DetailedStandingsTeam {
   id: string;
   name: string;
+  logoImageUrl?: string | null;
   totalPoints: number;
   rank: number;
   rankChange: number;

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useClerk, UserButton } from '@clerk/nextjs';
+import { useClerk } from '@clerk/nextjs';
 import {
   Box,
   VStack,
@@ -28,6 +28,7 @@ import {
   CollapseIcon,
   ChevronDownIcon,
   AdminIcon,
+  ProfileIcon,
 } from './icons';
 import type { League, SeasonMetadata } from '@/types/api';
 
@@ -227,46 +228,40 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                   px={3}
                 >
                   {isCollapsed ? (
-                    <Flex
-                      bg="rgba(254, 254, 254, 0.2)"
-                      borderRadius="full"
-                      boxSize="32px"
-                      align="center"
-                      justify="center"
-                    >
-                      <Text fontFamily="body" fontSize="12px" fontWeight="bold" color="#1D222A">
-                        {league.name.slice(0, 2).toUpperCase()}
+                    <HStack w="full" justify="center" minW={0}>
+                      <Text
+                        fontFamily="heading"
+                        fontSize="12px"
+                        fontWeight="bold"
+                        color="#1D222A"
+                        noOfLines={1}
+                        truncate
+                      >
+                        {league.name}
                       </Text>
-                    </Flex>
+                    </HStack>
                   ) : (
-                    <HStack w="full" justify="space-between">
-                      <HStack gap={2}>
-                        <Flex
-                          bg="rgba(254, 254, 254, 0.2)"
-                          borderRadius="full"
-                          boxSize="32px"
-                          align="center"
-                          justify="center"
+                    <HStack w="full" justify="space-between" gap={2} minW={0}>
+                      <VStack align="start" gap={0} flex="1" minW={0}>
+                        <Text
+                          fontFamily="heading"
+                          fontSize="14px"
+                          color="#14181F"
+                          noOfLines={1}
+                          truncate
                         >
-                          <Text fontFamily="body" fontSize="12px" fontWeight="bold" color="#1D222A">
-                            {league.name.slice(0, 2).toUpperCase()}
-                          </Text>
-                        </Flex>
-                        <VStack align="start" gap={0}>
-                          <Text fontFamily="heading" fontSize="14px" color="#14181F">
-                            {league.name}
-                          </Text>
-                          <Text
-                            fontFamily="body"
-                            fontSize="12px"
-                            fontWeight="bold"
-                            color="rgba(20, 24, 31, 0.65)"
-                          >
-                            Season {seasonNumber || '—'}
-                          </Text>
-                        </VStack>
-                      </HStack>
-                      <ChevronDownIcon boxSize="16px" color="#14181F" />
+                          {league.name}
+                        </Text>
+                        <Text
+                          fontFamily="body"
+                          fontSize="12px"
+                          fontWeight="bold"
+                          color="rgba(20, 24, 31, 0.65)"
+                        >
+                          Season {seasonNumber || '—'}
+                        </Text>
+                      </VStack>
+                      <ChevronDownIcon boxSize="16px" color="#14181F" flexShrink={0} />
                     </HStack>
                   )}
                 </MenuButton>
@@ -286,29 +281,15 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                         px={4}
                         py={3}
                       >
-                        <HStack gap={3} w="full">
-                          <Flex
-                            bg={l.id === league.id ? 'brand.primary' : 'rgba(254, 254, 254, 0.1)'}
-                            borderRadius="full"
-                            boxSize="32px"
-                            align="center"
-                            justify="center"
-                          >
-                            <Text
-                              fontFamily="body"
-                              fontSize="12px"
-                              fontWeight="bold"
-                              color={l.id === league.id ? '#1D222A' : 'text.secondary'}
-                            >
-                              {l.name.slice(0, 2).toUpperCase()}
-                            </Text>
-                          </Flex>
-                          <VStack align="start" gap={0} flex="1">
+                        <HStack gap={3} w="full" minW={0}>
+                          <VStack align="start" gap={0} flex="1" minW={0}>
                             <Text
                               fontFamily="heading"
                               fontSize="14px"
                               color="text.primary"
                               fontWeight={l.id === league.id ? 'bold' : 'medium'}
+                              noOfLines={1}
+                              truncate
                             >
                               {l.name}
                             </Text>
@@ -318,6 +299,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                               boxSize="8px"
                               borderRadius="full"
                               bg="brand.primary"
+                              flexShrink={0}
                             />
                           )}
                         </HStack>
@@ -341,33 +323,28 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                 cursor="default"
               >
                 {isCollapsed ? (
-                  <Flex
-                    bg="rgba(254, 254, 254, 0.2)"
-                    borderRadius="full"
-                    boxSize="32px"
-                    align="center"
-                    justify="center"
-                  >
-                    <Text fontFamily="body" fontSize="12px" fontWeight="bold" color="#1D222A">
-                      {league.name.slice(0, 2).toUpperCase()}
-                    </Text>
-                  </Flex>
-                ) : (
-                  <HStack gap={2} w="full">
-                    <Flex
-                      bg="rgba(254, 254, 254, 0.2)"
-                      borderRadius="full"
-                      boxSize="32px"
-                      align="center"
-                      justify="center"
-                      flexShrink={0}
+                  <HStack w="full" justify="center" minW={0}>
+                    <Text
+                      fontFamily="heading"
+                      fontSize="12px"
+                      fontWeight="bold"
+                      color="#1D222A"
+                      noOfLines={1}
+                      truncate
                     >
-                      <Text fontFamily="body" fontSize="12px" fontWeight="bold" color="#1D222A">
-                        {league.name.slice(0, 2).toUpperCase()}
-                      </Text>
-                    </Flex>
-                    <VStack align="start" gap={0} flex="1">
-                      <Text fontFamily="heading" fontSize="14px" color="#14181F">
+                      {league.name}
+                    </Text>
+                  </HStack>
+                ) : (
+                  <HStack gap={2} w="full" minW={0}>
+                    <VStack align="start" gap={0} flex="1" minW={0}>
+                      <Text
+                        fontFamily="heading"
+                        fontSize="14px"
+                        color="#14181F"
+                        noOfLines={1}
+                        truncate
+                      >
                         {league.name}
                       </Text>
                       <Text
@@ -459,32 +436,6 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
           borderTop="2px solid"
           borderColor="rgba(48, 53, 65, 0.5)"
         >
-          {/* User Profile */}
-          <Box
-            px={3}
-            py={2.5}
-            h="40px"
-            display="flex"
-            alignItems="center"
-            justifyContent={isCollapsed ? "center" : "flex-start"}
-            gap={3}
-          >
-            <UserButton
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  avatarBox: 'w-5 h-5',
-                  userButtonTrigger: 'focus:shadow-none',
-                },
-              }}
-            />
-            {!isCollapsed && (
-              <Text fontSize="14px" fontFamily="body" color="text.secondary" fontWeight="medium">
-                Profile
-              </Text>
-            )}
-          </Box>
-
           {/* Create League Button */}
           <NavLink
             href="/leagues/create"
@@ -503,6 +454,16 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
             isCollapsed={isCollapsed}
           >
             Join League
+          </NavLink>
+
+          {/* Profile */}
+          <NavLink
+            href="/profile"
+            icon={<ProfileIcon boxSize="20px" />}
+            isActive={pathname === '/profile'}
+            isCollapsed={isCollapsed}
+          >
+            Profile
           </NavLink>
 
           {/* Admin Link - Only show for admin users */}
@@ -536,11 +497,14 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
             color="text.secondary"
             fontWeight="medium"
             borderRadius="12px"
+            border="none"
             px={3}
             py={2.5}
             h="40px"
             w="full"
             _hover={{ bg: 'rgba(240, 101, 66, 0.05)' }}
+            _focus={{ boxShadow: 'none', outline: 'none' }}
+            _focusVisible={{ boxShadow: 'none', outline: 'none' }}
             onClick={handleLogout}
             cursor="pointer"
           >
@@ -561,11 +525,14 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
             color="text.secondary"
             fontWeight="normal"
             borderRadius="12px"
+            border="none"
             px={3}
             py={2}
             h="36px"
             w="full"
             _hover={{ bg: 'rgba(240, 101, 66, 0.05)' }}
+            _focus={{ boxShadow: 'none', outline: 'none' }}
+            _focusVisible={{ boxShadow: 'none', outline: 'none' }}
             onClick={handleCollapse}
             cursor="pointer"
           >

@@ -110,9 +110,7 @@ const Dashboard = () => {
 
           <Container maxW="container.xl" py={20} position="relative" zIndex={1}>
             <VStack gap={8} align="center" textAlign="center">
-              <Badge variant="accent" size="lg">
-                Welcome to Survivor Fantasy League!
-              </Badge>
+
 
               <Heading as="h1" size="4xl" maxW="800px">
                 Get Started, {user?.firstName || 'Champion'}!

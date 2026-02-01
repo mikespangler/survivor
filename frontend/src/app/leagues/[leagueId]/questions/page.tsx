@@ -369,14 +369,6 @@ export default function PlayerQuestionsPage() {
                   </AlertDescription>
                 </Box>
               </Alert>
-
-              <Button
-                variant="link"
-                color="brand.primary"
-                onClick={() => router.push(`/leagues/${leagueId}/dashboard`)}
-              >
-                ← Back to Dashboard
-              </Button>
             </VStack>
           </Container>
         </Box>

@@ -186,6 +186,17 @@ class ApiClient {
     });
   }
 
+  async updateUserProfile(data: { name?: string }): Promise<User> {
+    return this.request<User>('/users/me', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getUserTeams(): Promise<Team[]> {
+    return this.request<Team[]>('/users/me/teams');
+  }
+
   async deleteUser(id: string): Promise<void> {
     return this.request<void>(`/users/${id}`, {
       method: 'DELETE',
@@ -228,6 +239,10 @@ class ApiClient {
     return this.request<SeasonMetadata>(`/seasons/${id}/metadata`);
   }
 
+  async getActiveSeason(): Promise<{ number: number; name: string } | null> {
+    return this.request<{ number: number; name: string } | null>('/seasons/active');
+  }
+
   async createSeason(data: CreateSeasonDto): Promise<Season> {
     return this.request<Season>('/seasons', {
       method: 'POST',
@@ -262,6 +277,52 @@ class ApiClient {
     return this.request<Team>('/teams', {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  }
+
+  async uploadTeamLogo(teamId: string, file: File): Promise<Team> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    let token: string | null = null;
+    if (this.getToken) {
+      token = await this.getToken();
+    }
+
+    const url = `${this.baseUrl}/teams/${teamId}/logo`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        if (this.onUnauthorized) {
+          this.onUnauthorized();
+          return new Promise(() => {});
+        }
+        throw new Error('Unauthorized. Please sign in.');
+      }
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || `Upload failed: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  async deleteTeamLogo(teamId: string): Promise<Team> {
+    return this.request<Team>(`/teams/${teamId}/logo`, {
+      method: 'DELETE',
+    });
+  }
+
+  async updateTeamName(teamId: string, name: string): Promise<Team> {
+    return this.request<Team>(`/teams/${teamId}/name`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name }),
     });
   }
 
@@ -826,6 +887,54 @@ class ApiClient {
 
   async getAdminLeague(id: string): Promise<League> {
     return this.request<League>(`/admin/leagues/${id}`);
+  }
+
+  // Admin member management endpoints
+  async getLeagueMembers(leagueId: string): Promise<any[]> {
+    return this.request<any[]>(`/admin/leagues/${leagueId}/members`);
+  }
+
+  async addMemberToLeague(
+    leagueId: string,
+    userId: string,
+  ): Promise<{ member: User; team: Team }> {
+    return this.request<{ member: User; team: Team }>(
+      `/admin/leagues/${leagueId}/members`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ userId }),
+      },
+    );
+  }
+
+  async removeMemberFromLeague(
+    leagueId: string,
+    userId: string,
+  ): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(
+      `/admin/leagues/${leagueId}/members/${userId}`,
+      {
+        method: 'DELETE',
+      },
+    );
+  }
+
+  async searchUsers(query: string): Promise<User[]> {
+    return this.request<User[]>(`/admin/users/search?q=${encodeURIComponent(query)}`);
+  }
+
+  async sendEmailInvites(
+    leagueId: string,
+    emails: string[],
+  ): Promise<{ success: boolean; invited: string[]; alreadyMembers: string[] }> {
+    return this.request<{
+      success: boolean;
+      invited: string[];
+      alreadyMembers: string[];
+    }>(`/admin/leagues/${leagueId}/invite-email`, {
+      method: 'POST',
+      body: JSON.stringify({ emails }),
+    });
   }
 }
 

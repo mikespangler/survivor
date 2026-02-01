@@ -60,9 +60,11 @@ model LeagueSeason {
 model Team {
   id             String              @id @default(cuid())
   name           String
+  logoImageUrl   String?
   leagueSeasonId String
   ownerId        String
   totalPoints    Int                 @default(0)
+  createdAt      DateTime           @default(now())
   leagueSeason   LeagueSeason        @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
   owner          User                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   roster         TeamCastaway[]

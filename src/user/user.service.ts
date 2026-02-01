@@ -72,19 +72,19 @@ export class UserService {
     const existingUser = await this.findByClerkId(clerkUser.clerkId);
 
     if (existingUser) {
-      // Update existing user with latest info from Clerk
-      // Also ensure admin emails always have admin role
+      // Don't override name if user has set it - only update email and admin role
+      // This decouples the user's display name from Clerk
       return this.prisma.user.update({
         where: { clerkId: clerkUser.clerkId },
         data: {
           email: clerkUser.email,
-          name: clerkUser.name,
           ...(shouldBeAdmin && { systemRole: 'admin' }),
         },
       });
     }
 
     // Create new user (Just-in-Time sync)
+    // Only use Clerk name for initial creation
     return this.prisma.user.create({
       data: {
         clerkId: clerkUser.clerkId,
@@ -122,5 +122,20 @@ export class UserService {
     });
 
     return user?.lastViewedLeague || null;
+  }
+
+  async getUserTeams(userId: string) {
+    return this.prisma.team.findMany({
+      where: { ownerId: userId },
+      include: {
+        leagueSeason: {
+          include: {
+            league: true,
+            season: true,
+          },
+        },
+      },
+      orderBy: { leagueSeason: { league: { name: 'asc' } } },
+    });
   }
 }
