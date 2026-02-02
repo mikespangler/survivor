@@ -708,7 +708,7 @@ export class QuestionService {
     });
 
     // Trigger episode points recalculation for affected teams
-    const affectedTeamIds = Array.from(
+    const affectedTeamIds: string[] = Array.from(
       new Set(questions.flatMap((q) => q.answers.map((a) => a.teamId))),
     );
     const episodeNumber = questions[0]?.episodeNumber;
