@@ -235,7 +235,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                         fontWeight="bold"
                         color="#1D222A"
                         noOfLines={1}
-                        truncate
+                        isTruncated
                       >
                         {league.name}
                       </Text>
@@ -248,7 +248,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                           fontSize="14px"
                           color="#14181F"
                           noOfLines={1}
-                          truncate
+                          isTruncated
                         >
                           {league.name}
                         </Text>
@@ -289,7 +289,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                               color="text.primary"
                               fontWeight={l.id === league.id ? 'bold' : 'medium'}
                               noOfLines={1}
-                              truncate
+                              isTruncated
                             >
                               {l.name}
                             </Text>
@@ -330,7 +330,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                       fontWeight="bold"
                       color="#1D222A"
                       noOfLines={1}
-                      truncate
+                      isTruncated
                     >
                       {league.name}
                     </Text>
@@ -343,7 +343,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                         fontSize="14px"
                         color="#14181F"
                         noOfLines={1}
-                        truncate
+                        isTruncated
                       >
                         {league.name}
                       </Text>
