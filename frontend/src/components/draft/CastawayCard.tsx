@@ -1,4 +1,4 @@
-import { Box, Avatar, Text, VStack, Badge } from '@chakra-ui/react';
+import { Box, Image, Text, VStack, Badge } from '@chakra-ui/react';
 import { CheckIcon } from '../dashboard/icons';
 import type { Castaway } from '@/types/api';
 
@@ -69,14 +69,48 @@ export function CastawayCard({
         </Box>
       )}
 
-      <VStack gap={3}>
-        <Avatar
-          size="lg"
-          name={castaway.name}
-          src={castaway.imageUrl || undefined}
+      <VStack gap={3} align="stretch">
+        <Box
+          position="relative"
+          width="100%"
+          paddingTop="125%"
+          borderRadius="12px"
+          overflow="hidden"
           borderWidth="2px"
           borderColor={isSelected ? 'brand.primary' : 'border.default'}
-        />
+        >
+          <Image
+            src={castaway.imageUrl || undefined}
+            alt={castaway.name}
+            position="absolute"
+            top={0}
+            left={0}
+            width="100%"
+            height="100%"
+            objectFit="cover"
+            fallback={
+              <Box
+                position="absolute"
+                top={0}
+                left={0}
+                width="100%"
+                height="100%"
+                bg="bg.overlay"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+              >
+                <Text
+                  fontSize="2xl"
+                  fontWeight="bold"
+                  color="text.secondary"
+                >
+                  {castaway.name.charAt(0)}
+                </Text>
+              </Box>
+            }
+          />
+        </Box>
 
         <VStack gap={1}>
           <Text
