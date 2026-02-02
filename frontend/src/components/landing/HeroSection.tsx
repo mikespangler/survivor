@@ -39,9 +39,33 @@ export const HeroSection = () => {
       <Box
         position="absolute"
         inset={0}
-        bgGradient="radial(ellipse at center top, rgba(38, 43, 54, 1) 0%, rgba(20, 24, 31, 1) 70%)"
+        bgImage="radial-gradient(70.7% 141.4% at 50% 0%, rgba(38, 43, 54, 1) 0%, rgba(20, 24, 31, 1) 70%)"
         zIndex={0}
       />
+
+      {/* Palm tree silhouette background */}
+      <Box
+        position="absolute"
+        inset={0}
+        zIndex={0}
+        pointerEvents="none"
+      >
+        <Image
+          src="/landing/hero-palms.svg"
+          alt=""
+          position="absolute"
+          inset={0}
+          w="full"
+          h="full"
+          objectFit="cover"
+          opacity={1}
+        />
+        <Box
+          position="absolute"
+          inset={0}
+          bg="rgba(20, 24, 31, 0.02)"
+        />
+      </Box>
 
       {/* Ambient glow effects */}
       <Box
@@ -80,6 +104,37 @@ export const HeroSection = () => {
         filter="blur(100px)"
         pointerEvents="none"
         zIndex={1}
+      />
+
+      {/* Left Frond Decoration */}
+      <Image
+        src="/landing/frond-left.svg"
+        alt=""
+        position="absolute"
+        left={{ base: '-10%', md: '-5%', lg: '-2.08%' }}
+        top={{ base: '15%', md: '18%', lg: '21.78%' }}
+        w={{ base: '36px', md: '54px', lg: '71.667px' }}
+        h={{ base: '110px', md: '165px', lg: '220px' }}
+        transform="rotate(54.7deg)"
+        pointerEvents="none"
+        zIndex={2}
+        opacity={{ base: 0.7, md: 0.85, lg: 1 }}
+      />
+
+      {/* Right Frond Decoration */}
+      <Image
+        src="/landing/frond-right.svg"
+        alt=""
+        position="absolute"
+        right={{ base: '-10%', md: '-5%', lg: '-2.56%' }}
+        left={{ lg: '89.44%' }}
+        top={{ base: 'calc(50% - 60px)', md: 'calc(50% - 95px)', lg: 'calc(50% - 125.71px)' }}
+        w={{ base: '36px', md: '54px', lg: '71.517px' }}
+        h={{ base: '110px', md: '165px', lg: '219.542px' }}
+        transform="translateY(-50%) rotate(-36.84deg)"
+        pointerEvents="none"
+        zIndex={2}
+        opacity={{ base: 0.7, md: 0.85, lg: 1 }}
       />
 
       {/* Bottom gradient fade */}
