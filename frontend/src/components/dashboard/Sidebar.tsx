@@ -242,25 +242,17 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                     </HStack>
                   ) : (
                     <HStack w="full" justify="space-between" gap={2} minW={0}>
-                      <VStack align="start" gap={0} flex="1" minW={0}>
-                        <Text
-                          fontFamily="heading"
-                          fontSize="14px"
-                          color="#14181F"
-                          noOfLines={1}
-                          isTruncated
-                        >
-                          {league.name}
-                        </Text>
-                        <Text
-                          fontFamily="body"
-                          fontSize="12px"
-                          fontWeight="bold"
-                          color="rgba(20, 24, 31, 0.65)"
-                        >
-                          Season {seasonNumber || '—'}
-                        </Text>
-                      </VStack>
+                      <Text
+                        fontFamily="heading"
+                        fontSize="14px"
+                        color="#14181F"
+                        noOfLines={2}
+                        flex="1"
+                        minW={0}
+                        lineHeight="1.2"
+                      >
+                        {league.name}
+                      </Text>
                       <ChevronDownIcon boxSize="16px" color="#14181F" flexShrink={0} />
                     </HStack>
                   )}
@@ -336,27 +328,17 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                     </Text>
                   </HStack>
                 ) : (
-                  <HStack gap={2} w="full" minW={0}>
-                    <VStack align="start" gap={0} flex="1" minW={0}>
-                      <Text
-                        fontFamily="heading"
-                        fontSize="14px"
-                        color="#14181F"
-                        noOfLines={1}
-                        isTruncated
-                      >
-                        {league.name}
-                      </Text>
-                      <Text
-                        fontFamily="body"
-                        fontSize="12px"
-                        fontWeight="bold"
-                        color="rgba(20, 24, 31, 0.65)"
-                      >
-                        Season {seasonNumber || '—'}
-                      </Text>
-                    </VStack>
-                  </HStack>
+                  <Text
+                    fontFamily="heading"
+                    fontSize="14px"
+                    color="#14181F"
+                    noOfLines={2}
+                    w="full"
+                    minW={0}
+                    lineHeight="1.2"
+                  >
+                    {league.name}
+                  </Text>
                 )}
               </Box>
             )}
