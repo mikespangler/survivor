@@ -10,7 +10,7 @@
       "/tsconfig*.json",
       "/nest-cli.json"
     ],
-    "buildCommand": "npm ci && DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy npm run build:backend"
+    "buildCommand": "npm ci && DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dum npm run build:backend"
   },
   "deploy": {
     "preDeployCommand": ["npx prisma migrate deploy"],
