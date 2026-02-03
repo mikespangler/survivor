@@ -131,7 +131,6 @@ export const HeroSection = () => {
         zIndex={1}
       />
 
-      {/* Left Frond Decoration */}
       <Image
         src="/landing/frond-left.svg"
         alt=""
@@ -146,7 +145,6 @@ export const HeroSection = () => {
         opacity={{ base: 0.7, md: 0.85, lg: 1 }}
       />
 
-      {/* Right Frond Decoration */}
       <Image
         src="/landing/frond-right.svg"
         alt=""
