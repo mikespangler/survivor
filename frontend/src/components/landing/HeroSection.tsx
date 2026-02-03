@@ -15,6 +15,7 @@ import {
 } from '@chakra-ui/react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { getHeroBackgroundUrls, generateSrcSet } from '@/lib/cloudinary';
 
 export const HeroSection = () => {
   const [activeSeasonNumber, setActiveSeasonNumber] = useState<number | null>(null);
@@ -35,7 +36,7 @@ export const HeroSection = () => {
       overflow="hidden"
       pt="80px"
     >
-      {/* Background gradient */}
+      {/* Background gradient (fallback) */}
       <Box
         position="absolute"
         inset={0}
@@ -43,11 +44,40 @@ export const HeroSection = () => {
         zIndex={0}
       />
 
-      {/* Palm tree silhouette background */}
+      {/* Photo background layer */}
       <Box
         position="absolute"
         inset={0}
         zIndex={0}
+        pointerEvents="none"
+      >
+        <Image
+          src={getHeroBackgroundUrls().desktop}
+          srcSet={generateSrcSet(getHeroBackgroundUrls())}
+          sizes="100vw"
+          alt=""
+          position="absolute"
+          inset={0}
+          w="full"
+          h="full"
+          objectFit="cover"
+          opacity={0.65}
+          loading="eager"
+          fetchPriority="high"
+        />
+        {/* Dark overlay to maintain brand darkness */}
+        <Box
+          position="absolute"
+          inset={0}
+          bg="rgba(20, 24, 31, 0.35)"
+        />
+      </Box>
+
+      {/* Palm tree silhouette background */}
+      <Box
+        position="absolute"
+        inset={0}
+        zIndex={1}
         pointerEvents="none"
       >
         <Image
@@ -58,12 +88,7 @@ export const HeroSection = () => {
           w="full"
           h="full"
           objectFit="cover"
-          opacity={1}
-        />
-        <Box
-          position="absolute"
-          inset={0}
-          bg="rgba(20, 24, 31, 0.02)"
+          opacity={0.3}
         />
       </Box>
 
@@ -111,10 +136,10 @@ export const HeroSection = () => {
         src="/landing/frond-left.svg"
         alt=""
         position="absolute"
-        left={{ base: '-10%', md: '-5%', lg: '-2.08%' }}
-        top={{ base: '15%', md: '18%', lg: '21.78%' }}
-        w={{ base: '36px', md: '54px', lg: '71.667px' }}
-        h={{ base: '110px', md: '165px', lg: '220px' }}
+        left={{ base: '-5%', md: '-2%', lg: '4%' }}
+        top={{ base: '5%', md: '6%', lg: '8%' }}
+        w={{ base: '43px', md: '64px', lg: '86px' }}
+        h={{ base: '129px', md: '193px', lg: '263px' }}
         transform="rotate(54.7deg)"
         pointerEvents="none"
         zIndex={2}
@@ -126,11 +151,10 @@ export const HeroSection = () => {
         src="/landing/frond-right.svg"
         alt=""
         position="absolute"
-        right={{ base: '-10%', md: '-5%', lg: '-2.56%' }}
-        left={{ lg: '89.44%' }}
-        top={{ base: 'calc(50% - 60px)', md: 'calc(50% - 95px)', lg: 'calc(50% - 125.71px)' }}
-        w={{ base: '36px', md: '54px', lg: '71.517px' }}
-        h={{ base: '110px', md: '165px', lg: '219.542px' }}
+        right={{ base: '-8%', md: '-4%', lg: '3%' }}
+        top={{ base: 'calc(50% - 64.5px)', md: 'calc(50% - 96.5px)', lg: 'calc(50% - 131.5px)' }}
+        w={{ base: '43px', md: '64px', lg: '86px' }}
+        h={{ base: '129px', md: '193px', lg: '263px' }}
         transform="translateY(-50%) rotate(-36.84deg)"
         pointerEvents="none"
         zIndex={2}

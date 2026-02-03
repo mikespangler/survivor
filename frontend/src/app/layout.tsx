@@ -34,6 +34,16 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" className={`${nunito.variable} ${fredoka.variable}`} suppressHydrationWarning>
+        <head>
+          <link
+            rel="preload"
+            as="image"
+            href="https://res.cloudinary.com/dm2gfa9t8/image/upload/w_2560,q_auto,f_auto/hero-background"
+            imageSrcSet="https://res.cloudinary.com/dm2gfa9t8/image/upload/w_768,q_auto,f_auto/hero-background 768w, https://res.cloudinary.com/dm2gfa9t8/image/upload/w_1280,q_auto,f_auto/hero-background 1280w, https://res.cloudinary.com/dm2gfa9t8/image/upload/w_2560,q_auto,f_auto/hero-background 2560w, https://res.cloudinary.com/dm2gfa9t8/image/upload/w_3840,q_auto,f_auto/hero-background 3840w"
+            imageSizes="100vw"
+            fetchPriority="high"
+          />
+        </head>
         <body suppressHydrationWarning>
           <Script
             id="chakra-color-mode"

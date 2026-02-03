@@ -10,6 +10,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        pathname: '/dm2gfa9t8/**',
+      },
+    ],
+  },
 };
 
 export default nextConfig;
