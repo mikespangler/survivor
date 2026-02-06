@@ -17,14 +17,30 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import { getHeroBackgroundUrls, generateSrcSet } from '@/lib/cloudinary';
 
+const ROTATING_PHRASES = [
+  "Where Survivor Hot Takes Finally Have Consequences.",
+  "The Fantasy League for People Who Pause to Discuss Strategy.",
+  "You Call Every Blindside Before It Happens. Prove It.",
+  "Think You'd Win Survivor From Your Couch? Now You Can.",
+  "You Already Yell at the TV. Might As Well Keep Score.",
+];
+
 export const HeroSection = () => {
   const [activeSeasonNumber, setActiveSeasonNumber] = useState<number | null>(null);
+  const [phraseIndex, setPhraseIndex] = useState(0);
 
   useEffect(() => {
     api
       .getActiveSeason()
       .then((season) => (season ? setActiveSeasonNumber(season.number) : null))
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPhraseIndex((prev) => (prev + 1) % ROTATING_PHRASES.length);
+    }, 4000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -237,19 +253,27 @@ export const HeroSection = () => {
           </VStack>
 
           {/* Subheadline */}
-          <Text
-            fontFamily="body"
-            fontSize={{ base: 'md', md: 'lg', lg: 'xl' }}
-            lineHeight="28px"
-            fontWeight="medium"
-            color="text.secondary"
-            textAlign="center"
-            maxW="672px"
-            mb={8}
-          >
-            Draft castaways. Answer weekly questions. Compete for points. Join your
-            friends in the ultimate Survivor experience!
-          </Text>
+          <Box h={{ base: '56px', md: '28px' }} mb={8}>
+            <Text
+              key={phraseIndex}
+              fontFamily="body"
+              fontSize={{ base: 'md', md: 'lg', lg: 'xl' }}
+              lineHeight="28px"
+              fontWeight="medium"
+              color="text.secondary"
+              textAlign="center"
+              maxW="672px"
+              animation="fadeIn 0.5s ease-in-out"
+              sx={{
+                '@keyframes fadeIn': {
+                  '0%': { opacity: 0, transform: 'translateY(10px)' },
+                  '100%': { opacity: 1, transform: 'translateY(0)' },
+                },
+              }}
+            >
+              {ROTATING_PHRASES[phraseIndex]}
+            </Text>
+          </Box>
 
           {/* CTA Buttons */}
           <Flex
