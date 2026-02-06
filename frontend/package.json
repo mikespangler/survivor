@@ -12,14 +12,14 @@
     "@chakra-ui/icons": "^2.2.4",
     "@chakra-ui/next-js": "^2.4.2",
     "@chakra-ui/react": "^2.10.4",
-    "@clerk/nextjs": "^6.35.3",
+    "@clerk/nextjs": "^6.37.3",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "framer-motion": "^11.13.5",
     "next": "^16.1.6",
-    "react": "19.2.0",
+    "react": "^19.2.4",
     "react-datepicker": "^9.1.0",
-    "react-dom": "19.2.0"
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
