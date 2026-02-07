@@ -1,16 +1,7 @@
 'use client';
 
-import { Box, HStack, VStack, Text, Spinner, Icon, Alert, AlertIcon } from '@chakra-ui/react';
-
-// Check icon SVG
-const CheckIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <Icon viewBox="0 0 24 24" boxSize="20px" {...props}>
-    <path
-      fill="currentColor"
-      d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
-    />
-  </Icon>
-);
+import { Box, HStack, VStack, Text, Spinner, Alert, AlertIcon } from '@chakra-ui/react';
+import { CheckIcon } from '@chakra-ui/icons';
 
 // Helper to format deadline
 function formatDeadline(deadline: string | null): string {
@@ -80,7 +71,7 @@ export function FooterBar({
               </>
             ) : (
               <>
-                <CheckIcon color="green.400" />
+                <CheckIcon color="green.400" boxSize="20px" />
                 <Text
                   fontFamily="body"
                   fontSize="14px"

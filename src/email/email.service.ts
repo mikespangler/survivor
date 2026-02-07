@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 
@@ -13,23 +13,38 @@ export interface LeagueInviteEmailParams {
 
 @Injectable()
 export class EmailService {
+  private readonly logger = new Logger(EmailService.name);
   private resend: Resend;
   private fromEmail: string;
 
   constructor(private config: ConfigService) {
     const apiKey = this.config.get('RESEND_API_KEY');
-    this.resend = new Resend(apiKey);
     this.fromEmail = this.config.get('FROM_EMAIL') || 'noreply@survivor.com';
+
+    this.logger.log(`EmailService initialized`);
+    this.logger.log(`FROM_EMAIL: ${this.fromEmail}`);
+    this.logger.log(`RESEND_API_KEY present: ${!!apiKey}`);
+    this.logger.log(`RESEND_API_KEY length: ${apiKey?.length || 0}`);
+    this.logger.log(`RESEND_API_KEY prefix: ${apiKey?.substring(0, 8) || 'N/A'}...`);
+
+    this.resend = new Resend(apiKey);
   }
 
   async sendLeagueInvite(params: LeagueInviteEmailParams): Promise<void> {
     const { to, leagueName, leagueDescription, inviterName, joinUrl, expiresAt } = params;
 
+    this.logger.log(`=== SENDING LEAGUE INVITE EMAIL ===`);
+    this.logger.log(`To: ${to}`);
+    this.logger.log(`League: ${leagueName}`);
+    this.logger.log(`Inviter: ${inviterName}`);
+    this.logger.log(`Join URL: ${joinUrl}`);
+    this.logger.log(`Expires At: ${expiresAt}`);
+
     const expiryDays = Math.ceil(
       (expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
     );
 
-    await this.resend.emails.send({
+    const emailPayload = {
       from: `Survivor Fantasy League <${this.fromEmail}>`,
       to: [to],
       subject: `You've been invited to join ${leagueName}!`,
@@ -40,7 +55,21 @@ export class EmailService {
         joinUrl,
         expiryDays,
       }),
-    });
+    };
+
+    this.logger.log(`Email payload prepared, sending via Resend...`);
+
+    try {
+      const result = await this.resend.emails.send(emailPayload);
+      this.logger.log(`Resend API response: ${JSON.stringify(result)}`);
+      this.logger.log(`=== INVITE EMAIL SENT SUCCESSFULLY ===`);
+    } catch (error) {
+      this.logger.error(`=== INVITE EMAIL FAILED ===`);
+      this.logger.error(`Error type: ${error?.constructor?.name}`);
+      this.logger.error(`Error message: ${error?.message}`);
+      this.logger.error(`Error details: ${JSON.stringify(error, null, 2)}`);
+      throw error;
+    }
   }
 
   private getInviteEmailHtml(params: {

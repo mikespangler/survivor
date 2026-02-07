@@ -18,6 +18,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
 
+  const [mounted, setMounted] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [league, setLeague] = useState<League | null>(null);
@@ -26,6 +27,11 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
   const [isCommissioner, setIsCommissioner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userLeagues, setUserLeagues] = useState<League[]>([]);
+
+  // Ensure consistent hydration by only rendering after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -115,7 +121,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
     }
   }, [league?.id]);
 
-  if (!isLoaded || loading) {
+  if (!mounted || !isLoaded || loading) {
     return (
       <Box
         minH="100vh"
@@ -123,6 +129,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
         display="flex"
         alignItems="center"
         justifyContent="center"
+        suppressHydrationWarning
       >
         <Spinner size="xl" color="brand.primary" />
       </Box>

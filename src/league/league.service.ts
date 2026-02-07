@@ -4,8 +4,10 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 import { UpdateLeagueSeasonSettingsDto } from './dto/update-league-season-settings.dto';
 import { UpdateDraftConfigDto } from './dto/update-draft-config.dto';
 import { CreateLeagueDto } from './dto/create-league.dto';
@@ -17,7 +19,12 @@ import * as crypto from 'crypto';
 
 @Injectable()
 export class LeagueService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(LeagueService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
 
   async getLeagues(userId: string) {
     const leagues = await this.prisma.league.findMany({
@@ -1220,10 +1227,18 @@ export class LeagueService {
   }
 
   async inviteByEmail(leagueId: string, emails: string[], userId: string) {
-    // Verify user is commissioner
+    this.logger.log(`=== COMMISSIONER SEND EMAIL INVITES ===`);
+    this.logger.log(`League ID: ${leagueId}`);
+    this.logger.log(`Emails: ${emails.join(', ')}`);
+    this.logger.log(`User ID: ${userId}`);
+
+    // Verify user is commissioner and get league details
     const league = await this.prisma.league.findUnique({
       where: { id: leagueId },
       select: {
+        id: true,
+        name: true,
+        description: true,
         ownerId: true,
         commissioners: {
           select: { id: true },
@@ -1246,12 +1261,78 @@ export class LeagueService {
       );
     }
 
-    // For now, just return success - email sending can be implemented later
-    // The emails are stored for tracking purposes
+    // Get inviter info
+    const inviter = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true },
+    });
+    this.logger.log(`Inviter: ${inviter?.name || inviter?.email}`);
+
+    // Check which emails are already members
+    const existingMembers = await this.prisma.user.findMany({
+      where: {
+        email: { in: emails },
+        OR: [
+          { memberLeagues: { some: { id: leagueId } } },
+          { ownedLeagues: { some: { id: leagueId } } },
+        ],
+      },
+      select: { email: true },
+    });
+    const alreadyMembers = existingMembers.map((u) => u.email).filter(Boolean) as string[];
+    const toInvite = emails.filter((e) => !alreadyMembers.includes(e));
+
+    this.logger.log(`Already members: ${alreadyMembers.join(', ') || 'none'}`);
+    this.logger.log(`To invite: ${toInvite.join(', ') || 'none'}`);
+
+    // Generate tokens and send emails
+    const invited: string[] = [];
+    for (const email of toInvite) {
+      this.logger.log(`Processing invite for: ${email}`);
+
+      // Generate token
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 30); // 30 days expiration
+
+      const inviteToken = await this.prisma.inviteToken.create({
+        data: {
+          leagueId,
+          token,
+          createdById: userId,
+          expiresAt,
+        },
+      });
+      this.logger.log(`Invite token created: ${inviteToken.id}`);
+
+      // Send email
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
+      this.logger.log(`Frontend URL: ${frontendUrl}`);
+      this.logger.log(`Calling emailService.sendLeagueInvite...`);
+
+      try {
+        await this.emailService.sendLeagueInvite({
+          to: email,
+          leagueName: league.name,
+          leagueDescription: league.description,
+          inviterName: inviter?.name || inviter?.email || 'A commissioner',
+          joinUrl: `${frontendUrl}/leagues/join/${inviteToken.token}`,
+          expiresAt: inviteToken.expiresAt,
+        });
+        this.logger.log(`Email sent successfully to: ${email}`);
+        invited.push(email);
+      } catch (error) {
+        this.logger.error(`Failed to send email to ${email}: ${error.message}`);
+        throw error;
+      }
+    }
+
+    this.logger.log(`=== COMMISSIONER INVITE COMPLETE: ${invited.length} sent ===`);
     return {
       success: true,
-      emails,
-      message: 'Invitations will be sent manually via shareable links',
+      emails: invited,
+      alreadyMembers,
+      message: `Sent ${invited.length} invite(s)`,
     };
   }
 

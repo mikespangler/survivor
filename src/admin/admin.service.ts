@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LeagueMemberResponse } from './dto/league-member-response.dto';
 import { EmailService } from '../email/email.service';
@@ -6,6 +6,8 @@ import * as crypto from 'crypto';
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
@@ -288,12 +290,21 @@ export class AdminService {
     emails: string[],
     adminId: string,
   ): Promise<{ invited: string[]; alreadyMembers: string[] }> {
+    this.logger.log(`=== ADMIN SEND EMAIL INVITES ===`);
+    this.logger.log(`League ID: ${leagueId}`);
+    this.logger.log(`Emails: ${emails.join(', ')}`);
+    this.logger.log(`Admin ID: ${adminId}`);
+
     const league = await this.getAnyLeague(leagueId);
+    this.logger.log(`League found: ${league.name}`);
+
     const admin = await this.prisma.user.findUnique({ where: { id: adminId } });
 
     if (!admin) {
+      this.logger.error(`Admin user not found: ${adminId}`);
       throw new NotFoundException('Admin user not found');
     }
+    this.logger.log(`Admin found: ${admin.name || admin.email}`);
 
     // Check which emails are already members
     const existingMembers = await this.prisma.user.findMany({
@@ -306,9 +317,14 @@ export class AdminService {
     const alreadyMembers = existingMembers.map((u) => u.email);
     const toInvite = emails.filter((e) => !alreadyMembers.includes(e));
 
+    this.logger.log(`Already members: ${alreadyMembers.join(', ') || 'none'}`);
+    this.logger.log(`To invite: ${toInvite.join(', ') || 'none'}`);
+
     // Generate tokens and send emails
     const invited = [];
     for (const email of toInvite) {
+      this.logger.log(`Processing invite for: ${email}`);
+
       // Generate token
       const token = crypto.randomBytes(32).toString('hex');
       const expiresAt = new Date();
@@ -322,21 +338,31 @@ export class AdminService {
           expiresAt,
         },
       });
+      this.logger.log(`Invite token created: ${inviteToken.id}`);
 
       // Send email
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
-      await this.emailService.sendLeagueInvite({
-        to: email,
-        leagueName: league.name,
-        leagueDescription: league.description,
-        inviterName: admin.name || admin.email || 'Admin',
-        joinUrl: `${frontendUrl}/leagues/join/${inviteToken.token}`,
-        expiresAt: inviteToken.expiresAt,
-      });
+      this.logger.log(`Frontend URL: ${frontendUrl}`);
+      this.logger.log(`Calling emailService.sendLeagueInvite...`);
 
-      invited.push(email);
+      try {
+        await this.emailService.sendLeagueInvite({
+          to: email,
+          leagueName: league.name,
+          leagueDescription: league.description,
+          inviterName: admin.name || admin.email || 'Admin',
+          joinUrl: `${frontendUrl}/leagues/join/${inviteToken.token}`,
+          expiresAt: inviteToken.expiresAt,
+        });
+        this.logger.log(`Email sent successfully to: ${email}`);
+        invited.push(email);
+      } catch (error) {
+        this.logger.error(`Failed to send email to ${email}: ${error.message}`);
+        throw error;
+      }
     }
 
+    this.logger.log(`=== ADMIN INVITE COMPLETE: ${invited.length} sent ===`);
     return { invited, alreadyMembers };
   }
 }
