@@ -350,7 +350,11 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                 Standings
               </NavLink>
               <NavLink
-                href={`${baseUrl}/questions`}
+                href={
+                  isCommissioner && currentEpisodeState?.needsScoring
+                    ? `${baseUrl}/settings?tab=questions`
+                    : `${baseUrl}/questions`
+                }
                 icon={<WeeklyQuestionsIcon boxSize="20px" />}
                 isActive={isActive(`${baseUrl}/questions`)}
                 isCollapsed={isCollapsed}

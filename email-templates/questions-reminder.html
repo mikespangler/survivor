@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Questions Reminder</title>
+    <style>
+      body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+      .header { background: #F06542; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+      .header h1 { color: white; margin: 0; font-size: 24px; }
+      .content { background: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; }
+      .content h2 { color: #333; margin-top: 0; }
+      .content p { color: #555; line-height: 1.6; }
+      .cta-button {
+        display: inline-block;
+        background: #F06542;
+        color: white !important;
+        padding: 15px 30px;
+        text-decoration: none;
+        border-radius: 8px;
+        margin: 20px 0;
+        font-weight: bold;
+      }
+      .deadline {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+        color: #856404;
+      }
+      .info-box {
+        background: #e7f3ff;
+        border: 1px solid #0066cc;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+        color: #004085;
+      }
+      .footer {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+        font-size: 12px;
+      }
+      .footer a { color: #F06542; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Survivor Fantasy League</h1>
+      </div>
+      <div class="content">
+        <h2>Hey {{userName}}!</h2>
+        <p>Don't forget to submit your answers for <strong>Episode {{episodeNumber}}</strong> in <strong>{{leagueName}}</strong>.</p>
+
+        <div class="deadline">
+          <strong>Deadline:</strong> {{deadline}}
+        </div>
+
+        <div class="info-box">
+          <strong>{{questionsRemaining}} question(s)</strong> remaining to answer
+          ({{answeredCount}} of {{questionsCount}} completed)
+        </div>
+
+        <center>
+          <a href="{{questionsUrl}}" class="cta-button">Answer Questions</a>
+        </center>
+
+        <p style="color: #666; font-size: 14px; margin-top: 30px;">
+          Make sure to submit before the episode airs to earn points!
+        </p>
+      </div>
+      <div class="footer">
+        <p>
+          <a href="{{preferencesUrl}}">Manage notification preferences</a>
+        </p>
+        <p>Survivor Fantasy League</p>
+      </div>
+    </div>
+  </body>
+</html>
+
+<!--
+RESEND VARIABLES:
+- {{userName}} - User's display name
+- {{leagueName}} - Name of the league
+- {{episodeNumber}} - Episode number (e.g., "5")
+- {{deadline}} - Formatted deadline date/time (e.g., "Wednesday, February 12, 2026 at 8:00 PM EST")
+- {{questionsRemaining}} - Number of unanswered questions
+- {{answeredCount}} - Number of questions already answered
+- {{questionsCount}} - Total number of questions
+- {{questionsUrl}} - Direct link to the questions page
+- {{preferencesUrl}} - Link to notification preferences page
+-->

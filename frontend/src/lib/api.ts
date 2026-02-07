@@ -51,6 +51,8 @@ import type {
   SubmitDraftDto,
   TeamCastaway,
   LeagueEpisodeStatesResponse,
+  NotificationPreferences,
+  UpdateNotificationPreferencesDto,
 } from '@/types/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -987,6 +989,28 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ emails }),
     });
+  }
+
+  // ================== Notification Preferences endpoints ==================
+
+  async getNotificationPreferences(): Promise<NotificationPreferences> {
+    return this.request<NotificationPreferences>('/users/me/notification-preferences');
+  }
+
+  async updateNotificationPreferences(
+    data: UpdateNotificationPreferencesDto,
+  ): Promise<NotificationPreferences> {
+    return this.request<NotificationPreferences>('/users/me/notification-preferences', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async sendTestNotificationEmail(): Promise<{ success: boolean; message: string }> {
+    return this.request<{ success: boolean; message: string }>(
+      '/users/me/notification-preferences/test',
+      { method: 'POST' },
+    );
   }
 }
 

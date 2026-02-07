@@ -43,11 +43,11 @@ export function EmailInviteModal({
   return (
     <Modal isOpen={isOpen} onClose={handleClose}>
       <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Send Email Invites</ModalHeader>
+      <ModalContent bg="gray.800">
+        <ModalHeader color="white">Send Email Invites</ModalHeader>
         <ModalBody>
           <FormControl>
-            <FormLabel>
+            <FormLabel color="gray.300">
               Email addresses (one per line or comma-separated)
             </FormLabel>
             <Textarea
@@ -55,6 +55,10 @@ export function EmailInviteModal({
               onChange={(e) => setEmails(e.target.value)}
               placeholder="email1@example.com&#10;email2@example.com"
               rows={6}
+              bg="gray.700"
+              color="white"
+              borderColor="gray.600"
+              _placeholder={{ color: 'gray.400' }}
             />
           </FormControl>
         </ModalBody>

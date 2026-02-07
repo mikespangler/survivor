@@ -2,6 +2,49 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Helper function to get the next Wednesday at 8pm Pacific Time
+function getNextWednesdayAtEightPM(): Date {
+  const now = new Date();
+  
+  // Get current time in Pacific (PST/PDT is UTC-8/UTC-7)
+  // Convert current UTC time to Pacific time
+  const pacificTimeStr = now.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
+  const pacificDate = new Date(pacificTimeStr);
+  
+  const currentDay = pacificDate.getDay();
+  const currentHour = pacificDate.getHours();
+  
+  let daysUntilWednesday = 0;
+  
+  if (currentDay === 3) {
+    // It's Wednesday in Pacific time
+    if (currentHour < 20) {
+      // Before 8pm, use today
+      daysUntilWednesday = 0;
+    } else {
+      // After 8pm, use next Wednesday
+      daysUntilWednesday = 7;
+    }
+  } else if (currentDay < 3) {
+    // Sunday (0), Monday (1), Tuesday (2) - Wednesday is ahead this week
+    daysUntilWednesday = 3 - currentDay;
+  } else {
+    // Thursday (4), Friday (5), Saturday (6) - Wednesday is next week
+    daysUntilWednesday = 7 - currentDay + 3;
+  }
+  
+  // Create target date in Pacific timezone
+  const targetYear = pacificDate.getFullYear();
+  const targetMonth = pacificDate.getMonth();
+  const targetDay = pacificDate.getDate() + daysUntilWednesday;
+  
+  // Create a date string for the target Wednesday at 8pm Pacific
+  const targetDateStr = `${targetMonth + 1}/${targetDay}/${targetYear} 20:00:00`;
+  const targetInPacific = new Date(targetDateStr + ' GMT-0800'); // PST
+  
+  return targetInPacific;
+}
+
 // Castaway names for Season 48
 const castawayNames = [
   'Marcus Chen',
@@ -428,12 +471,19 @@ async function createSeason() {
 }
 
 // Helper function to create episodes
-async function createEpisodes(seasonId: string, count: number) {
+async function createEpisodes(seasonId: string, count: number, activeEpisode: number) {
   const episodes = [];
-  const baseDate = new Date('2024-09-18T20:00:00-04:00');
+  
+  // Get the next Wednesday at 8pm Pacific as the anchor date
+  const nextWednesday = getNextWednesdayAtEightPM();
+  
+  // Calculate episode dates relative to the active episode
+  // The active episode airs on the next Wednesday
   for (let i = 1; i <= count; i++) {
-    const episodeDate = new Date(baseDate);
-    episodeDate.setDate(baseDate.getDate() + (i - 1) * 7); // Weekly episodes
+    const episodeDate = new Date(nextWednesday);
+    // Calculate days from the next episode (activeEpisode)
+    const weeksFromActive = i - activeEpisode;
+    episodeDate.setDate(nextWednesday.getDate() + weeksFromActive * 7);
 
     const episode = await prisma.episode.create({
       data: {
@@ -858,7 +908,9 @@ async function main() {
   // Create season and episodes (shared by all leagues)
   console.log('📺 Creating Season 48...');
   const season = await createSeason();
-  await createEpisodes(season.id, 14);
+  // Using episode 7 as the active episode for episode date calculation
+  // This represents the "current" state of the season
+  await createEpisodes(season.id, 14, 7);
 
   // LEAGUE 1: Pre-Draft - Not Started (Mike is commissioner)
   console.log('\n🏆 Creating League 1: [TEST] Pre-Draft - Not Started');

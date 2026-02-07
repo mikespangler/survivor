@@ -46,18 +46,22 @@ export function AddMemberModal({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="xl">
       <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Add Member to League</ModalHeader>
+      <ModalContent bg="gray.800">
+        <ModalHeader color="white">Add Member to League</ModalHeader>
         <ModalBody>
           <VStack gap={4} align="stretch">
             <FormControl>
-              <FormLabel>Search for user by name or email</FormLabel>
+              <FormLabel color="gray.300">Search for user by name or email</FormLabel>
               <HStack>
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Enter name or email..."
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  bg="gray.700"
+                  color="white"
+                  borderColor="gray.600"
+                  _placeholder={{ color: 'gray.400' }}
                 />
                 <Button onClick={handleSearch} isLoading={searching}>
                   Search
@@ -67,22 +71,22 @@ export function AddMemberModal({
 
             {searchResults.length > 0 && (
               <VStack align="stretch" gap={2}>
-                <Text fontWeight="bold">Results:</Text>
+                <Text fontWeight="bold" color="white">Results:</Text>
                 {searchResults.map((user) => (
                   <HStack
                     key={user.id}
                     p={3}
-                    bg="bg.secondary"
+                    bg="gray.700"
                     borderRadius="md"
                     justify="space-between"
                   >
                     <VStack align="start" spacing={0}>
-                      <Text fontWeight="medium">{user.name || 'No name'}</Text>
-                      <Text fontSize="sm" color="text.secondary">
+                      <Text fontWeight="medium" color="white">{user.name || 'No name'}</Text>
+                      <Text fontSize="sm" color="gray.400">
                         {user.email}
                       </Text>
                     </VStack>
-                    <Button size="sm" onClick={() => handleAdd(user.id)}>
+                    <Button size="sm" colorScheme="brand" onClick={() => handleAdd(user.id)}>
                       Add
                     </Button>
                   </HStack>

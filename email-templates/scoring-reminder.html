@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scoring Reminder</title>
+    <style>
+      body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+      .header { background: #F06542; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+      .header h1 { color: white; margin: 0; font-size: 24px; }
+      .content { background: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; }
+      .content h2 { color: #333; margin-top: 0; }
+      .content p { color: #555; line-height: 1.6; }
+      .cta-button {
+        display: inline-block;
+        background: #F06542;
+        color: white !important;
+        padding: 15px 30px;
+        text-decoration: none;
+        border-radius: 8px;
+        margin: 20px 0;
+        font-weight: bold;
+      }
+      .info-box {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+        color: #856404;
+      }
+      .progress {
+        background: #e9ecef;
+        border-radius: 4px;
+        height: 20px;
+        margin-top: 10px;
+        overflow: hidden;
+      }
+      .progress-bar {
+        background: #F06542;
+        height: 100%;
+        transition: width 0.3s;
+      }
+      .footer {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+        font-size: 12px;
+      }
+      .footer a { color: #F06542; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Survivor Fantasy League</h1>
+      </div>
+      <div class="content">
+        <h2>Hey {{userName}}!</h2>
+        <p>Episode {{episodeNumber}} has aired! It's time to score the questions for <strong>{{leagueName}}</strong>.</p>
+
+        <div class="info-box">
+          <strong>{{scoredQuestions}} of {{totalQuestions}}</strong> questions scored
+          <div class="progress">
+            <div class="progress-bar" style="width: {{progressPercent}}%;"></div>
+          </div>
+        </div>
+
+        <center>
+          <a href="{{scoringUrl}}" class="cta-button">Score Questions</a>
+        </center>
+
+        <p style="color: #666; font-size: 14px; margin-top: 30px;">
+          Players are waiting to see their results!
+        </p>
+      </div>
+      <div class="footer">
+        <p>
+          <a href="{{preferencesUrl}}">Manage notification preferences</a>
+        </p>
+        <p>Survivor Fantasy League</p>
+      </div>
+    </div>
+  </body>
+</html>
+
+<!--
+RESEND VARIABLES:
+- {{userName}} - Commissioner's display name
+- {{leagueName}} - Name of the league
+- {{episodeNumber}} - Episode number (e.g., "5")
+- {{scoredQuestions}} - Number of questions already scored
+- {{totalQuestions}} - Total number of questions to score
+- {{progressPercent}} - Scoring progress percentage (0-100)
+- {{scoringUrl}} - Direct link to the scoring page
+- {{preferencesUrl}} - Link to notification preferences page
+-->

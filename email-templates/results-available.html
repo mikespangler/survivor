@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results Available</title>
+    <style>
+      body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; }
+      .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+      .header { background: #F06542; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+      .header h1 { color: white; margin: 0; font-size: 24px; }
+      .content { background: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; }
+      .content h2 { color: #333; margin-top: 0; }
+      .content p { color: #555; line-height: 1.6; }
+      .cta-button {
+        display: inline-block;
+        background: #F06542;
+        color: white !important;
+        padding: 15px 30px;
+        text-decoration: none;
+        border-radius: 8px;
+        margin: 20px 0;
+        font-weight: bold;
+      }
+      .stats-box {
+        background: #d4edda;
+        border: 1px solid #28a745;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 15px 0;
+        text-align: center;
+      }
+      .stats-box .points {
+        font-size: 32px;
+        font-weight: bold;
+        color: #155724;
+        margin: 10px 0;
+      }
+      .stats-box .rank {
+        color: #155724;
+        font-size: 14px;
+      }
+      .footer {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+        font-size: 12px;
+      }
+      .footer a { color: #F06542; text-decoration: none; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Survivor Fantasy League</h1>
+      </div>
+      <div class="content">
+        <h2>Hey {{userName}}!</h2>
+        <p>Results are in for <strong>Episode {{episodeNumber}}</strong> in <strong>{{leagueName}}</strong>!</p>
+
+        <div class="stats-box">
+          <p style="margin: 0 0 10px 0; color: #155724;"><strong>Your Episode {{episodeNumber}} Performance:</strong></p>
+          <div class="points">{{userPoints}} points</div>
+          <div class="rank">Rank: {{userRank}} of {{totalTeams}}</div>
+        </div>
+
+        <center>
+          <a href="{{resultsUrl}}" class="cta-button">View Full Results</a>
+        </center>
+
+        <p style="color: #666; font-size: 14px; margin-top: 30px;">
+          See how you stack up against the competition!
+        </p>
+      </div>
+      <div class="footer">
+        <p>
+          <a href="{{preferencesUrl}}">Manage notification preferences</a>
+        </p>
+        <p>Survivor Fantasy League</p>
+      </div>
+    </div>
+  </body>
+</html>
+
+<!--
+RESEND VARIABLES:
+- {{userName}} - User's display name
+- {{leagueName}} - Name of the league
+- {{episodeNumber}} - Episode number (e.g., "5")
+- {{userPoints}} - Points earned this episode
+- {{userRank}} - User's rank for this episode
+- {{totalTeams}} - Total number of teams in the league
+- {{resultsUrl}} - Direct link to the results page
+- {{preferencesUrl}} - Link to notification preferences page
+-->

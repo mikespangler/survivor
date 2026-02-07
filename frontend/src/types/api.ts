@@ -618,3 +618,30 @@ export interface LeagueEpisodeStatesResponse {
   commissionerActions: CommissionerAction[];
 }
 
+// Notification preference types
+export type EmailFrequency = 'immediate' | 'daily_digest' | 'never';
+
+export interface NotificationPreferences {
+  id: string;
+  userId: string;
+  weeklyQuestionsReminder: boolean;
+  draftReminder: boolean;
+  resultsAvailable: boolean;
+  scoringReminder: boolean;
+  questionsSetupReminder: boolean;
+  emailFrequency: EmailFrequency;
+  reminderHoursBefore: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateNotificationPreferencesDto {
+  weeklyQuestionsReminder?: boolean;
+  draftReminder?: boolean;
+  resultsAvailable?: boolean;
+  scoringReminder?: boolean;
+  questionsSetupReminder?: boolean;
+  emailFrequency?: EmailFrequency;
+  reminderHoursBefore?: number;
+}
+

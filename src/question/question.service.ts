@@ -5,10 +5,12 @@ import {
   ForbiddenException,
   Inject,
   forwardRef,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LeagueService } from '../league/league.service';
 import { EpisodeStateService, EpisodeState } from '../episode/episode-state.service';
+import { NotificationService } from '../notification/notification.service';
 import {
   CreateQuestionTemplateDto,
   UpdateQuestionTemplateDto,
@@ -21,11 +23,14 @@ import {
 
 @Injectable()
 export class QuestionService {
+  private readonly logger = new Logger(QuestionService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     @Inject(forwardRef(() => LeagueService))
     private readonly leagueService: LeagueService,
     private readonly episodeStateService: EpisodeStateService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   // ================== TEMPLATE METHODS (System Admin) ==================
@@ -738,6 +743,35 @@ export class QuestionService {
           }
         }),
       );
+    }
+
+    // Check if episode is now fully scored and send results notifications
+    if (episodeNumber) {
+      const allEpisodeQuestions = await this.prisma.leagueQuestion.findMany({
+        where: {
+          leagueSeasonId: leagueSeason.id,
+          episodeNumber,
+        },
+      });
+
+      const isFullyScored = allEpisodeQuestions.every((q) => q.isScored);
+
+      if (isFullyScored) {
+        // Send results notifications to all league members
+        try {
+          const sentCount = await this.notificationService.sendResultsForEpisode(
+            leagueSeason.id,
+            episodeNumber,
+          );
+          this.logger.log(
+            `Sent ${sentCount} results notifications for episode ${episodeNumber}`,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Failed to send results notifications: ${error.message}`,
+          );
+        }
+      }
     }
 
     return { success: true, scoredCount: questions.length };

@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import {
   Box,
   Container,
@@ -30,6 +30,7 @@ import type { League, DraftConfig, Season } from '@/types/api';
 export default function LeagueSettingsPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user: clerkUser, isSignedIn } = useUser();
   const toast = useToast();
   const leagueId = params.leagueId as string;
@@ -42,6 +43,31 @@ export default function LeagueSettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [castawaysPerTeam, setCastawaysPerTeam] = useState<number>(0);
   const [isCommissioner, setIsCommissioner] = useState(false);
+
+  // Determine tab index from query parameter
+  const tabParam = searchParams.get('tab');
+  
+  // Map tab names to indices - compute based on query param and commissioner status
+  const initialTabIndex = useMemo(() => {
+    if (!tabParam) return 0;
+
+    const tabMap: { [key: string]: number } = {
+      'questions': 0,
+      'members': isCommissioner ? 1 : -1, // Only valid if commissioner
+      'points': isCommissioner ? 2 : 1,
+      'draft': isCommissioner ? 3 : 2,
+    };
+
+    const index = tabMap[tabParam.toLowerCase()];
+    return index !== undefined && index >= 0 ? index : 0;
+  }, [tabParam, isCommissioner]);
+
+  const [tabIndex, setTabIndex] = useState(initialTabIndex);
+
+  // Update tab index when query params or commissioner status changes
+  useEffect(() => {
+    setTabIndex(initialTabIndex);
+  }, [initialTabIndex]);
 
   const loadData = useCallback(async () => {
     try {
@@ -211,7 +237,7 @@ export default function LeagueSettingsPage() {
               </Box>
             )}
 
-            <Tabs defaultIndex={0} variant="enclosed">
+            <Tabs index={tabIndex} onChange={setTabIndex} variant="enclosed">
               <TabList>
                 <Tab>Questions</Tab>
                 {isCommissioner && <Tab>Members</Tab>}

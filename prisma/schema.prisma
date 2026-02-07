@@ -8,21 +8,23 @@ datasource db {
 }
 
 model User {
-  id                  String             @id @default(uuid())
-  clerkId             String             @unique
-  email               String?            @unique
-  name                String?
-  systemRole          String             @default("user")
-  lastViewedLeagueId  String?
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-  ownedLeagues        League[]
-  teams               Team[]
-  memberLeagues       League[]           @relation("LeagueMembers")
-  commissionerLeagues League[]           @relation("LeagueCommissioners")
-  questionTemplates   QuestionTemplate[]
-  createdInviteTokens InviteToken[]
-  lastViewedLeague    League?            @relation("LastViewedLeague", fields: [lastViewedLeagueId], references: [id], onDelete: SetNull)
+  id                      String                   @id @default(uuid())
+  clerkId                 String                   @unique
+  email                   String?                  @unique
+  name                    String?
+  systemRole              String                   @default("user")
+  lastViewedLeagueId      String?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  ownedLeagues            League[]
+  teams                   Team[]
+  memberLeagues           League[]                 @relation("LeagueMembers")
+  commissionerLeagues     League[]                 @relation("LeagueCommissioners")
+  questionTemplates       QuestionTemplate[]
+  createdInviteTokens     InviteToken[]
+  lastViewedLeague        League?                  @relation("LastViewedLeague", fields: [lastViewedLeagueId], references: [id], onDelete: SetNull)
+  notificationPreferences NotificationPreferences?
+  sentNotifications       SentNotification[]
 
   @@index([clerkId])
   @@index([lastViewedLeagueId])
@@ -250,4 +252,41 @@ model TeamEpisodePoints {
   @@unique([teamId, episodeNumber])
   @@index([teamId])
   @@index([episodeNumber])
+}
+
+// User notification preferences
+model NotificationPreferences {
+  id                       String   @id @default(cuid())
+  userId                   String   @unique
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Player notifications
+  weeklyQuestionsReminder  Boolean  @default(true)
+  draftReminder            Boolean  @default(true)
+  resultsAvailable         Boolean  @default(true)
+
+  // Commissioner notifications
+  scoringReminder          Boolean  @default(true)
+  questionsSetupReminder   Boolean  @default(true)
+
+  // Timing
+  emailFrequency           String   @default("immediate") // "immediate" | "daily_digest" | "never"
+  reminderHoursBefore      Int      @default(24)
+
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+}
+
+// Track sent notifications to prevent duplicates
+model SentNotification {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notificationType String
+  leagueId         String?
+  episodeNumber    Int?
+  sentAt           DateTime @default(now())
+
+  @@unique([userId, notificationType, leagueId, episodeNumber])
+  @@index([userId])
 }
