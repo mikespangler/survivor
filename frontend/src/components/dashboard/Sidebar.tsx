@@ -16,7 +16,9 @@ import {
   MenuList,
   MenuItem,
   Portal,
+  Image,
 } from '@chakra-ui/react';
+import { getCloudinaryUrl } from '@/lib/cloudinary';
 import {
   DashboardIcon,
   StandingsIcon,
@@ -160,47 +162,41 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
       <VStack align="stretch" flex="1" px={1} py={8} gap={3}>
         {/* Logo Section */}
         <HStack
-          gap={3}
+          gap={4}
           px={4}
           pb={4}
           borderBottom="2px solid"
           borderColor="rgba(48, 53, 65, 0.5)"
           justify={isCollapsed ? "center" : "flex-start"}
         >
-          <Box
-            w="53px"
+          <Image
+            src={getCloudinaryUrl('main-logo', { height: 120, crop: 'fit', format: 'png', trim: true })}
+            alt="Survivor Fantasy League"
             h="40px"
-            bg="brand.primary"
-            borderRadius="8px"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <Text fontFamily="heading" fontSize="12px" color="text.button" fontWeight="bold">
-              SFL
-            </Text>
-          </Box>
+            w="auto"
+            flexShrink={0}
+          />
           {!isCollapsed && (
-            <VStack align="start" gap={0}>
+            <HStack gap={1} whiteSpace="nowrap">
               <Text
                 fontFamily="heading"
-                fontSize="16px"
-                color="text.primary"
-                letterSpacing="0.5px"
+                fontSize="13px"
+                fontWeight="bold"
+                color="brand.primary"
+                letterSpacing="1.5px"
               >
-                SURVIVOR
+                OUTPICK
               </Text>
               <Text
-                fontFamily="body"
-                fontSize="10px"
-                fontWeight="medium"
-                color="text.secondary"
-                textTransform="uppercase"
-                letterSpacing="1px"
+                fontFamily="heading"
+                fontSize="13px"
+                fontWeight="bold"
+                color="text.primary"
+                letterSpacing="1.5px"
               >
-                Fantasy League
+                OUTLAST
               </Text>
-            </VStack>
+            </HStack>
           )}
         </HStack>
 

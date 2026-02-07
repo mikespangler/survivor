@@ -198,7 +198,7 @@ export const HeroSection = () => {
           gap={0}
           align="center"
           justify="center"
-          pt={{ base: '80px', md: '157px' }}
+          pt={{ base: '60px', md: '80px' }}
           pb={{ base: '100px', md: '157px' }}
         >
           {/* Season Badge */}

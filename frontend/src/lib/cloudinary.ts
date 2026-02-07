@@ -13,6 +13,7 @@ export interface CloudinaryTransformation {
   crop?: 'fill' | 'fit' | 'scale' | 'limit';
   gravity?: 'auto' | 'center' | 'face' | 'faces';
   fetchFormat?: 'auto';
+  trim?: boolean;
 }
 
 /**
@@ -30,17 +31,24 @@ export function getCloudinaryUrl(
     crop = 'fill',
     gravity,
     fetchFormat = 'auto',
+    trim,
   } = transformations;
 
   const parts: string[] = [];
+
+  if (trim) parts.push('e_trim');
 
   if (width) parts.push(`w_${width}`);
   if (height) parts.push(`h_${height}`);
   if (crop) parts.push(`c_${crop}`);
   if (gravity) parts.push(`g_${gravity}`);
   if (quality) parts.push(`q_${quality}`);
-  if (format !== 'auto') parts.push(`f_${format}`);
-  if (fetchFormat) parts.push(`f_${fetchFormat}`);
+  // Only add f_auto if no explicit format is set (f_auto can strip transparency)
+  if (format !== 'auto') {
+    parts.push(`f_${format}`);
+  } else if (fetchFormat) {
+    parts.push(`f_${fetchFormat}`);
+  }
 
   const transformString = parts.length > 0 ? parts.join(',') : '';
 

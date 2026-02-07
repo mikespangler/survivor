@@ -9,7 +9,9 @@ import {
   HStack,
   Flex,
   SimpleGrid,
+  Image,
 } from '@chakra-ui/react';
+import { getCloudinaryUrl } from '@/lib/cloudinary';
 import Link from 'next/link';
 
 const footerLinks = {
@@ -45,27 +47,33 @@ export const Footer = () => {
           >
             {/* Logo & Description */}
             <VStack align="start" gap={2} maxW="247px">
-              <HStack gap={2}>
-                <Text fontSize="3xl">🔥</Text>
-                <VStack align="start" gap={0}>
+              <HStack gap={4}>
+                <Image
+                  src={getCloudinaryUrl('main-logo', { height: 144, crop: 'fit', format: 'png', trim: true })}
+                  alt="Survivor Fantasy League"
+                  h="48px"
+                  w="auto"
+                />
+                <HStack gap={1}>
                   <Text
                     fontFamily="heading"
-                    fontSize="xl"
-                    color="text.primary"
-                    letterSpacing="-0.5px"
-                    lineHeight="1.2"
-                  >
-                    SURVIVOR
-                  </Text>
-                  <Text
-                    fontFamily="heading"
-                    fontSize="sm"
+                    fontSize="16px"
+                    fontWeight="bold"
                     color="brand.primary"
-                    letterSpacing="0.5px"
+                    letterSpacing="1.5px"
                   >
-                    FANTASY LEAGUE
+                    OUTPICK
                   </Text>
-                </VStack>
+                  <Text
+                    fontFamily="heading"
+                    fontSize="16px"
+                    fontWeight="bold"
+                    color="text.primary"
+                    letterSpacing="1.5px"
+                  >
+                    OUTLAST
+                  </Text>
+                </HStack>
               </HStack>
               <Text
                 fontFamily="body"

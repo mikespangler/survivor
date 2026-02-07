@@ -25,6 +25,7 @@ import {
   EpisodeSummaryTab,
   QuestionBreakdownTab,
   CastawayRetentionTab,
+  PlacementGraphTab,
 } from '@/components/standings';
 import type { DetailedStandingsResponse, Season } from '@/types/api';
 
@@ -114,6 +115,7 @@ export default function StandingsPage() {
               <Tab fontWeight="medium">Episode Summary</Tab>
               <Tab fontWeight="medium">Question Breakdown</Tab>
               <Tab fontWeight="medium">Castaway Retention</Tab>
+              <Tab fontWeight="medium">Placement History</Tab>
             </TabList>
 
             <TabPanels>
@@ -138,6 +140,12 @@ export default function StandingsPage() {
               </TabPanel>
               <TabPanel px={0}>
                 <CastawayRetentionTab
+                  teams={standingsData.teams}
+                  currentEpisode={standingsData.currentEpisode}
+                />
+              </TabPanel>
+              <TabPanel px={0}>
+                <PlacementGraphTab
                   teams={standingsData.teams}
                   currentEpisode={standingsData.currentEpisode}
                 />

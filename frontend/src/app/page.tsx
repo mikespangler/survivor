@@ -18,20 +18,20 @@ import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { api } from '@/lib/api';
 import type { League } from '@/types/api';
 import { AuthenticatedLayout } from '@/components/navigation';
 
-// Landing page components
-import {
-  HeroSection,
-  HowItWorksSection,
-  WeeklyEngagementSection,
-  DraftingSection,
-  LeaderboardSection,
-  CTASection,
-  Footer,
-} from '@/components/landing';
+// Dynamically import landing page components to avoid SSR hydration issues
+const LandingHeader = dynamic(() => import('@/components/landing/LandingHeader'), { ssr: false });
+const HeroSection = dynamic(() => import('@/components/landing/HeroSection'), { ssr: false });
+const HowItWorksSection = dynamic(() => import('@/components/landing/HowItWorksSection'), { ssr: false });
+const WeeklyEngagementSection = dynamic(() => import('@/components/landing/WeeklyEngagementSection'), { ssr: false });
+const DraftingSection = dynamic(() => import('@/components/landing/DraftingSection'), { ssr: false });
+const LeaderboardSection = dynamic(() => import('@/components/landing/LeaderboardSection'), { ssr: false });
+const CTASection = dynamic(() => import('@/components/landing/CTASection'), { ssr: false });
+const Footer = dynamic(() => import('@/components/landing/Footer'), { ssr: false });
 
 // Dashboard component for logged-in users with auto-redirect
 const Dashboard = () => {
@@ -180,6 +180,7 @@ const Dashboard = () => {
 const LandingPage = () => {
   return (
     <Box as="main" bg="bg.primary">
+      <LandingHeader />
       <HeroSection />
       <HowItWorksSection />
       <WeeklyEngagementSection />
