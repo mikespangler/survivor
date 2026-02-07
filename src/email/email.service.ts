@@ -45,7 +45,7 @@ export class EmailService {
     );
 
     const emailPayload = {
-      from: `Survivor Fantasy League <${this.fromEmail}>`,
+      from: `Outpick Outlast <${this.fromEmail}>`,
       to: [to],
       subject: `You've been invited to join ${leagueName}!`,
       html: this.getInviteEmailHtml({
@@ -79,53 +79,140 @@ export class EmailService {
     joinUrl: string;
     expiryDays: number;
   }): string {
+    const logoUrl = 'https://res.cloudinary.com/dm2gfa9t8/image/upload/e_trim,h_80,c_fit,f_png,q_auto/main-logo';
+
     return `
       <!DOCTYPE html>
       <html>
         <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
-            body { font-family: 'Helvetica Neue', Arial, sans-serif; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #F06542; padding: 30px; text-align: center; }
-            .header h1 { color: white; margin: 0; }
-            .content { background: #f9f9f9; padding: 30px; }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              margin: 0;
+              padding: 0;
+              background: #14181F;
+              color: #F8F6F2;
+            }
+            .wrapper {
+              background: #14181F;
+              padding: 40px 20px;
+            }
+            .container {
+              max-width: 600px;
+              margin: 0 auto;
+            }
+            .header {
+              background: linear-gradient(138deg, #212630 0%, #191D24 100%);
+              padding: 32px;
+              text-align: center;
+              border-radius: 16px 16px 0 0;
+              border: 1px solid rgba(48, 53, 65, 0.5);
+              border-bottom: none;
+            }
+            .header img {
+              height: 40px;
+              width: auto;
+            }
+            .subheader {
+              color: #818898;
+              font-size: 13px;
+              margin-top: 8px;
+              letter-spacing: 1px;
+              text-transform: uppercase;
+            }
+            .content {
+              background: linear-gradient(138deg, #212630 0%, #191D24 100%);
+              padding: 32px;
+              border-radius: 0 0 16px 16px;
+              border: 1px solid rgba(48, 53, 65, 0.5);
+              border-top: none;
+            }
+            .content h2 {
+              color: #F8F6F2;
+              margin: 0 0 16px 0;
+              font-size: 22px;
+              font-weight: 600;
+            }
+            .content p {
+              color: #818898;
+              margin: 0 0 16px 0;
+              font-size: 15px;
+              line-height: 1.6;
+            }
+            .content strong {
+              color: #F8F6F2;
+            }
+            .content ul {
+              color: #818898;
+              padding-left: 20px;
+              margin: 16px 0;
+            }
+            .content li {
+              margin: 8px 0;
+              font-size: 15px;
+            }
             .cta-button {
               display: inline-block;
               background: #F06542;
-              color: white;
-              padding: 15px 30px;
+              color: #14181F !important;
+              padding: 14px 28px;
               text-decoration: none;
-              border-radius: 8px;
-              margin: 20px 0;
+              border-radius: 12px;
+              margin: 24px 0;
+              font-weight: 600;
+              font-size: 15px;
+              box-shadow: 0 4px 0 #C34322;
             }
-            .footer { text-align: center; padding: 20px; color: #666; }
+            .expiry-note {
+              background: rgba(249, 195, 31, 0.1);
+              border: 1px solid rgba(249, 195, 31, 0.3);
+              padding: 16px;
+              border-radius: 12px;
+              margin-top: 24px;
+            }
+            .expiry-note p {
+              color: #F9C31F;
+              margin: 0;
+              font-size: 14px;
+            }
+            .footer {
+              text-align: center;
+              padding: 24px;
+              color: #818898;
+              font-size: 13px;
+            }
           </style>
         </head>
         <body>
-          <div class="container">
-            <div class="header">
-              <h1>🏝️ Survivor Fantasy League</h1>
-            </div>
-            <div class="content">
-              <h2>You've been invited!</h2>
-              <p><strong>${params.inviterName}</strong> has invited you to join <strong>${params.leagueName}</strong>.</p>
-              ${params.leagueDescription ? `<p>${params.leagueDescription}</p>` : ''}
-              <p>Join your league to:</p>
-              <ul>
-                <li>Draft your favorite castaways</li>
-                <li>Compete with friends for points</li>
-                <li>Answer weekly team questions</li>
-                <li>Track standings and scores</li>
-              </ul>
-              <center>
-                <a href="${params.joinUrl}" class="cta-button">Join League Now</a>
-              </center>
-              <p style="color: #666; font-size: 14px; margin-top: 30px;">
-                This invite expires in ${params.expiryDays} days. Don't wait!
-              </p>
-            </div>
-            <div class="footer">
-              <p>Survivor Fantasy League © 2026</p>
+          <div class="wrapper">
+            <div class="container">
+              <div class="header">
+                <img src="${logoUrl}" alt="Outpick Outlast" />
+                <div class="subheader">A Survivor Fantasy League</div>
+              </div>
+              <div class="content">
+                <h2>You've been invited!</h2>
+                <p><strong>${params.inviterName}</strong> has invited you to join <strong>${params.leagueName}</strong>.</p>
+                ${params.leagueDescription ? `<p>${params.leagueDescription}</p>` : ''}
+                <p>Join your league to:</p>
+                <ul>
+                  <li>Draft your favorite castaways</li>
+                  <li>Compete with friends for points</li>
+                  <li>Answer weekly questions</li>
+                  <li>Track standings and scores</li>
+                </ul>
+                <center>
+                  <a href="${params.joinUrl}" class="cta-button">Join League Now</a>
+                </center>
+                <div class="expiry-note">
+                  <p>This invite expires in ${params.expiryDays} days. Don't wait!</p>
+                </div>
+              </div>
+              <div class="footer">
+                <p>Outpick Outlast</p>
+              </div>
             </div>
           </div>
         </body>

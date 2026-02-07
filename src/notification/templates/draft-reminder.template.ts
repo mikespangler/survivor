@@ -46,7 +46,7 @@ export function getDraftReminderHtml(params: DraftReminderParams): string {
       <a href="${draftUrl}" class="cta-button">Complete Your Draft</a>
     </center>
 
-    <p style="color: #666; font-size: 14px; margin-top: 30px;">
+    <p style="font-size: 14px; margin-top: 24px;">
       Don't miss out on building your dream team!
     </p>
   `;

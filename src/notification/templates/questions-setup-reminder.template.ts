@@ -50,7 +50,7 @@ export function getQuestionsSetupReminderHtml(params: QuestionsSetupReminderPara
       <a href="${setupUrl}" class="cta-button">Create Questions</a>
     </center>
 
-    <p style="color: #666; font-size: 14px; margin-top: 30px;">
+    <p style="font-size: 14px; margin-top: 24px;">
       Tip: You can quickly add questions from templates or create custom ones.
     </p>
   `;

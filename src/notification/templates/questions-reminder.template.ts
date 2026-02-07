@@ -58,7 +58,7 @@ export function getQuestionsReminderHtml(params: QuestionsReminderParams): strin
       </a>
     </center>
 
-    <p style="color: #666; font-size: 14px; margin-top: 30px;">
+    <p style="font-size: 14px; margin-top: 24px;">
       Make sure to submit before the episode airs to earn points!
     </p>
   `;

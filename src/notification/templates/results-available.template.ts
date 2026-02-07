@@ -36,7 +36,7 @@ export function getResultsAvailableHtml(params: ResultsAvailableParams): string 
           <strong>${userPoints} points</strong>
         </p>
         ${userRank && totalTeams ? `
-          <p style="margin: 10px 0 0 0; color: #666;">
+          <p style="margin: 10px 0 0 0;">
             Rank: ${userRank} of ${totalTeams}
           </p>
         ` : ''}
@@ -47,7 +47,7 @@ export function getResultsAvailableHtml(params: ResultsAvailableParams): string 
       <a href="${resultsUrl}" class="cta-button">View Full Results</a>
     </center>
 
-    <p style="color: #666; font-size: 14px; margin-top: 30px;">
+    <p style="font-size: 14px; margin-top: 24px;">
       See how you stack up against the competition!
     </p>
   `;

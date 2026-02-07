@@ -46,7 +46,7 @@ export function getScoringReminderHtml(params: ScoringReminderParams): string {
       </a>
     </center>
 
-    <p style="color: #666; font-size: 14px; margin-top: 30px;">
+    <p style="font-size: 14px; margin-top: 24px;">
       Players are waiting to see their results!
     </p>
   `;

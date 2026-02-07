@@ -1,19 +1,21 @@
 'use client';
 
-import { Box, VStack, HStack, Text, Button, Icon, Spinner, Alert, AlertIcon } from '@chakra-ui/react';
+import { Box, VStack, HStack, Text, Button, Spinner, Alert, AlertIcon, createIcon } from '@chakra-ui/react';
 import { OptionButton } from './OptionButton';
 import { WagerSlider } from './WagerSlider';
 import type { QuestionScope } from '@/types/api';
 
 // Season bonus icon (gift/present icon)
-const SeasonBonusIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <Icon viewBox="0 0 12 12" boxSize="12px" {...props}>
+const SeasonBonusIcon = createIcon({
+  displayName: 'SeasonBonusIcon',
+  viewBox: '0 0 12 12',
+  path: (
     <path
       fill="currentColor"
       d="M10.5 4.5h-1.086c.377-.377.586-.88.586-1.414 0-.534-.209-1.037-.586-1.414a2.002 2.002 0 0 0-2.828 0L6 2.258 5.414 1.672a2.002 2.002 0 0 0-2.828 0A1.994 1.994 0 0 0 2 3.086c0 .534.209 1.037.586 1.414H1.5c-.275 0-.5.225-.5.5v2c0 .275.225.5.5.5h.5v3.5c0 .275.225.5.5.5h7c.275 0 .5-.225.5-.5V7.5h.5c.275 0 .5-.225.5-.5v-2c0-.275-.225-.5-.5-.5zm-6.914-1c-.155-.155-.241-.361-.241-.586s.086-.431.241-.586a.827.827 0 0 1 1.172 0L6 3.57 4.758 4.812a1.994 1.994 0 0 1-1.172-1.312zm4.242.586c.155.155.241.361.241.586s-.086.431-.241.586L6.586 3.914 7.828 2.672a.827.827 0 0 1 1.172 0c.155.155.241.361.241.586s-.086.431-.241.586zm-1.328.914h2.5v1.5h-2.5V5zm-5 0h2.5v1.5H1.5V5zm1 2.5h2V10H3V7.5zm3 2.5V7.5h2V10H6z"
     />
-  </Icon>
-);
+  ),
+});
 
 interface QuestionCardProps {
   questionNumber: number;
@@ -140,7 +142,7 @@ export function QuestionCard({
               >
                 <HStack spacing={1}>
                   {questionScope === 'season' && !isWager && (
-                    <SeasonBonusIcon color={badgeColors.textColor} />
+                    <SeasonBonusIcon boxSize="12px" color={badgeColors.textColor} />
                   )}
                   <Text
                     fontFamily="body"
