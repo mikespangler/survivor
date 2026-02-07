@@ -18,11 +18,11 @@ import { api } from '@/lib/api';
 import { getHeroBackgroundUrls, generateSrcSet } from '@/lib/cloudinary';
 
 const ROTATING_PHRASES = [
-  { top: "Where Survivor Hot Takes", bottom: "Finally Have Consequences." },
-  { top: "The Fantasy League for People Who", bottom: "Pause to Discuss Strategy." },
-  { top: "You Call Every Blindside", bottom: "Before It Happens. Prove It." },
-  { top: "Think You'd Win Survivor", bottom: "From Your Couch? Now You Can." },
-  { top: "You Already Yell at the TV.", bottom: "Might As Well Keep Score." },
+  { top: "Survivor Hot Takes", bottom: "Finally Have Consequences." },
+  { top: "The Fantasy League", bottom: "for People Who Pause to Discuss Strategy." },
+  { top: "You Call Every Blindside.", bottom: "Prove It." },
+  { top: "Win Survivor From Your Couch?", bottom: "Now You Can." },
+  { top: "You Yell at the TV.", bottom: "Might As Well Keep Score." },
 ];
 
 export const HeroSection = () => {
@@ -247,7 +247,7 @@ export const HeroSection = () => {
               letterSpacing="-2px"
               color="text.primary"
               textAlign="center"
-              maxW="900px"
+              whiteSpace="nowrap"
             >
               {ROTATING_PHRASES[phraseIndex].top}
             </Heading>
