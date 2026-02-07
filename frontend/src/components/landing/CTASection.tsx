@@ -18,7 +18,7 @@ export const CTASection = () => {
     <Box
       as="section"
       bg="bg.primary"
-      py={{ base: 16, md: 32 }}
+      py={{ base: 12, md: 20 }}
       px={{ base: 4, lg: '100px' }}
       position="relative"
       overflow="hidden"

@@ -44,7 +44,7 @@ export const WeeklyEngagementSection = () => {
       bg="bg.secondary"
       border="1px solid"
       borderColor="rgba(48, 53, 65, 0.5)"
-      py={{ base: 16, md: 32 }}
+      py={{ base: 12, md: 20 }}
       px={{ base: 4, lg: '100px' }}
       position="relative"
       overflow="hidden"

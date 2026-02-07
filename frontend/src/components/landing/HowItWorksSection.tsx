@@ -43,7 +43,7 @@ export const HowItWorksSection = () => {
     <Box
       as="section"
       bg="bg.primary"
-      py={{ base: 16, md: 32 }}
+      py={{ base: 12, md: 20 }}
       px={{ base: 4, lg: '100px' }}
     >
       <Container maxW="1400px" px={0}>

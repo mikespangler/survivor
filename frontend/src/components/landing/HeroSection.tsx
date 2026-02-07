@@ -47,7 +47,7 @@ export const HeroSection = () => {
     <Box
       as="section"
       position="relative"
-      minH="900px"
+      minH="700px"
       bg="bg.primary"
       overflow="hidden"
       pt="80px"
