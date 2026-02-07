@@ -6,6 +6,7 @@ import {
   Button,
   FormControl,
   FormLabel,
+  FormHelperText,
   Input,
   Select,
   Spinner,
@@ -36,11 +37,8 @@ import {
   ModalFooter,
   ModalCloseButton,
   useDisclosure,
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
+  Radio,
+  RadioGroup,
 } from '@chakra-ui/react';
 import { api } from '@/lib/api';
 import type {
@@ -52,6 +50,8 @@ import type {
 
 const QUESTION_TYPES: QuestionType[] = ['MULTIPLE_CHOICE', 'FILL_IN_THE_BLANK'];
 
+type ScoringType = 'fixed' | 'wager';
+
 type QuestionFormState = {
   id: string;
   episodeNumber: number;
@@ -60,6 +60,9 @@ type QuestionFormState = {
   options: string[];
   pointValue: number;
   newOption: string;
+  scoringType: ScoringType;
+  minWager: number;
+  maxWager: number;
 };
 
 const initialQuestionForm: QuestionFormState = {
@@ -70,6 +73,9 @@ const initialQuestionForm: QuestionFormState = {
   options: [],
   pointValue: 1,
   newOption: '',
+  scoringType: 'fixed',
+  minWager: 0,
+  maxWager: 100,
 };
 
 type ScoringState = {
@@ -216,7 +222,10 @@ export function QuestionsManager({
       text: form.text.trim(),
       type: form.type,
       options: form.type === 'MULTIPLE_CHOICE' ? form.options : undefined,
-      pointValue: form.pointValue,
+      pointValue: form.scoringType === 'fixed' ? form.pointValue : form.maxWager,
+      isWager: form.scoringType === 'wager',
+      minWager: form.scoringType === 'wager' ? form.minWager : undefined,
+      maxWager: form.scoringType === 'wager' ? form.maxWager : undefined,
     };
 
     setIsSubmitting(true);
@@ -250,6 +259,9 @@ export function QuestionsManager({
       options: (question.options as string[]) || [],
       pointValue: question.pointValue,
       newOption: '',
+      scoringType: question.isWager ? 'wager' : 'fixed',
+      minWager: question.minWager || 0,
+      maxWager: question.maxWager || 100,
     });
   };
 
@@ -416,222 +428,271 @@ export function QuestionsManager({
         </Box>
       </HStack>
 
-      <Tabs>
-        <TabList>
-          <Tab>Questions</Tab>
-          <Tab>Add New Question</Tab>
-        </TabList>
+      {/* Question Form */}
+      <Box as="form" onSubmit={handleSubmitQuestion}>
+        <Stack
+          spacing={4}
+          p={5}
+          borderWidth="1px"
+          borderRadius="lg"
+          bg="transparent"
+        >
+          <Text fontWeight="semibold">
+            {form.id ? 'Edit Question' : 'Create Question'}
+          </Text>
 
-        <TabPanels>
-          <TabPanel px={0}>
-            <Box
-              borderWidth="1px"
-              borderRadius="lg"
-              overflowX="auto"
-              bg="transparent"
-            >
-              <Table>
-                <Thead bg="transparent">
-                  <Tr>
-                    <Th>#</Th>
-                    <Th>Question</Th>
-                    <Th>Type</Th>
-                    <Th>Points</Th>
-                    <Th>Answers</Th>
-                    <Th>Status</Th>
-                    <Th>Actions</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {questions.map((question, index) => (
-                    <Tr key={question.id}>
-                      <Td>{index + 1}</Td>
-                      <Td maxW="300px">
-                        <Text noOfLines={2}>{question.text}</Text>
-                      </Td>
-                      <Td>
-                        <Badge
-                          colorScheme={
-                            question.type === 'MULTIPLE_CHOICE'
-                              ? 'blue'
-                              : 'purple'
-                          }
-                          size="sm"
-                        >
-                          {question.type === 'MULTIPLE_CHOICE' ? 'MC' : 'Fill'}
-                        </Badge>
-                      </Td>
-                      <Td>{question.pointValue}</Td>
-                      <Td>{question.answers?.length || 0}</Td>
-                      <Td>
-                        {question.isScored ? (
-                          <Badge colorScheme="green">Scored</Badge>
-                        ) : (
-                          <Badge colorScheme="yellow">Pending</Badge>
-                        )}
-                      </Td>
-                      <Td>
-                        <HStack spacing={2}>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEditQuestion(question)}
-                            isDisabled={question.isScored}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            colorScheme="red"
-                            variant="outline"
-                            onClick={() => handleDeleteQuestion(question)}
-                            isDisabled={question.isScored}
-                          >
-                            Delete
-                          </Button>
-                        </HStack>
-                      </Td>
-                    </Tr>
-                  ))}
-                  {questions.length === 0 && (
-                    <Tr>
-                      <Td colSpan={7} textAlign="center" py={6}>
-                        No questions for this episode yet.
-                      </Td>
-                    </Tr>
-                  )}
-                </Tbody>
-              </Table>
-            </Box>
-          </TabPanel>
+          <FormControl isRequired>
+            <FormLabel>Question Text</FormLabel>
+            <Textarea
+              value={form.text}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, text: e.target.value }))
+              }
+              placeholder="e.g., Who will be eliminated this week?"
+              rows={2}
+            />
+          </FormControl>
 
-          <TabPanel px={0}>
-            <Box as="form" onSubmit={handleSubmitQuestion}>
-              <Stack
-                spacing={4}
-                p={5}
-                borderWidth="1px"
-                borderRadius="lg"
-                bg="transparent"
+          <HStack spacing={4} align="flex-start">
+            <FormControl isRequired flex={1}>
+              <FormLabel>Type</FormLabel>
+              <Select
+                value={form.type}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    type: e.target.value as QuestionType,
+                  }))
+                }
               >
-                <Text fontWeight="semibold">
-                  {form.id ? 'Edit Question' : 'Create Question'}
-                </Text>
+                {QUESTION_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type.replace(/_/g, ' ')}
+                  </option>
+                ))}
+              </Select>
+            </FormControl>
 
-                <FormControl isRequired>
-                  <FormLabel>Question Text</FormLabel>
-                  <Textarea
-                    value={form.text}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, text: e.target.value }))
-                    }
-                    placeholder="e.g., Who will be eliminated this week?"
-                    rows={2}
-                  />
-                </FormControl>
-
-                <HStack spacing={4} align="flex-start">
-                  <FormControl isRequired flex={1}>
-                    <FormLabel>Type</FormLabel>
-                    <Select
-                      value={form.type}
-                      onChange={(e) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          type: e.target.value as QuestionType,
-                        }))
-                      }
-                    >
-                      {QUESTION_TYPES.map((type) => (
-                        <option key={type} value={type}>
-                          {type.replace(/_/g, ' ')}
-                        </option>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl flex={1}>
-                    <FormLabel>Point Value</FormLabel>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={form.pointValue}
-                      onChange={(e) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          pointValue: parseInt(e.target.value, 10) || 1,
-                        }))
-                      }
-                    />
-                  </FormControl>
+            <FormControl flex={1}>
+              <FormLabel>Scoring Type</FormLabel>
+              <RadioGroup
+                value={form.scoringType}
+                onChange={(val: ScoringType) =>
+                  setForm((prev) => ({ ...prev, scoringType: val }))
+                }
+              >
+                <HStack spacing={6}>
+                  <Radio value="fixed">Fixed Points</Radio>
+                  <Radio value="wager">Wager</Radio>
                 </HStack>
+              </RadioGroup>
+            </FormControl>
+          </HStack>
 
-                {form.type === 'MULTIPLE_CHOICE' && (
-                  <FormControl>
-                    <FormLabel>Options</FormLabel>
-                    <Wrap spacing={2} mb={2}>
-                      {form.options.map((option) => (
-                        <WrapItem key={option}>
-                          <Tag size="lg" colorScheme="orange" borderRadius="full">
-                            <TagLabel>{option}</TagLabel>
-                            <TagCloseButton
-                              onClick={() => handleRemoveOption(option)}
-                            />
-                          </Tag>
-                        </WrapItem>
-                      ))}
-                    </Wrap>
-                    <HStack>
-                      <Input
-                        value={form.newOption}
-                        onChange={(e) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            newOption: e.target.value,
-                          }))
-                        }
-                        placeholder="Add an option"
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddOption();
-                          }
-                        }}
+          {form.scoringType === 'fixed' ? (
+            <FormControl>
+              <FormLabel>Point Value</FormLabel>
+              <Input
+                type="number"
+                min={1}
+                value={form.pointValue}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    pointValue: parseInt(e.target.value, 10) || 1,
+                  }))
+                }
+              />
+              <FormHelperText>Correct = +points, Incorrect = 0</FormHelperText>
+            </FormControl>
+          ) : (
+            <FormControl>
+              <HStack spacing={4}>
+                <Box flex={1}>
+                  <FormLabel>Min Wager</FormLabel>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={form.minWager}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        minWager: parseInt(e.target.value, 10) || 0,
+                      }))
+                    }
+                  />
+                </Box>
+                <Box flex={1}>
+                  <FormLabel>Max Wager</FormLabel>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={form.maxWager}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        maxWager: parseInt(e.target.value, 10) || 100,
+                      }))
+                    }
+                  />
+                </Box>
+              </HStack>
+              <FormHelperText>
+                Players bet points. Correct = +wager, Incorrect = -wager
+              </FormHelperText>
+            </FormControl>
+          )}
+
+          {form.type === 'MULTIPLE_CHOICE' && (
+            <FormControl>
+              <FormLabel>Options</FormLabel>
+              <Wrap spacing={2} mb={2}>
+                {form.options.map((option) => (
+                  <WrapItem key={option}>
+                    <Tag size="lg" colorScheme="orange" borderRadius="full">
+                      <TagLabel>{option}</TagLabel>
+                      <TagCloseButton
+                        onClick={() => handleRemoveOption(option)}
                       />
-                      <Button onClick={handleAddOption} variant="outline">
-                        Add
-                      </Button>
-                    </HStack>
-                  </FormControl>
-                )}
+                    </Tag>
+                  </WrapItem>
+                ))}
+              </Wrap>
+              <HStack>
+                <Input
+                  value={form.newOption}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      newOption: e.target.value,
+                    }))
+                  }
+                  placeholder="Add an option"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddOption();
+                    }
+                  }}
+                />
+                <Button onClick={handleAddOption} variant="outline">
+                  Add
+                </Button>
+              </HStack>
+            </FormControl>
+          )}
 
-                <Stack direction="row" spacing={3}>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    isLoading={isSubmitting}
+          <Stack direction="row" spacing={3}>
+            <Button
+              type="submit"
+              variant="primary"
+              isLoading={isSubmitting}
+            >
+              {form.id ? 'Update Question' : 'Create Question'}
+            </Button>
+            {form.id && (
+              <Button
+                variant="outline"
+                onClick={() =>
+                  setForm({
+                    ...initialQuestionForm,
+                    episodeNumber: selectedEpisode,
+                  })
+                }
+              >
+                Cancel
+              </Button>
+            )}
+          </Stack>
+        </Stack>
+      </Box>
+
+      {/* Questions Table */}
+      <Box
+        borderWidth="1px"
+        borderRadius="lg"
+        overflowX="auto"
+        bg="transparent"
+      >
+        <Table>
+          <Thead bg="transparent">
+            <Tr>
+              <Th>#</Th>
+              <Th>Question</Th>
+              <Th>Type</Th>
+              <Th>Points</Th>
+              <Th>Answers</Th>
+              <Th>Status</Th>
+              <Th>Actions</Th>
+            </Tr>
+          </Thead>
+          <Tbody>
+            {questions.map((question, index) => (
+              <Tr key={question.id}>
+                <Td>{index + 1}</Td>
+                <Td maxW="300px">
+                  <Text noOfLines={2}>{question.text}</Text>
+                </Td>
+                <Td>
+                  <Badge
+                    colorScheme={
+                      question.type === 'MULTIPLE_CHOICE'
+                        ? 'blue'
+                        : 'purple'
+                    }
+                    size="sm"
                   >
-                    {form.id ? 'Update Question' : 'Create Question'}
-                  </Button>
-                  {form.id && (
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        setForm({
-                          ...initialQuestionForm,
-                          episodeNumber: selectedEpisode,
-                        })
-                      }
-                    >
-                      Cancel
-                    </Button>
+                    {question.type === 'MULTIPLE_CHOICE' ? 'MC' : 'Fill'}
+                  </Badge>
+                </Td>
+                <Td>
+                  {question.isWager ? (
+                    <Text>Wager {question.minWager}-{question.maxWager}</Text>
+                  ) : (
+                    <Text>{question.pointValue} pts</Text>
                   )}
-                </Stack>
-              </Stack>
-            </Box>
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
+                </Td>
+                <Td>{question.answers?.length || 0}</Td>
+                <Td>
+                  {question.isScored ? (
+                    <Badge colorScheme="green">Scored</Badge>
+                  ) : (
+                    <Badge colorScheme="yellow">Pending</Badge>
+                  )}
+                </Td>
+                <Td>
+                  <HStack spacing={2}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEditQuestion(question)}
+                      isDisabled={question.isScored}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      colorScheme="red"
+                      variant="outline"
+                      onClick={() => handleDeleteQuestion(question)}
+                      isDisabled={question.isScored}
+                    >
+                      Delete
+                    </Button>
+                  </HStack>
+                </Td>
+              </Tr>
+            ))}
+            {questions.length === 0 && (
+              <Tr>
+                <Td colSpan={7} textAlign="center" py={6}>
+                  No questions for this episode yet.
+                </Td>
+              </Tr>
+            )}
+          </Tbody>
+        </Table>
+      </Box>
 
       {/* Templates Modal */}
       <Modal isOpen={isTemplatesOpen} onClose={onTemplatesClose} size="xl">

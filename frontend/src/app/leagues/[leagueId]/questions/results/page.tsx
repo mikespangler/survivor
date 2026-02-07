@@ -306,7 +306,7 @@ export default function QuestionsResultsPage() {
                               {resultsData.leaderboard.map((entry) => (
                                 <Tr
                                   key={entry.teamId}
-                                  bg={entry.isCurrentUser ? 'orange.50' : undefined}
+                                  bg={entry.isCurrentUser ? 'rgba(66, 153, 225, 0.1)' : undefined}
                                   fontWeight={entry.isCurrentUser ? 'bold' : undefined}
                                 >
                                   <Td>
@@ -318,7 +318,7 @@ export default function QuestionsResultsPage() {
                                   <Td>
                                     {entry.teamName}
                                     {entry.isCurrentUser && (
-                                      <Badge ml={2} colorScheme="orange">
+                                      <Badge ml={2} colorScheme="blue">
                                         You
                                       </Badge>
                                     )}
@@ -422,12 +422,12 @@ export default function QuestionsResultsPage() {
                                       return (
                                         <Tr
                                           key={answer.teamId}
-                                          bg={answer.isCurrentUser ? 'orange.50' : undefined}
+                                          bg={answer.isCurrentUser ? 'rgba(66, 153, 225, 0.1)' : undefined}
                                         >
                                           <Td>
                                             {answer.teamName}
                                             {answer.isCurrentUser && (
-                                              <Badge ml={2} colorScheme="orange" size="sm">
+                                              <Badge ml={2} colorScheme="blue" size="sm">
                                                 You
                                               </Badge>
                                             )}

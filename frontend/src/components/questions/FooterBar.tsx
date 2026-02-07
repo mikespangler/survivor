@@ -1,26 +1,50 @@
 'use client';
 
-import { Box, HStack, VStack, Text, Button, Icon } from '@chakra-ui/react';
+import { Box, HStack, VStack, Text, Spinner, Icon, Alert, AlertIcon } from '@chakra-ui/react';
+
+// Check icon SVG
+const CheckIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <Icon viewBox="0 0 24 24" boxSize="20px" {...props}>
+    <path
+      fill="currentColor"
+      d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+    />
+  </Icon>
+);
+
+// Helper to format deadline
+function formatDeadline(deadline: string | null): string {
+  if (!deadline) return 'No deadline set';
+  const date = new Date(deadline);
+  return date.toLocaleString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  });
+}
 
 interface FooterBarProps {
   answeredCount: number;
   totalCount: number;
-  canSubmit: boolean;
-  isSubmitting: boolean;
-  onSaveDraft: () => void;
-  onSubmit: () => void;
+  deadline: string | null;
+  timeRemaining: string;
+  isLocked: boolean;
+  anySaving: boolean;
 }
+
+export type { FooterBarProps };
 
 export function FooterBar({
   answeredCount,
   totalCount,
-  canSubmit,
-  isSubmitting,
-  onSaveDraft,
-  onSubmit,
+  deadline,
+  timeRemaining,
+  isLocked,
+  anySaving,
 }: FooterBarProps) {
-  const allAnswered = answeredCount === totalCount;
-
   return (
     <Box
       bg="linear-gradient(173deg, rgb(33, 38, 48) 2.5%, rgb(25, 29, 36) 97.5%)"
@@ -31,8 +55,8 @@ export function FooterBar({
       py={6}
     >
       <VStack spacing={4} align="stretch">
-        {/* Progress info */}
-        <HStack justify="space-between">
+        {/* Progress and save status */}
+        <HStack justify="space-between" w="full">
           <Text
             fontFamily="body"
             fontSize="14px"
@@ -41,81 +65,116 @@ export function FooterBar({
           >
             {answeredCount} of {totalCount} questions answered
           </Text>
-          <Text
-            fontFamily="body"
-            fontSize="14px"
-            fontWeight="medium"
-            color="text.secondary"
-          >
-            {allAnswered
-              ? 'All questions answered!'
-              : 'Please answer all questions before submitting'}
-          </Text>
+          <HStack spacing={2}>
+            {anySaving ? (
+              <>
+                <Spinner size="sm" color="brand.primary" />
+                <Text
+                  fontFamily="body"
+                  fontSize="14px"
+                  fontWeight="medium"
+                  color="text.secondary"
+                >
+                  Saving...
+                </Text>
+              </>
+            ) : (
+              <>
+                <CheckIcon color="green.400" />
+                <Text
+                  fontFamily="body"
+                  fontSize="14px"
+                  fontWeight="medium"
+                  color="green.400"
+                >
+                  All changes saved
+                </Text>
+              </>
+            )}
+          </HStack>
         </HStack>
-
-        {/* Buttons */}
-        <HStack spacing={4}>
-          {/* Save Draft button */}
-          <Button
-            flex={1}
-            h="64px"
-            bg="#2b2b31"
-            color="text.primary"
-            fontFamily="display"
-            fontSize="18px"
-            borderRadius="20px"
+        
+        {/* Deadline info */}
+        {!isLocked && deadline && (
+          <Alert
+            status="info"
+            borderRadius="16px"
+            bg="rgba(107, 126, 203, 0.1)"
             border="1px solid"
-            borderColor="black"
-            boxShadow="0px 6px 0px 0px #0c0e12"
-            _hover={{ bg: '#353540' }}
-            _active={{
-              transform: 'translateY(2px)',
-              boxShadow: '0px 3px 0px 0px #0c0e12',
-            }}
-            onClick={onSaveDraft}
-            isDisabled={!canSubmit || isSubmitting}
-            leftIcon={
-              <Icon viewBox="0 0 16 16" boxSize="16px">
-                <path
-                  fill="currentColor"
-                  d="M13 1H3C1.9 1 1 1.9 1 3v10c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-2-2-2zm0 12H3V3h10v10zM4 9h8v2H4V9z"
-                />
-              </Icon>
-            }
+            borderColor="rgba(107, 126, 203, 0.3)"
+            py={4}
           >
-            Save Draft
-          </Button>
-
-          {/* Submit button */}
-          <Button
-            flex={1}
-            h="64px"
-            bg="brand.primary"
-            color="text.button"
-            fontFamily="display"
-            fontSize="16px"
-            borderRadius="20px"
-            boxShadow="0px 6px 0px 0px #C34322"
-            _hover={{ bg: '#E85A3A' }}
-            _active={{
-              transform: 'translateY(2px)',
-              boxShadow: '0px 3px 0px 0px #C34322',
-            }}
-            onClick={onSubmit}
-            isLoading={isSubmitting}
-            isDisabled={!canSubmit || !allAnswered}
-            rightIcon={
-              <Icon viewBox="0 0 24 24" boxSize="16px">
-                <path
-                  fill="currentColor"
-                  d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"
-                />
-              </Icon>
-            }
+            <AlertIcon color="brand.purple" />
+            <VStack align="start" spacing={1} flex="1">
+              <HStack spacing={2}>
+                <Text
+                  fontFamily="body"
+                  fontSize="14px"
+                  fontWeight="semibold"
+                  color="text.primary"
+                >
+                  Deadline:
+                </Text>
+                <Text
+                  fontFamily="body"
+                  fontSize="14px"
+                  fontWeight="medium"
+                  color="text.secondary"
+                >
+                  {formatDeadline(deadline)}
+                </Text>
+              </HStack>
+              <HStack spacing={2}>
+                <Text
+                  fontFamily="body"
+                  fontSize="14px"
+                  fontWeight="semibold"
+                  color="text.primary"
+                >
+                  Time remaining:
+                </Text>
+                <Text
+                  fontFamily="body"
+                  fontSize="14px"
+                  fontWeight="medium"
+                  color="text.secondary"
+                >
+                  {timeRemaining}
+                </Text>
+              </HStack>
+              <Text
+                fontFamily="body"
+                fontSize="13px"
+                color="text.secondary"
+                mt={1}
+              >
+                Your answers save automatically and can be edited until the deadline.
+              </Text>
+            </VStack>
+          </Alert>
+        )}
+        
+        {/* Locked notice */}
+        {isLocked && (
+          <Alert
+            status="warning"
+            borderRadius="16px"
+            bg="rgba(249, 195, 31, 0.1)"
+            border="1px solid"
+            borderColor="rgba(249, 195, 31, 0.3)"
+            py={4}
           >
-            Submit Answers
-          </Button>
-        </HStack>
+            <AlertIcon color="brand.yellow" />
+            <Text
+              fontFamily="body"
+              fontSize="14px"
+              fontWeight="medium"
+              color="text.primary"
+            >
+              Answers are now locked. The deadline has passed.
+            </Text>
+          </Alert>
+        )}
       </VStack>
     </Box>
   );

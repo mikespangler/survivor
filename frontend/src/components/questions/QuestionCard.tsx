@@ -1,12 +1,12 @@
 'use client';
 
-import { Box, VStack, HStack, Text, Button, Icon } from '@chakra-ui/react';
+import { Box, VStack, HStack, Text, Button, Icon, Spinner, Alert, AlertIcon } from '@chakra-ui/react';
 import { OptionButton } from './OptionButton';
 import { WagerSlider } from './WagerSlider';
 import type { QuestionScope } from '@/types/api';
 
 // Season bonus icon (gift/present icon)
-const SeasonBonusIcon = (props: any) => (
+const SeasonBonusIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <Icon viewBox="0 0 12 12" boxSize="12px" {...props}>
     <path
       fill="currentColor"
@@ -31,10 +31,14 @@ interface QuestionCardProps {
   isScored?: boolean;
   correctAnswer?: string | null;
   pointsEarned?: number | null;
+  isSaving?: boolean;
+  saveError?: string;
   onSelectAnswer: (answer: string) => void;
   onClearSelection: () => void;
   onWagerChange: (amount: number) => void;
 }
+
+export type { QuestionCardProps };
 
 // Get badge color based on scope and type
 function getBadgeColors(scope: QuestionScope, isWager: boolean) {
@@ -53,9 +57,9 @@ function getBadgeColors(scope: QuestionScope, isWager: boolean) {
   };
 }
 
-function getScopeLabel(scope: QuestionScope, isWager: boolean) {
+function getScopeLabel(_scope: QuestionScope, isWager: boolean) {
   if (isWager) return 'Point Wager';
-  if (scope === 'season') return 'Season Bonus';
+  if (_scope === 'season') return 'Season Bonus';
   return 'Episode';
 }
 
@@ -75,6 +79,8 @@ export function QuestionCard({
   isScored = false,
   correctAnswer,
   pointsEarned,
+  isSaving = false,
+  saveError,
   onSelectAnswer,
   onClearSelection,
   onWagerChange,
@@ -175,24 +181,38 @@ export function QuestionCard({
           </VStack>
 
           {/* Points badge */}
-          <Box
-            bg="rgba(240, 101, 66, 0.15)"
-            border="1px solid"
-            borderColor="rgba(240, 101, 66, 0.2)"
-            borderRadius="full"
-            px={3}
-            py={2}
-            flexShrink={0}
-          >
-            <Text
-              fontFamily="display"
-              fontSize="14px"
-              fontWeight="bold"
-              color="brand.primary"
+          <HStack spacing={2} flexShrink={0}>
+            {isSaving && (
+              <HStack spacing={1}>
+                <Spinner size="xs" color="brand.primary" />
+                <Text
+                  fontFamily="body"
+                  fontSize="11px"
+                  fontWeight="medium"
+                  color="text.secondary"
+                >
+                  Saving...
+                </Text>
+              </HStack>
+            )}
+            <Box
+              bg="rgba(240, 101, 66, 0.15)"
+              border="1px solid"
+              borderColor="rgba(240, 101, 66, 0.2)"
+              borderRadius="full"
+              px={3}
+              py={2}
             >
-              {isWager ? 'High Wager' : `+${pointValue} pts`}
-            </Text>
-          </Box>
+              <Text
+                fontFamily="display"
+                fontSize="14px"
+                fontWeight="bold"
+                color="brand.primary"
+              >
+                {isWager ? 'High Wager' : `+${pointValue} pts`}
+              </Text>
+            </Box>
+          </HStack>
         </HStack>
       </Box>
 
@@ -308,6 +328,28 @@ export function QuestionCard({
                 </Box>
               </HStack>
             </Box>
+          )}
+          
+          {/* Save error */}
+          {saveError && (
+            <Alert
+              status="error"
+              borderRadius="12px"
+              bg="rgba(240, 101, 66, 0.1)"
+              border="1px solid"
+              borderColor="rgba(240, 101, 66, 0.3)"
+              py={3}
+            >
+              <AlertIcon color="brand.primary" />
+              <Text
+                fontFamily="body"
+                fontSize="13px"
+                fontWeight="medium"
+                color="text.primary"
+              >
+                {saveError}
+              </Text>
+            </Alert>
           )}
         </VStack>
       </Box>

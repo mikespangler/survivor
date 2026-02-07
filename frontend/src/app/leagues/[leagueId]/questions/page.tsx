@@ -13,14 +13,12 @@ import {
   AlertIcon,
   AlertTitle,
   AlertDescription,
-  Button,
   useToast,
 } from '@chakra-ui/react';
 import { useUser } from '@clerk/nextjs';
 import { api } from '@/lib/api';
 import { AuthenticatedLayout } from '@/components/navigation';
 import type {
-  League,
   Season,
   EpisodeQuestionsResponse,
   MyTeamResponse,
@@ -75,7 +73,6 @@ export default function PlayerQuestionsPage() {
   const toast = useToast();
   const leagueId = params.leagueId as string;
 
-  const [league, setLeague] = useState<League | null>(null);
   const [activeSeason, setActiveSeason] = useState<Season | null>(null);
   const [questionsData, setQuestionsData] =
     useState<EpisodeQuestionsResponse | null>(null);
@@ -84,8 +81,11 @@ export default function PlayerQuestionsPage() {
     {},
   );
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Auto-save state tracking
+  const [savingStates, setSavingStates] = useState<{ [questionId: string]: boolean }>({});
+  const [saveErrors, setSaveErrors] = useState<{ [questionId: string]: string }>({});
 
   const loadData = useCallback(async () => {
     if (!leagueId) return;
@@ -95,8 +95,7 @@ export default function PlayerQuestionsPage() {
 
     try {
       // Load league
-      const leagueData = await api.getLeague(leagueId);
-      setLeague(leagueData);
+      await api.getLeague(leagueId);
 
       // Find active season
       const seasons = await api.getSeasons();
@@ -182,7 +181,33 @@ export default function PlayerQuestionsPage() {
     return { episode, season, wager };
   }, [questionsData]);
 
-  // Handle answer selection
+  // Auto-save function
+  const autoSaveAnswer = useCallback(async (questionId: string, answer: string, wagerAmount?: number) => {
+    if (!activeSeason || !answer) return;
+    
+    setSavingStates(prev => ({ ...prev, [questionId]: true }));
+    setSaveErrors(prev => ({ ...prev, [questionId]: '' }));
+    
+    try {
+      await api.submitAnswer(leagueId, activeSeason.id, questionId, {
+        answer,
+        wagerAmount,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to save';
+      setSaveErrors(prev => ({ ...prev, [questionId]: message }));
+      toast({
+        title: 'Failed to save answer',
+        description: message,
+        status: 'error',
+        duration: 3000,
+      });
+    } finally {
+      setSavingStates(prev => ({ ...prev, [questionId]: false }));
+    }
+  }, [activeSeason, leagueId, toast]);
+
+  // Handle answer selection (immediate save for multiple choice)
   const handleSelectAnswer = (questionId: string, answer: string) => {
     setAnswers((prev) => ({
       ...prev,
@@ -191,6 +216,12 @@ export default function PlayerQuestionsPage() {
         answer,
       },
     }));
+    
+    // Immediate save for multiple choice
+    const question = questionsData?.questions.find(q => q.id === questionId);
+    if (question?.type === 'MULTIPLE_CHOICE') {
+      autoSaveAnswer(questionId, answer, answers[questionId]?.wagerAmount);
+    }
   };
 
   // Handle clear selection
@@ -204,7 +235,7 @@ export default function PlayerQuestionsPage() {
     }));
   };
 
-  // Handle wager change
+  // Handle wager change (immediate save)
   const handleWagerChange = (questionId: string, amount: number) => {
     setAnswers((prev) => ({
       ...prev,
@@ -213,87 +244,51 @@ export default function PlayerQuestionsPage() {
         wagerAmount: amount,
       },
     }));
-  };
-
-  // Submit all answers
-  const handleSubmitAll = async () => {
-    if (!activeSeason || !questionsData) return;
-
-    setIsSubmitting(true);
-    try {
-      // Submit each answer
-      for (const q of questionsData.questions) {
-        const answerState = answers[q.id];
-        if (answerState?.answer) {
-          await api.submitAnswer(leagueId, activeSeason.id, q.id, {
-            answer: answerState.answer,
-            wagerAmount: q.isWager ? answerState.wagerAmount : undefined,
-          });
-        }
-      }
-
-      toast({
-        title: 'Answers submitted successfully!',
-        status: 'success',
-        duration: 3000,
-      });
-
-      // Reload data
-      await loadData();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to submit answers';
-      toast({
-        title: 'Failed to submit answers',
-        description: message,
-        status: 'error',
-      });
-    } finally {
-      setIsSubmitting(false);
+    
+    // Immediate save for wager changes
+    const answerText = answers[questionId]?.answer;
+    if (answerText) {
+      autoSaveAnswer(questionId, answerText, amount);
     }
   };
 
-  // Save draft (same as submit but shows different message)
-  const handleSaveDraft = async () => {
-    if (!activeSeason || !questionsData) return;
-
-    setIsSubmitting(true);
-    try {
-      // Submit each answered question
-      for (const q of questionsData.questions) {
-        const answerState = answers[q.id];
-        if (answerState?.answer) {
-          await api.submitAnswer(leagueId, activeSeason.id, q.id, {
-            answer: answerState.answer,
-            wagerAmount: q.isWager ? answerState.wagerAmount : undefined,
-          });
-        }
+  // Debounce fill-in-the-blank answers
+  useEffect(() => {
+    if (!questionsData) return;
+    
+    const fillInQuestions = questionsData.questions.filter(q => q.type === 'FILL_IN_THE_BLANK');
+    
+    const timeouts: NodeJS.Timeout[] = [];
+    
+    fillInQuestions.forEach(question => {
+      const answer = answers[question.id]?.answer;
+      const wagerAmount = answers[question.id]?.wagerAmount;
+      
+      // Only auto-save if there's an answer and it's different from the original
+      if (answer && answer !== question.myAnswer) {
+        const timeoutId = setTimeout(() => {
+          autoSaveAnswer(question.id, answer, wagerAmount);
+        }, 1000); // 1 second debounce
+        
+        timeouts.push(timeoutId);
       }
-
-      toast({
-        title: 'Draft saved!',
-        status: 'success',
-        duration: 2000,
+    });
+    
+    return () => {
+      timeouts.forEach(id => {
+        clearTimeout(id);
       });
-
-      // Reload data
-      await loadData();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to save draft';
-      toast({
-        title: 'Failed to save draft',
-        description: message,
-        status: 'error',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    };
+  }, [answers, questionsData, autoSaveAnswer]);
 
   // Calculate progress
   const answeredCount = questionsData
     ? questionsData.questions.filter((q) => answers[q.id]?.answer).length
     : 0;
   const totalQuestions = questionsData?.questions.length || 0;
+  
+  // Check if any answers are currently saving
+  const anySaving = Object.values(savingStates).some(saving => saving);
 
   // Loading state
   if (isLoading) {
@@ -430,6 +425,8 @@ export default function PlayerQuestionsPage() {
               isScored={q.isScored}
               correctAnswer={q.correctAnswer}
               pointsEarned={q.pointsEarned}
+              isSaving={savingStates[q.id] || false}
+              saveError={saveErrors[q.id]}
               onSelectAnswer={(answer) => handleSelectAnswer(q.id, answer)}
               onClearSelection={() => handleClearSelection(q.id)}
               onWagerChange={(amount) => handleWagerChange(q.id, amount)}
@@ -522,10 +519,10 @@ export default function PlayerQuestionsPage() {
             <FooterBar
               answeredCount={answeredCount}
               totalCount={totalQuestions}
-              canSubmit={questionsData.canSubmit}
-              isSubmitting={isSubmitting}
-              onSaveDraft={handleSaveDraft}
-              onSubmit={handleSubmitAll}
+              deadline={questionsData.deadline}
+              timeRemaining={getTimeRemaining(questionsData.deadline)}
+              isLocked={!questionsData.canSubmit}
+              anySaving={anySaving}
             />
           </VStack>
         </Container>

@@ -20,7 +20,6 @@ import {
   StandingsIcon,
   WeeklyQuestionsIcon,
   DraftIcon,
-  HistoryIcon,
   SettingsIcon,
   CollapseIcon,
   ChevronDownIcon,
@@ -174,6 +173,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                 border="1px solid"
                 borderColor="rgba(255, 255, 255, 0.08)"
                 borderRadius="12px"
+                boxShadow="0 2px 4px rgba(0, 0, 0, 0.2)"
                 _hover={{
                   bg: 'rgba(40, 46, 58, 0.9)',
                   borderColor: 'rgba(240, 101, 66, 0.3)',
@@ -314,14 +314,6 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                 isCollapsed={isCollapsed}
               >
                 Draft
-              </NavLink>
-              <NavLink
-                href={`${baseUrl}/history`}
-                icon={<HistoryIcon boxSize="20px" />}
-                isActive={isActive(`${baseUrl}/history`)}
-                isCollapsed={isCollapsed}
-              >
-                History
               </NavLink>
               {isCommissioner && (
                 <NavLink

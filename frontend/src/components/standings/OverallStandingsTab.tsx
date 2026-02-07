@@ -91,7 +91,7 @@ export function OverallStandingsTab({ teams, currentEpisode }: OverallStandingsT
             return (
               <Tr
                 key={team.id}
-                bg={team.isCurrentUser ? 'bg.overlay' : undefined}
+                bg={team.isCurrentUser ? 'rgba(66, 153, 225, 0.1)' : undefined}
                 borderLeftWidth={team.isCurrentUser ? '3px' : '0'}
                 borderLeftColor={team.isCurrentUser ? 'brand.primary' : undefined}
                 fontWeight={team.isCurrentUser ? 'semibold' : 'normal'}
@@ -106,7 +106,7 @@ export function OverallStandingsTab({ teams, currentEpisode }: OverallStandingsT
                   <HStack gap={2}>
                     <Text fontSize="sm">{team.name}</Text>
                     {team.isCurrentUser && (
-                      <Badge colorScheme="orange" fontSize="2xs" px={1.5} py={0.5}>
+                      <Badge colorScheme="blue" fontSize="2xs" px={1.5} py={0.5}>
                         You
                       </Badge>
                     )}
