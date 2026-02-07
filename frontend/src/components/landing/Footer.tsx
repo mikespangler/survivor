@@ -31,11 +31,11 @@ export const Footer = () => {
       bg="bg.secondary"
       borderTop="2px solid"
       borderColor="rgba(48, 53, 65, 0.5)"
-      py={16}
+      py={8}
       px={{ base: 4, lg: 5 }}
     >
       <Container maxW="1400px" px={4}>
-        <VStack gap={16}>
+        <VStack gap={6}>
           {/* Main Footer Content */}
           <Flex
             direction={{ base: 'column', lg: 'row' }}
@@ -44,7 +44,7 @@ export const Footer = () => {
             justify="space-between"
           >
             {/* Logo & Description */}
-            <VStack align="start" gap={4} maxW="247px">
+            <VStack align="start" gap={2} maxW="247px">
               <HStack gap={2}>
                 <Text fontSize="3xl">🔥</Text>
                 <VStack align="start" gap={0}>
@@ -79,20 +79,20 @@ export const Footer = () => {
             </VStack>
 
             {/* Link Columns */}
-            <SimpleGrid columns={2} gap={8}>
+            <SimpleGrid columns={2} gap={12}>
               {Object.entries(footerLinks).map(([category, links]) => (
-                <VStack key={category} align="start" gap={4}>
+                <VStack key={category} align="start" gap={2}>
                   <Heading
                     as="h4"
                     fontFamily="display"
-                    fontSize="lg"
+                    fontSize="md"
                     fontWeight="bold"
                     color="text.primary"
                     letterSpacing="-0.45px"
                   >
                     {category}
                   </Heading>
-                  <VStack align="start" gap={3}>
+                  <VStack align="start" gap={1}>
                     {links.map((link) => (
                       <Link key={link.label} href={link.href}>
                         <Text
@@ -118,7 +118,7 @@ export const Footer = () => {
             w="full"
             borderTop="2px solid"
             borderColor="rgba(48, 53, 65, 0.5)"
-            pt={8}
+            pt={4}
           >
             <Flex
               direction={{ base: 'column', md: 'row' }}
