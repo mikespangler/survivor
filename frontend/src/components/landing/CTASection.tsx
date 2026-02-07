@@ -38,23 +38,6 @@ export const CTASection = () => {
 
       <Container maxW="768px" px={0} position="relative" zIndex={1}>
         <VStack gap={0} textAlign="center">
-          {/* Headline */}
-          <Heading
-            as="h2"
-            fontFamily="heading"
-            fontSize={{ base: '32px', md: '40px' }}
-            lineHeight="48px"
-            letterSpacing="-1.2px"
-            mb={4}
-          >
-            <Text as="span" color="text.primary">
-              Ready to Outwit, Outplay,{' '}
-            </Text>
-            <Text as="span" className="text-gradient-orange-yellow">
-              Outlast Your Friends?
-            </Text>
-          </Heading>
-
           {/* Subheadline */}
           <Text
             fontFamily="body"
