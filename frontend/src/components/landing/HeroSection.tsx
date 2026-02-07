@@ -225,44 +225,23 @@ export const HeroSection = () => {
           </Badge>
 
           {/* Main Headline */}
-          <VStack gap={0} mb={4}>
+          <Box
+            h={{ base: '144px', md: '192px', lg: '240px' }}
+            mb={4}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+          >
             <Heading
+              key={phraseIndex}
               as="h1"
               fontFamily="heading"
-              fontSize={{ base: '40px', md: '56px', lg: '72px' }}
-              lineHeight={{ base: '48px', md: '64px', lg: '80px' }}
-              letterSpacing="-2px"
-              color="text.primary"
-              textAlign="center"
-              textTransform="uppercase"
-            >
-              A Survivor Fantasy League
-            </Heading>
-            <Text
-              as="span"
-              fontFamily="heading"
-              fontSize={{ base: '40px', md: '56px', lg: '72px' }}
-              lineHeight={{ base: '48px', md: '64px', lg: '80px' }}
+              fontSize={{ base: '32px', md: '48px', lg: '64px' }}
+              lineHeight={{ base: '40px', md: '56px', lg: '72px' }}
               letterSpacing="-2px"
               textAlign="center"
-              textTransform="uppercase"
+              maxW="900px"
               className="text-gradient-orange-purple"
-            >
-              You Play All Season
-            </Text>
-          </VStack>
-
-          {/* Subheadline */}
-          <Box h={{ base: '56px', md: '28px' }} mb={8}>
-            <Text
-              key={phraseIndex}
-              fontFamily="body"
-              fontSize={{ base: 'md', md: 'lg', lg: 'xl' }}
-              lineHeight="28px"
-              fontWeight="medium"
-              color="text.secondary"
-              textAlign="center"
-              maxW="672px"
               animation="fadeIn 0.5s ease-in-out"
               sx={{
                 '@keyframes fadeIn': {
@@ -272,8 +251,23 @@ export const HeroSection = () => {
               }}
             >
               {ROTATING_PHRASES[phraseIndex]}
-            </Text>
+            </Heading>
           </Box>
+
+          {/* Subheadline */}
+          <Text
+            fontFamily="body"
+            fontSize={{ base: 'md', md: 'lg', lg: 'xl' }}
+            lineHeight="28px"
+            fontWeight="medium"
+            color="text.secondary"
+            textAlign="center"
+            maxW="672px"
+            mb={8}
+          >
+            Draft castaways. Answer weekly questions. Compete for points. Join your
+            friends in the ultimate Survivor experience!
+          </Text>
 
           {/* CTA Buttons */}
           <Flex
