@@ -18,11 +18,11 @@ import { api } from '@/lib/api';
 import { getHeroBackgroundUrls, generateSrcSet } from '@/lib/cloudinary';
 
 const ROTATING_PHRASES = [
-  "Where Survivor Hot Takes Finally Have Consequences.",
-  "The Fantasy League for People Who Pause to Discuss Strategy.",
-  "You Call Every Blindside Before It Happens. Prove It.",
-  "Think You'd Win Survivor From Your Couch? Now You Can.",
-  "You Already Yell at the TV. Might As Well Keep Score.",
+  { top: "Where Survivor Hot Takes", bottom: "Finally Have Consequences." },
+  { top: "The Fantasy League for People Who", bottom: "Pause to Discuss Strategy." },
+  { top: "You Call Every Blindside", bottom: "Before It Happens. Prove It." },
+  { top: "Think You'd Win Survivor", bottom: "From Your Couch? Now You Can." },
+  { top: "You Already Yell at the TV.", bottom: "Might As Well Keep Score." },
 ];
 
 export const HeroSection = () => {
@@ -225,16 +225,34 @@ export const HeroSection = () => {
           </Badge>
 
           {/* Main Headline */}
-          <Box
-            h={{ base: '144px', md: '192px', lg: '240px' }}
+          <VStack
+            key={phraseIndex}
+            gap={0}
             mb={4}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
+            minH={{ base: '120px', md: '160px', lg: '200px' }}
+            justify="center"
+            animation="fadeIn 0.5s ease-in-out"
+            sx={{
+              '@keyframes fadeIn': {
+                '0%': { opacity: 0, transform: 'translateY(10px)' },
+                '100%': { opacity: 1, transform: 'translateY(0)' },
+              },
+            }}
           >
             <Heading
-              key={phraseIndex}
               as="h1"
+              fontFamily="heading"
+              fontSize={{ base: '32px', md: '48px', lg: '64px' }}
+              lineHeight={{ base: '40px', md: '56px', lg: '72px' }}
+              letterSpacing="-2px"
+              color="text.primary"
+              textAlign="center"
+              maxW="900px"
+            >
+              {ROTATING_PHRASES[phraseIndex].top}
+            </Heading>
+            <Text
+              as="span"
               fontFamily="heading"
               fontSize={{ base: '32px', md: '48px', lg: '64px' }}
               lineHeight={{ base: '40px', md: '56px', lg: '72px' }}
@@ -242,17 +260,10 @@ export const HeroSection = () => {
               textAlign="center"
               maxW="900px"
               className="text-gradient-orange-purple"
-              animation="fadeIn 0.5s ease-in-out"
-              sx={{
-                '@keyframes fadeIn': {
-                  '0%': { opacity: 0, transform: 'translateY(10px)' },
-                  '100%': { opacity: 1, transform: 'translateY(0)' },
-                },
-              }}
             >
-              {ROTATING_PHRASES[phraseIndex]}
-            </Heading>
-          </Box>
+              {ROTATING_PHRASES[phraseIndex].bottom}
+            </Text>
+          </VStack>
 
           {/* Subheadline */}
           <Text
