@@ -1578,6 +1578,252 @@ export class LeagueService {
     };
   }
 
+  // Commissioner member management methods
+  async getLeagueMembers(leagueId: string, requesterId: string) {
+    // Verify requester has access (guard already checks, but we verify league exists)
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+      include: {
+        owner: true,
+        members: true,
+        commissioners: true,
+        leagueSeasons: {
+          include: {
+            season: true,
+            teams: {
+              include: {
+                owner: true,
+              },
+            },
+          },
+          orderBy: {
+            season: {
+              number: 'desc',
+            },
+          },
+          take: 1,
+        },
+      },
+    });
+
+    if (!league) {
+      throw new NotFoundException(`League with ID ${leagueId} not found`);
+    }
+
+    const activeSeason = league.leagueSeasons[0];
+
+    return league.members.map((member) => {
+      const team = activeSeason?.teams.find((t) => t.ownerId === member.id);
+      return {
+        id: member.id,
+        name: member.name,
+        email: member.email,
+        isOwner: member.id === league.ownerId,
+        isCommissioner: league.commissioners.some((c) => c.id === member.id),
+        team: team
+          ? {
+              id: team.id,
+              name: team.name,
+            }
+          : null,
+        joinedAt: team?.createdAt || new Date(),
+      };
+    });
+  }
+
+  async addMemberToLeague(
+    leagueId: string,
+    newUserId: string,
+    requesterId: string,
+  ): Promise<{ member: any; team: any }> {
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+      include: {
+        members: true,
+      },
+    });
+
+    if (!league) {
+      throw new NotFoundException(`League with ID ${leagueId} not found`);
+    }
+
+    // Check if already member
+    const isMember = league.members.some((m) => m.id === newUserId);
+    if (isMember) {
+      throw new BadRequestException('User is already a member');
+    }
+
+    // Check if user exists
+    const user = await this.prisma.user.findUnique({ where: { id: newUserId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Find active or upcoming season
+    const activeSeason = await this.prisma.season.findFirst({
+      where: {
+        status: {
+          in: ['ACTIVE', 'UPCOMING'],
+        },
+      },
+      orderBy: {
+        number: 'desc',
+      },
+    });
+
+    if (!activeSeason) {
+      throw new NotFoundException('No active or upcoming season found');
+    }
+
+    // Add to league
+    return this.prisma.$transaction(async (tx) => {
+      // Add to members relation
+      await tx.league.update({
+        where: { id: leagueId },
+        data: {
+          members: {
+            connect: { id: newUserId },
+          },
+        },
+      });
+
+      // Find or create LeagueSeason
+      let leagueSeason = await tx.leagueSeason.findUnique({
+        where: {
+          leagueId_seasonId: {
+            leagueId,
+            seasonId: activeSeason.id,
+          },
+        },
+      });
+
+      if (!leagueSeason) {
+        leagueSeason = await tx.leagueSeason.create({
+          data: {
+            leagueId,
+            seasonId: activeSeason.id,
+          },
+        });
+      }
+
+      // Create team for active season
+      const teamName = user.name
+        ? `${user.name}'s Team`
+        : user.email
+          ? `${user.email.split('@')[0]}'s Team`
+          : 'Team';
+
+      const team = await tx.team.create({
+        data: {
+          name: teamName,
+          leagueSeasonId: leagueSeason.id,
+          ownerId: newUserId,
+          totalPoints: 0,
+        },
+      });
+
+      return { member: user, team };
+    });
+  }
+
+  async removeMemberFromLeague(
+    leagueId: string,
+    userId: string,
+    requesterId: string,
+  ): Promise<void> {
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+      include: {
+        members: true,
+      },
+    });
+
+    if (!league) {
+      throw new NotFoundException(`League with ID ${leagueId} not found`);
+    }
+
+    // Can't remove owner
+    if (league.ownerId === userId) {
+      throw new BadRequestException('Cannot remove league owner');
+    }
+
+    // Check if actually a member
+    const isMember = league.members.some((m) => m.id === userId);
+    if (!isMember) {
+      throw new BadRequestException('User is not a member');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      // Remove from members
+      await tx.league.update({
+        where: { id: leagueId },
+        data: {
+          members: {
+            disconnect: { id: userId },
+          },
+        },
+      });
+
+      // Remove from commissioners if applicable
+      await tx.league.update({
+        where: { id: leagueId },
+        data: {
+          commissioners: {
+            disconnect: { id: userId },
+          },
+        },
+      });
+
+      // NOTE: Teams and answers remain for historical data
+    });
+  }
+
+  async searchUsersForLeague(
+    leagueId: string,
+    query: string,
+    requesterId: string,
+  ): Promise<any[]> {
+    // Get current members to exclude them from search
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+      include: {
+        members: { select: { id: true } },
+      },
+    });
+
+    if (!league) {
+      throw new NotFoundException(`League with ID ${leagueId} not found`);
+    }
+
+    const memberIds = league.members.map((m) => m.id);
+    // Also exclude the owner
+    if (!memberIds.includes(league.ownerId)) {
+      memberIds.push(league.ownerId);
+    }
+
+    return this.prisma.user.findMany({
+      where: {
+        AND: [
+          {
+            OR: [
+              { name: { contains: query, mode: 'insensitive' } },
+              { email: { contains: query, mode: 'insensitive' } },
+            ],
+          },
+          {
+            id: { notIn: memberIds },
+          },
+        ],
+      },
+      take: 20,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
+  }
+
   async getDraftPageData(
     leagueId: string,
     seasonId: string,

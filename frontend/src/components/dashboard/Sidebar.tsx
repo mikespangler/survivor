@@ -323,6 +323,16 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
               >
                 History
               </NavLink>
+              {isCommissioner && (
+                <NavLink
+                  href={`${baseUrl}/settings`}
+                  icon={<SettingsIcon boxSize="20px" />}
+                  isActive={isActive(`${baseUrl}/settings`)}
+                  isCollapsed={isCollapsed}
+                >
+                  League Settings
+                </NavLink>
+              )}
             </>
           )}
         </VStack>
@@ -355,49 +365,6 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
           >
             Join League
           </NavLink>
-
-          {/* Commissioner Section - Only show when user is commissioner in league context */}
-          {isCommissioner && !isCollapsed && (
-            <Box
-              border="1px solid"
-              borderColor="rgba(240, 101, 66, 0.3)"
-              borderRadius="8px"
-              bg="rgba(240, 101, 66, 0.05)"
-              p={2}
-              mt={2}
-            >
-              <Text
-                fontSize="10px"
-                color="brand.primary"
-                fontWeight="bold"
-                mb={2}
-                letterSpacing="0.5px"
-                textTransform="uppercase"
-              >
-                Commissioner
-              </Text>
-              <NavLink
-                href={`${baseUrl}/settings`}
-                icon={<SettingsIcon boxSize="20px" />}
-                isActive={isActive(`${baseUrl}/settings`)}
-                isCollapsed={isCollapsed}
-              >
-                League Settings
-              </NavLink>
-            </Box>
-          )}
-
-          {/* Commissioner Section - Collapsed version */}
-          {isCommissioner && isCollapsed && (
-            <NavLink
-              href={`${baseUrl}/settings`}
-              icon={<SettingsIcon boxSize="20px" />}
-              isActive={isActive(`${baseUrl}/settings`)}
-              isCollapsed={isCollapsed}
-            >
-              League Settings
-            </NavLink>
-          )}
 
           {/* Super Admin Link - Only show for admin users */}
           {isAdmin && (

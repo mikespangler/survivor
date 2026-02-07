@@ -5,6 +5,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   HttpCode,
   HttpStatus,
   UseGuards,
@@ -156,5 +157,48 @@ export class LeagueBaseController {
   @UseGuards(LeagueMemberGuard)
   async getCommissioners(@Param('id') leagueId: string) {
     return this.leagueService.getCommissioners(leagueId);
+  }
+
+  // Commissioner member management endpoints
+  @Get(':id/members')
+  @UseGuards(LeagueCommissionerOrAdminGuard)
+  async getLeagueMembers(
+    @Param('id') leagueId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.leagueService.getLeagueMembers(leagueId, user.id);
+  }
+
+  @Post(':id/members')
+  @UseGuards(LeagueCommissionerOrAdminGuard)
+  @HttpCode(HttpStatus.OK)
+  async addMember(
+    @Param('id') leagueId: string,
+    @Body() dto: { userId: string },
+    @CurrentUser() user: any,
+  ) {
+    return this.leagueService.addMemberToLeague(leagueId, dto.userId, user.id);
+  }
+
+  @Delete(':id/members/:userId')
+  @UseGuards(LeagueCommissionerOrAdminGuard)
+  @HttpCode(HttpStatus.OK)
+  async removeMember(
+    @Param('id') leagueId: string,
+    @Param('userId') userId: string,
+    @CurrentUser() user: any,
+  ) {
+    await this.leagueService.removeMemberFromLeague(leagueId, userId, user.id);
+    return { success: true };
+  }
+
+  @Get(':id/users/search')
+  @UseGuards(LeagueCommissionerOrAdminGuard)
+  async searchUsersForLeague(
+    @Param('id') leagueId: string,
+    @Query('q') query: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.leagueService.searchUsersForLeague(leagueId, query, user.id);
   }
 }

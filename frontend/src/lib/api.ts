@@ -871,6 +871,42 @@ class ApiClient {
     );
   }
 
+  // Commissioner member management (non-admin endpoints)
+  async getLeagueMembersAsCommissioner(leagueId: string): Promise<any[]> {
+    return this.request<any[]>(`/leagues/${leagueId}/members`);
+  }
+
+  async addMemberAsCommissioner(
+    leagueId: string,
+    userId: string,
+  ): Promise<{ member: User; team: Team }> {
+    return this.request<{ member: User; team: Team }>(
+      `/leagues/${leagueId}/members`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ userId }),
+      },
+    );
+  }
+
+  async removeMemberAsCommissioner(
+    leagueId: string,
+    userId: string,
+  ): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(
+      `/leagues/${leagueId}/members/${userId}`,
+      {
+        method: 'DELETE',
+      },
+    );
+  }
+
+  async searchUsersForLeague(leagueId: string, query: string): Promise<User[]> {
+    return this.request<User[]>(
+      `/leagues/${leagueId}/users/search?q=${encodeURIComponent(query)}`,
+    );
+  }
+
   // Admin endpoints
   async getAdminUsers(
     skip = 0,
