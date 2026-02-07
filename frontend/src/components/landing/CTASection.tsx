@@ -36,39 +36,19 @@ export const CTASection = () => {
         pointerEvents="none"
       />
 
-      <Container maxW="768px" px={0} position="relative" zIndex={1}>
-        <VStack gap={0} textAlign="center">
-          {/* Icon Badge */}
-          <Box
-            bg="rgba(240, 101, 66, 0.15)"
-            border="2px solid"
-            borderColor="rgba(240, 101, 66, 0.3)"
-            borderRadius="24px"
-            boxShadow="0px 0px 60px 0px rgba(240, 101, 66, 0.25)"
-            px={0.5}
-            py={6}
-            w="96px"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            mb={8}
-          >
-            <Image src="/landing/icon-trophy.svg" alt="" w="48px" h="48px" />
-          </Box>
-
+      <Container maxW="900px" px={0} position="relative" zIndex={1}>
+        <VStack gap={4} textAlign="center">
           {/* Headline */}
           <Heading
             as="h2"
             fontFamily="heading"
-            fontSize={{ base: '32px', md: '40px' }}
-            lineHeight="48px"
+            fontSize={{ base: '28px', md: '36px' }}
+            lineHeight="1.2"
             letterSpacing="-1.2px"
-            mb={4}
           >
             <Text as="span" color="text.primary">
-              Ready to Outwit, Outplay,
+              Ready to Outwit, Outplay,{' '}
             </Text>
-            <br />
             <Text as="span" className="text-gradient-orange-yellow">
               Outlast Your Friends?
             </Text>
@@ -77,14 +57,13 @@ export const CTASection = () => {
           {/* Subheadline */}
           <Text
             fontFamily="body"
-            fontSize="lg"
-            lineHeight="28px"
+            fontSize="md"
+            lineHeight="24px"
             fontWeight="medium"
             color="text.secondary"
-            maxW="576px"
-            mb={10}
+            maxW="500px"
           >
-            Takes less than a minute to get started. Join the thousands of Survivor fans already competing in fantasy leagues!
+            Takes less than a minute to get started. Join thousands of Survivor fans competing in fantasy leagues!
           </Text>
 
           {/* CTA Buttons */}
@@ -92,49 +71,47 @@ export const CTASection = () => {
             gap={4}
             direction={{ base: 'column', sm: 'row' }}
             align="center"
-            mb={10}
           >
             <Link href="/sign-up">
               <Button
-                size="lg"
+                size="md"
                 bg="brand.primary"
                 color="text.button"
-                boxShadow="0px 6px 0px 0px #C34322"
-                h="64px"
-                px={10}
+                boxShadow="0px 4px 0px 0px #C34322"
+                h="48px"
+                px={6}
                 borderRadius="full"
                 fontFamily="heading"
                 gap={2}
                 _hover={{ bg: '#E85A3A' }}
                 _active={{ transform: 'translateY(4px)', boxShadow: 'none' }}
               >
-                <Image src="/landing/icon-users.svg" alt="" w="16px" h="16px" filter="brightness(0)" />
+                <Image src="/landing/icon-users.svg" alt="" w="14px" h="14px" filter="brightness(0)" />
                 Join a League
-                <Image src="/landing/icon-arrow-right.svg" alt="" w="16px" h="16px" filter="brightness(0)" />
               </Button>
             </Link>
             <Link href="/sign-up">
               <Button
-                size="lg"
+                size="md"
                 bg="rgba(248, 246, 242, 0.05)"
                 color="text.primary"
-                boxShadow="0px 6px 0px 0px #0C0E12"
-                h="64px"
-                px={10}
+                boxShadow="0px 4px 0px 0px #0C0E12"
+                h="48px"
+                px={6}
                 borderRadius="full"
                 fontFamily="heading"
                 gap={2}
                 _hover={{ bg: 'rgba(248, 246, 242, 0.1)' }}
                 _active={{ transform: 'translateY(4px)', boxShadow: 'none' }}
               >
-                <Image src="/landing/icon-plus.svg" alt="" w="16px" h="16px" />
-                Create Your Own League
+                <Image src="/landing/icon-plus.svg" alt="" w="14px" h="14px" />
+                Create a League
               </Button>
             </Link>
           </Flex>
 
           {/* Feature Pills */}
-          <HStack gap={4} flexWrap="wrap" justify="center">
+          <HStack gap={3} flexWrap="wrap" justify="center">
             <FeaturePill>✓ Free to play</FeaturePill>
             <FeaturePill>✓ Private leagues</FeaturePill>
             <FeaturePill>✓ No download</FeaturePill>
