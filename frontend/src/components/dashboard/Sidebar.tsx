@@ -2,23 +2,19 @@
 
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useClerk } from '@clerk/nextjs';
 import {
   Box,
   VStack,
   HStack,
   Text,
   Button,
-  Flex,
   Badge,
   Menu,
   MenuButton,
   MenuList,
   MenuItem,
   Portal,
-  Image,
 } from '@chakra-ui/react';
-import { getCloudinaryUrl } from '@/lib/cloudinary';
 import {
   DashboardIcon,
   StandingsIcon,
@@ -26,13 +22,11 @@ import {
   DraftIcon,
   HistoryIcon,
   SettingsIcon,
-  LogoutIcon,
   CollapseIcon,
   ChevronDownIcon,
   AdminIcon,
-  ProfileIcon,
 } from './icons';
-import type { League, SeasonMetadata } from '@/types/api';
+import type { League, SeasonMetadata, User } from '@/types/api';
 
 interface SidebarProps {
   league?: League | null;
@@ -40,6 +34,7 @@ interface SidebarProps {
   isAdmin?: boolean;
   currentLeagueId?: string;
   userLeagues?: League[];
+  currentUser?: User | null;
 }
 
 interface NavLinkProps {
@@ -89,11 +84,10 @@ const NavLink = ({ href, icon, children, isActive = false, isCollapsed = false }
   );
 };
 
-export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, userLeagues = [] }: SidebarProps) {
+export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, userLeagues = [], currentUser }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { signOut } = useClerk();
 
   const baseUrl = league ? `/leagues/${league.id}` : '';
 
@@ -131,9 +125,11 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
     return pathname.startsWith(path);
   };
 
-  const handleLogout = () => {
-    signOut({ redirectUrl: '/' });
-  };
+  // Check if current user is commissioner (owner or in commissioners array)
+  const isCommissioner = league && currentUser && (
+    league.ownerId === currentUser.id ||
+    league.commissioners?.some(c => c.id === currentUser.id)
+  );
 
   const handleLeagueSwitch = (newLeagueId: string) => {
     // Navigate to the new league's dashboard
@@ -153,58 +149,18 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
       borderColor="rgba(48, 53, 65, 0.5)"
       position="sticky"
       top="0"
-      h="100vh"
+      h="calc(100vh - 64px)"
       display="flex"
       flexDirection="column"
       transition="all 0.3s ease"
       overflow="hidden"
     >
       <VStack align="stretch" flex="1" px={1} pt={4} pb={8} gap={3}>
-        {/* Logo Section */}
-        <HStack
-          gap={4}
-          px={4}
-          pb={4}
-          borderBottom="2px solid"
-          borderColor="rgba(48, 53, 65, 0.5)"
-          justify={isCollapsed ? "center" : "flex-start"}
-        >
-          <Image
-            src={getCloudinaryUrl('main-logo', { height: 120, crop: 'fit', format: 'png', trim: true })}
-            alt="Survivor Fantasy League"
-            h="40px"
-            w="auto"
-            flexShrink={0}
-          />
-          {!isCollapsed && (
-            <HStack gap={1} whiteSpace="nowrap">
-              <Text
-                fontFamily="heading"
-                fontSize="13px"
-                fontWeight="bold"
-                color="brand.primary"
-                letterSpacing="1.5px"
-              >
-                OUTPICK
-              </Text>
-              <Text
-                fontFamily="heading"
-                fontSize="13px"
-                fontWeight="bold"
-                color="text.primary"
-                letterSpacing="1.5px"
-              >
-                OUTLAST
-              </Text>
-            </HStack>
-          )}
-        </HStack>
-
         {/* League Selector - Only show if user has multiple leagues */}
         {league && userLeagues.length > 1 && (
           <Box
             px={3}
-            pb={6}
+            pb={4}
             borderBottom="2px solid"
             borderColor="rgba(48, 53, 65, 0.5)"
           >
@@ -400,17 +356,50 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
             Join League
           </NavLink>
 
-          {/* Profile */}
-          <NavLink
-            href="/profile"
-            icon={<ProfileIcon boxSize="20px" />}
-            isActive={pathname === '/profile'}
-            isCollapsed={isCollapsed}
-          >
-            Profile
-          </NavLink>
+          {/* Commissioner Section - Only show when user is commissioner in league context */}
+          {isCommissioner && !isCollapsed && (
+            <Box
+              border="1px solid"
+              borderColor="rgba(240, 101, 66, 0.3)"
+              borderRadius="8px"
+              bg="rgba(240, 101, 66, 0.05)"
+              p={2}
+              mt={2}
+            >
+              <Text
+                fontSize="10px"
+                color="brand.primary"
+                fontWeight="bold"
+                mb={2}
+                letterSpacing="0.5px"
+                textTransform="uppercase"
+              >
+                Commissioner
+              </Text>
+              <NavLink
+                href={`${baseUrl}/settings`}
+                icon={<SettingsIcon boxSize="20px" />}
+                isActive={isActive(`${baseUrl}/settings`)}
+                isCollapsed={isCollapsed}
+              >
+                League Settings
+              </NavLink>
+            </Box>
+          )}
 
-          {/* Admin Link - Only show for admin users */}
+          {/* Commissioner Section - Collapsed version */}
+          {isCommissioner && isCollapsed && (
+            <NavLink
+              href={`${baseUrl}/settings`}
+              icon={<SettingsIcon boxSize="20px" />}
+              isActive={isActive(`${baseUrl}/settings`)}
+              isCollapsed={isCollapsed}
+            >
+              League Settings
+            </NavLink>
+          )}
+
+          {/* Super Admin Link - Only show for admin users */}
           {isAdmin && (
             <NavLink
               href="/admin"
@@ -418,49 +407,9 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
               isActive={isActive('/admin')}
               isCollapsed={isCollapsed}
             >
-              Admin
+              Super Admin
             </NavLink>
           )}
-
-          {/* Settings - League settings if in league */}
-          {league && (
-            <NavLink
-              href={`${baseUrl}/settings`}
-              icon={<SettingsIcon boxSize="20px" />}
-              isActive={isActive(`${baseUrl}/settings`)}
-              isCollapsed={isCollapsed}
-            >
-              Settings
-            </NavLink>
-          )}
-
-          {/* Logout */}
-          <Button
-            variant="ghost"
-            justifyContent={isCollapsed ? "center" : "flex-start"}
-            color="text.secondary"
-            fontWeight="medium"
-            borderRadius="12px"
-            border="none"
-            px={3}
-            py={2.5}
-            h="40px"
-            w="full"
-            _hover={{ bg: 'rgba(240, 101, 66, 0.05)' }}
-            _focus={{ boxShadow: 'none', outline: 'none' }}
-            _focusVisible={{ boxShadow: 'none', outline: 'none' }}
-            onClick={handleLogout}
-            cursor="pointer"
-          >
-            <HStack gap={3}>
-              <LogoutIcon boxSize="20px" />
-              {!isCollapsed && (
-                <Text fontSize="14px" fontFamily="body">
-                  Logout
-                </Text>
-              )}
-            </HStack>
-          </Button>
 
           {/* Collapse */}
           <Button

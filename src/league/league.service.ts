@@ -1416,7 +1416,14 @@ export class LeagueService {
     userId: string,
     newCommissionerId: string,
   ) {
-    // Verify current user is commissioner
+    // Check if user is a system admin
+    const currentUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { systemRole: true },
+    });
+    const isAdmin = currentUser?.systemRole === 'admin';
+
+    // Verify current user is commissioner (or admin)
     const league = await this.prisma.league.findUnique({
       where: { id: leagueId },
       include: {
@@ -1435,7 +1442,7 @@ export class LeagueService {
       (c) => c.id === userId,
     );
 
-    if (!isOwner && !isCommissioner) {
+    if (!isAdmin && !isOwner && !isCommissioner) {
       throw new ForbiddenException(
         'You must be a league commissioner to add commissioners',
       );
@@ -1483,7 +1490,14 @@ export class LeagueService {
     userId: string,
     commissionerId: string,
   ) {
-    // Verify current user is commissioner
+    // Check if user is a system admin
+    const currentUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { systemRole: true },
+    });
+    const isAdmin = currentUser?.systemRole === 'admin';
+
+    // Verify current user is commissioner (or admin)
     const league = await this.prisma.league.findUnique({
       where: { id: leagueId },
       include: {
@@ -1501,7 +1515,7 @@ export class LeagueService {
       (c) => c.id === userId,
     );
 
-    if (!isOwner && !isCommissioner) {
+    if (!isAdmin && !isOwner && !isCommissioner) {
       throw new ForbiddenException(
         'You must be a league commissioner to remove commissioners',
       );

@@ -5,8 +5,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { Box, Flex, Spinner } from '@chakra-ui/react';
 import { Sidebar } from '@/components/dashboard';
+import { AuthenticatedHeader } from './AuthenticatedHeader';
 import { api } from '@/lib/api';
-import type { League, SeasonMetadata } from '@/types/api';
+import type { League, SeasonMetadata, User } from '@/types/api';
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
@@ -18,6 +19,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
   const pathname = usePathname();
 
   const [isAdmin, setIsAdmin] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [league, setLeague] = useState<League | null>(null);
   const [seasonMetadata, setSeasonMetadata] = useState<SeasonMetadata | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,8 +43,9 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
       setLoading(true);
 
       // Fetch current user to check admin status
-      const currentUser = await api.getCurrentUser();
-      setIsAdmin(currentUser.systemRole === 'admin');
+      const user = await api.getCurrentUser();
+      setCurrentUser(user);
+      setIsAdmin(user.systemRole === 'admin');
 
       // Check if we're on a league page
       const leagueMatch = pathname.match(/^\/leagues\/([^\/]+)/);
@@ -109,17 +112,21 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
   }
 
   return (
-    <Flex minH="100vh" bg="bg.primary">
-      <Sidebar
-        league={league}
-        seasonMetadata={seasonMetadata}
-        isAdmin={isAdmin}
-        currentLeagueId={league?.id}
-        userLeagues={userLeagues}
-      />
-      <Box flex="1" overflowY="auto">
-        {children}
-      </Box>
-    </Flex>
+    <Box minH="100vh" bg="bg.primary">
+      <AuthenticatedHeader userName={currentUser?.name} />
+      <Flex pt="64px">
+        <Sidebar
+          league={league}
+          seasonMetadata={seasonMetadata}
+          isAdmin={isAdmin}
+          currentLeagueId={league?.id}
+          userLeagues={userLeagues}
+          currentUser={currentUser}
+        />
+        <Box flex="1" overflowY="auto" minH="calc(100vh - 64px)">
+          {children}
+        </Box>
+      </Flex>
+    </Box>
   );
 }

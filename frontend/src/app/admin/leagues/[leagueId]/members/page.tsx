@@ -8,7 +8,7 @@ import {
   ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure, Text, Spinner,
   Tooltip, Card, CardBody, Textarea,
 } from '@chakra-ui/react';
-import { DeleteIcon, AddIcon, EmailIcon } from '@chakra-ui/icons';
+import { DeleteIcon, AddIcon, EmailIcon, StarIcon } from '@chakra-ui/icons';
 import { api } from '@/lib/api';
 
 interface LeagueMember {
@@ -30,6 +30,7 @@ export default function AdminLeagueMembersPage() {
   const [league, setLeague] = useState<any>(null);
   const [members, setMembers] = useState<LeagueMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [changingRole, setChangingRole] = useState<string | null>(null);
 
   // Add Member Modal
   const { isOpen: isAddOpen, onOpen: onAddOpen, onClose: onAddClose } = useDisclosure();
@@ -130,6 +131,39 @@ export default function AdminLeagueMembersPage() {
         status: 'error',
         duration: 3000,
       });
+    }
+  };
+
+  const handleToggleCommissioner = async (member: LeagueMember) => {
+    const action = member.isCommissioner ? 'remove' : 'add';
+    const confirmMessage = member.isCommissioner
+      ? `Remove commissioner privileges from ${member.name || member.email}?`
+      : `Make ${member.name || member.email} a commissioner?`;
+
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      setChangingRole(member.id);
+      if (member.isCommissioner) {
+        await api.removeCommissioner(leagueId, member.id);
+      } else {
+        await api.addCommissioner(leagueId, { userId: member.id });
+      }
+      toast({
+        title: member.isCommissioner ? 'Commissioner removed' : 'Commissioner added',
+        status: 'success',
+        duration: 3000,
+      });
+      loadData();
+    } catch (error) {
+      toast({
+        title: `Failed to ${action} commissioner`,
+        description: error instanceof Error ? error.message : undefined,
+        status: 'error',
+        duration: 3000,
+      });
+    } finally {
+      setChangingRole(null);
     }
   };
 
@@ -235,16 +269,29 @@ export default function AdminLeagueMembersPage() {
                     <Td>{new Date(member.joinedAt).toLocaleDateString()}</Td>
                     <Td>
                       {!member.isOwner && (
-                        <Tooltip label="Remove member">
-                          <IconButton
-                            aria-label="Remove member"
-                            icon={<DeleteIcon />}
-                            size="sm"
-                            colorScheme="red"
-                            variant="ghost"
-                            onClick={() => handleRemoveMember(member.id, member.name || member.email || 'this user')}
-                          />
-                        </Tooltip>
+                        <HStack spacing={1}>
+                          <Tooltip label={member.isCommissioner ? 'Remove commissioner' : 'Make commissioner'}>
+                            <IconButton
+                              aria-label={member.isCommissioner ? 'Remove commissioner' : 'Make commissioner'}
+                              icon={<StarIcon />}
+                              size="sm"
+                              colorScheme={member.isCommissioner ? 'blue' : 'gray'}
+                              variant={member.isCommissioner ? 'solid' : 'outline'}
+                              isLoading={changingRole === member.id}
+                              onClick={() => handleToggleCommissioner(member)}
+                            />
+                          </Tooltip>
+                          <Tooltip label="Remove member">
+                            <IconButton
+                              aria-label="Remove member"
+                              icon={<DeleteIcon />}
+                              size="sm"
+                              colorScheme="red"
+                              variant="ghost"
+                              onClick={() => handleRemoveMember(member.id, member.name || member.email || 'this user')}
+                            />
+                          </Tooltip>
+                        </HStack>
                       )}
                     </Td>
                   </Tr>
