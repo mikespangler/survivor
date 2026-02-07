@@ -7,7 +7,7 @@ import { Box, Flex, Spinner } from '@chakra-ui/react';
 import { Sidebar } from '@/components/dashboard';
 import { AuthenticatedHeader } from './AuthenticatedHeader';
 import { api } from '@/lib/api';
-import type { League, SeasonMetadata, User } from '@/types/api';
+import type { League, SeasonMetadata, User, LeagueEpisodeState } from '@/types/api';
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
@@ -22,6 +22,8 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [league, setLeague] = useState<League | null>(null);
   const [seasonMetadata, setSeasonMetadata] = useState<SeasonMetadata | null>(null);
+  const [currentEpisodeState, setCurrentEpisodeState] = useState<LeagueEpisodeState | null>(null);
+  const [isCommissioner, setIsCommissioner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userLeagues, setUserLeagues] = useState<League[]>([]);
 
@@ -69,12 +71,26 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
             // Fetch season metadata
             const metadata = await api.getSeasonMetadata(activeSeason.seasonId);
             setSeasonMetadata(metadata);
+
+            // Fetch episode states for the sidebar badge
+            try {
+              const episodeStates = await api.getEpisodeStates(leagueId, activeSeason.seasonId);
+              const currentState = episodeStates.episodes.find(e => e.isCurrentEpisode) || episodeStates.episodes[0];
+              setCurrentEpisodeState(currentState || null);
+              setIsCommissioner(episodeStates.isCommissioner);
+            } catch (err) {
+              console.log('Failed to load episode states for sidebar:', err);
+              setCurrentEpisodeState(null);
+              setIsCommissioner(false);
+            }
           }
         }
       } else {
         // Not on a league page - clear league context
         setLeague(null);
         setSeasonMetadata(null);
+        setCurrentEpisodeState(null);
+        setIsCommissioner(false);
         setUserLeagues([]);
       }
     } catch (error) {
@@ -83,6 +99,8 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
       setIsAdmin(false);
       setLeague(null);
       setSeasonMetadata(null);
+      setCurrentEpisodeState(null);
+      setIsCommissioner(false);
     } finally {
       setLoading(false);
     }
@@ -122,6 +140,8 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
           currentLeagueId={league?.id}
           userLeagues={userLeagues}
           currentUser={currentUser}
+          currentEpisodeState={currentEpisodeState}
+          isCommissioner={isCommissioner}
         />
         <Box flex="1" overflowY="auto" minH="calc(100vh - 64px)">
           {children}

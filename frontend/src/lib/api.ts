@@ -50,6 +50,7 @@ import type {
   DraftPageData,
   SubmitDraftDto,
   TeamCastaway,
+  LeagueEpisodeStatesResponse,
 } from '@/types/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -594,6 +595,16 @@ class ApiClient {
       {
         method: 'POST',
       },
+    );
+  }
+
+  // Episode states endpoint
+  async getEpisodeStates(
+    leagueId: string,
+    seasonId: string,
+  ): Promise<LeagueEpisodeStatesResponse> {
+    return this.request<LeagueEpisodeStatesResponse>(
+      `/leagues/${leagueId}/seasons/${seasonId}/episode-states`,
     );
   }
 

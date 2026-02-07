@@ -52,18 +52,12 @@ export default function LeagueSettingsPage() {
       const leagueData = await api.getLeague(leagueId);
       setLeague(leagueData);
 
-      // Get current user's database ID
-      try {
-        const currentUser = await api.getCurrentUser();
-
-        // Check if user is commissioner
-        const isOwner = leagueData.ownerId === currentUser.id;
-        const isCommissionerUser =
-          leagueData.commissioners?.some((c) => c.id === currentUser.id) || false;
-        setIsCommissioner(isOwner || isCommissionerUser);
-      } catch {
-        // Ignore errors - user might not be loaded yet
-      }
+      // Get current user's database ID and check if commissioner
+      const currentUser = await api.getCurrentUser();
+      const isOwner = leagueData.ownerId === currentUser.id;
+      const isCommissionerUser =
+        leagueData.commissioners?.some((c) => c.id === currentUser.id) || false;
+      setIsCommissioner(isOwner || isCommissionerUser);
 
       // Find active or upcoming season
       const seasons = await api.getSeasons();

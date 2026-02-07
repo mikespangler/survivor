@@ -384,6 +384,7 @@ export interface EpisodeQuestionsResponse {
   episodeNumber: number;
   deadline: string | null;
   canSubmit: boolean;
+  episodeState?: EpisodeState;
   questions: Array<{
     id: string;
     text: string;
@@ -580,5 +581,40 @@ export interface AdminUsersResponse {
 export interface AdminLeaguesResponse {
   leagues: League[];
   total: number;
+}
+
+// Episode State types
+export type EpisodeState =
+  | 'FUTURE'
+  | 'QUESTIONS_NOT_READY'
+  | 'SUBMISSIONS_OPEN'
+  | 'SUBMISSIONS_CLOSED'
+  | 'PARTIALLY_SCORED'
+  | 'FULLY_SCORED';
+
+export interface LeagueEpisodeState {
+  episodeNumber: number;
+  state: EpisodeState;
+  airDate: string | null;
+  totalQuestions: number;
+  scoredQuestions: number;
+  canSubmit: boolean;
+  needsScoring: boolean;
+  questionsReady: boolean;
+  isCurrentEpisode: boolean;
+}
+
+export interface CommissionerAction {
+  episodeNumber: number;
+  action: 'CREATE_QUESTIONS' | 'SCORE_QUESTIONS' | 'CONTINUE_SCORING';
+  label: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
+export interface LeagueEpisodeStatesResponse {
+  episodes: LeagueEpisodeState[];
+  currentEpisode: number;
+  isCommissioner: boolean;
+  commissionerActions: CommissionerAction[];
 }
 

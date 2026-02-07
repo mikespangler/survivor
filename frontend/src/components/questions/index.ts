@@ -6,3 +6,5 @@ export { StatsBar } from './StatsBar';
 export { HeaderBar } from './HeaderBar';
 export { FooterBar } from './FooterBar';
 export type { FooterBarProps } from './FooterBar';
+export { EpisodeStatusMessage } from './EpisodeStatusMessage';
+export type { EpisodeStatusMessageProps } from './EpisodeStatusMessage';

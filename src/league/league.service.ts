@@ -169,12 +169,16 @@ export class LeagueService {
           name: createDto.name,
           description: createDto.description,
           ownerId: userId,
+          members: {
+            connect: { id: userId },
+          },
           commissioners: {
             connect: { id: userId },
           },
         },
         include: {
           owner: true,
+          members: true,
           commissioners: true,
         },
       });
@@ -1612,7 +1616,12 @@ export class LeagueService {
 
     const activeSeason = league.leagueSeasons[0];
 
-    return league.members.map((member) => {
+    // Ensure owner is included in the list (for legacy leagues where owner wasn't added to members)
+    const allMembers = league.members.some((m) => m.id === league.ownerId)
+      ? league.members
+      : [league.owner, ...league.members];
+
+    return allMembers.map((member) => {
       const team = activeSeason?.teams.find((t) => t.ownerId === member.id);
       return {
         id: member.id,

@@ -5,10 +5,11 @@ import { LeagueService } from './league.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { QuestionModule } from '../question/question.module';
+import { EpisodeModule } from '../episode/episode.module';
 import { UserService } from '../user/user.service';
 
 @Module({
-  imports: [PrismaModule, AuthModule, forwardRef(() => QuestionModule)],
+  imports: [PrismaModule, AuthModule, forwardRef(() => QuestionModule), EpisodeModule],
   controllers: [LeagueBaseController, LeagueController],
   providers: [LeagueService, UserService],
   exports: [LeagueService],

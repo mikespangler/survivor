@@ -12,6 +12,7 @@ import {
 import { ModuleRef } from '@nestjs/core';
 import { LeagueService } from './league.service';
 import { TeamService } from '../team/team.service';
+import { EpisodeStateService } from '../episode/episode-state.service';
 import { UpdateLeagueSeasonSettingsDto } from './dto/update-league-season-settings.dto';
 import { UpdateDraftConfigDto } from './dto/update-draft-config.dto';
 import { UpdateRetentionConfigDto } from './dto/update-retention-config.dto';
@@ -26,6 +27,7 @@ export class LeagueController {
     private readonly leagueService: LeagueService,
     private readonly moduleRef: ModuleRef,
     private readonly prisma: PrismaService,
+    private readonly episodeStateService: EpisodeStateService,
   ) {}
 
   @Get('settings')
@@ -113,6 +115,21 @@ export class LeagueController {
       seasonId,
       user.id,
       episodeNumber,
+    );
+  }
+
+  // Get episode states for the league season
+  @Get('episode-states')
+  @UseGuards(LeagueMemberGuard)
+  async getEpisodeStates(
+    @Param('leagueId') leagueId: string,
+    @Param('seasonId') seasonId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.episodeStateService.getLeagueEpisodeStates(
+      leagueId,
+      seasonId,
+      user.id,
     );
   }
 

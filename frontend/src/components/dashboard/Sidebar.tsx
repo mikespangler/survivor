@@ -25,7 +25,7 @@ import {
   ChevronDownIcon,
   AdminIcon,
 } from './icons';
-import type { League, SeasonMetadata, User } from '@/types/api';
+import type { League, SeasonMetadata, User, EpisodeState, LeagueEpisodeState } from '@/types/api';
 
 interface SidebarProps {
   league?: League | null;
@@ -34,6 +34,8 @@ interface SidebarProps {
   currentLeagueId?: string;
   userLeagues?: League[];
   currentUser?: User | null;
+  currentEpisodeState?: LeagueEpisodeState | null;
+  isCommissioner?: boolean;
 }
 
 interface NavLinkProps {
@@ -83,7 +85,7 @@ const NavLink = ({ href, icon, children, isActive = false, isCollapsed = false }
   );
 };
 
-export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, userLeagues = [], currentUser }: SidebarProps) {
+export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, userLeagues = [], currentUser, currentEpisodeState, isCommissioner: isCommissionerProp }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -125,10 +127,71 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
   };
 
   // Check if current user is commissioner (owner or in commissioners array)
-  const isCommissioner = league && currentUser && (
+  const isCommissioner = isCommissionerProp ?? (league && currentUser && (
     league.ownerId === currentUser.id ||
     league.commissioners?.some(c => c.id === currentUser.id)
-  );
+  ));
+
+  // Compute badge for Weekly Team Questions based on episode state
+  const getQuestionsBadge = (): { label: string; bg: string; color: string } | null => {
+    if (!currentEpisodeState) {
+      // Fallback to old behavior for upcoming season
+      if (seasonMetadata?.status === 'UPCOMING') {
+        return {
+          label: 'SOON',
+          bg: 'rgba(240, 101, 66, 0.15)',
+          color: 'brand.primary',
+        };
+      }
+      return null;
+    }
+
+    const { state, needsScoring, questionsReady } = currentEpisodeState;
+
+    // Commissioner-specific badges
+    if (isCommissioner) {
+      if (needsScoring) {
+        return {
+          label: 'SCORE',
+          bg: 'rgba(236, 201, 75, 0.15)',
+          color: 'yellow.400',
+        };
+      }
+      if (!questionsReady && state !== 'FUTURE') {
+        return {
+          label: 'SETUP',
+          bg: 'rgba(237, 137, 54, 0.15)',
+          color: 'orange.400',
+        };
+      }
+    }
+
+    // Badges for all users
+    switch (state) {
+      case 'SUBMISSIONS_OPEN':
+        return {
+          label: 'OPEN',
+          bg: 'rgba(72, 187, 120, 0.15)',
+          color: 'green.400',
+        };
+      case 'FULLY_SCORED':
+        return {
+          label: 'DONE',
+          bg: 'rgba(72, 187, 120, 0.15)',
+          color: 'green.400',
+        };
+      case 'FUTURE':
+        return {
+          label: 'SOON',
+          bg: 'rgba(240, 101, 66, 0.15)',
+          color: 'brand.primary',
+        };
+      default:
+        return null;
+    }
+  };
+
+  const questionsBadge = getQuestionsBadge();
 
   const handleLeagueSwitch = (newLeagueId: string) => {
     // Navigate to the new league's dashboard
@@ -140,19 +203,22 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
   };
 
   return (
+    <>
     <Box
       w={isCollapsed ? "80px" : "256px"}
       minW={isCollapsed ? "80px" : "256px"}
       bg="bg.secondary"
       borderRight="1px solid"
       borderColor="rgba(48, 53, 65, 0.5)"
-      position="sticky"
-      top="0"
+      position="fixed"
+      top="64px"
+      left="0"
       h="calc(100vh - 64px)"
       display="flex"
       flexDirection="column"
       transition="all 0.3s ease"
       overflow="hidden"
+      zIndex={10}
     >
       <VStack align="stretch" flex="1" px={1} pt={4} pb={8} gap={3}>
         {/* League Selector - Only show if user has multiple leagues */}
@@ -289,20 +355,20 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                 isActive={isActive(`${baseUrl}/questions`)}
                 isCollapsed={isCollapsed}
               >
-                <HStack justify="space-between" flex="1" gap={2}>
-                  <Text fontSize="14px" fontFamily="body">Weekly Team Questions</Text>
-                  {seasonMetadata?.status === 'UPCOMING' && (
+                <HStack justify="space-between" flex="1" gap={2} minW={0}>
+                  <Text fontSize="14px" fontFamily="body" isTruncated>Questions</Text>
+                  {questionsBadge && (
                     <Badge
-                      fontSize="10px"
-                      px={2}
+                      fontSize="9px"
+                      px={1.5}
                       py={0.5}
                       borderRadius="full"
-                      bg="rgba(240, 101, 66, 0.15)"
-                      color="brand.primary"
+                      bg={questionsBadge.bg}
+                      color={questionsBadge.color}
                       fontWeight="bold"
                       flexShrink={0}
                     >
-                      SOON
+                      {questionsBadge.label}
                     </Badge>
                   )}
                 </HStack>
@@ -404,5 +470,13 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
         </VStack>
       </VStack>
     </Box>
+    {/* Spacer to push main content */}
+    <Box
+      w={isCollapsed ? "80px" : "256px"}
+      minW={isCollapsed ? "80px" : "256px"}
+      flexShrink={0}
+      transition="all 0.3s ease"
+    />
+    </>
   );
 }

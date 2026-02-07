@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LeagueService } from '../league/league.service';
+import { EpisodeStateService, EpisodeState } from '../episode/episode-state.service';
 import {
   CreateQuestionTemplateDto,
   UpdateQuestionTemplateDto,
@@ -24,6 +25,7 @@ export class QuestionService {
     private readonly prisma: PrismaService,
     @Inject(forwardRef(() => LeagueService))
     private readonly leagueService: LeagueService,
+    private readonly episodeStateService: EpisodeStateService,
   ) {}
 
   // ================== TEMPLATE METHODS (System Admin) ==================
@@ -464,10 +466,17 @@ export class QuestionService {
       (ep) => ep.number === episodeNumber,
     );
 
+    // Compute episode state
+    const episodeState = await this.episodeStateService.getEpisodeState(
+      leagueSeason.id,
+      episodeNumber,
+    );
+
     return {
       episodeNumber,
       deadline: episode?.airDate || null,
       canSubmit,
+      episodeState,
       questions: questions.map((q) => ({
         id: q.id,
         text: q.text,

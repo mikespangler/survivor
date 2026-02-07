@@ -11,6 +11,7 @@ import {
   Badge,
   IconButton,
   Tooltip,
+  Text,
 } from '@chakra-ui/react';
 import { DeleteIcon, StarIcon } from '@chakra-ui/icons';
 import type { MemberTableProps } from './types';
@@ -54,7 +55,9 @@ export function MemberTable({
             <Td>{member.team?.name || '—'}</Td>
             <Td>{new Date(member.joinedAt).toLocaleDateString()}</Td>
             <Td>
-              {!member.isOwner && (
+              {member.isOwner ? (
+                <Text fontSize="sm" color="text.secondary">—</Text>
+              ) : (
                 <HStack spacing={1}>
                   <Tooltip
                     label={

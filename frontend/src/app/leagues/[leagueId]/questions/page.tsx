@@ -22,12 +22,15 @@ import type {
   Season,
   EpisodeQuestionsResponse,
   MyTeamResponse,
+  EpisodeState,
+  LeagueEpisodeStatesResponse,
 } from '@/types/api';
 import {
   QuestionCard,
   StatsBar,
   HeaderBar,
   FooterBar,
+  EpisodeStatusMessage,
 } from '@/components/questions';
 
 // Helper to format deadline
@@ -77,12 +80,13 @@ export default function PlayerQuestionsPage() {
   const [questionsData, setQuestionsData] =
     useState<EpisodeQuestionsResponse | null>(null);
   const [teamData, setTeamData] = useState<MyTeamResponse | null>(null);
+  const [episodeStates, setEpisodeStates] = useState<LeagueEpisodeStatesResponse | null>(null);
   const [answers, setAnswers] = useState<{ [questionId: string]: AnswerState }>(
     {},
   );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Auto-save state tracking
   const [savingStates, setSavingStates] = useState<{ [questionId: string]: boolean }>({});
   const [saveErrors, setSaveErrors] = useState<{ [questionId: string]: string }>({});
@@ -124,6 +128,14 @@ export default function PlayerQuestionsPage() {
         active.activeEpisode || 1,
       );
       setQuestionsData(data);
+
+      // Load episode states for commissioner actions
+      try {
+        const states = await api.getEpisodeStates(leagueId, active.id);
+        setEpisodeStates(states);
+      } catch {
+        console.log('Failed to load episode states');
+      }
 
       // Load team data for stats
       try {
@@ -326,6 +338,9 @@ export default function PlayerQuestionsPage() {
   // Upcoming season or no questions state
   if (!questionsData || questionsData.questions.length === 0) {
     const isUpcoming = activeSeason?.status === 'UPCOMING';
+    const episodeState: EpisodeState = isUpcoming ? 'FUTURE' : (questionsData?.episodeState || 'QUESTIONS_NOT_READY');
+    const currentEpisodeNumber = activeSeason?.activeEpisode || 1;
+    const isCommissioner = episodeStates?.isCommissioner || false;
 
     return (
       <AuthenticatedLayout>
@@ -344,26 +359,13 @@ export default function PlayerQuestionsPage() {
                 </Text>
               </Box>
 
-              <Alert
-                status={isUpcoming ? "info" : "info"}
-                borderRadius="24px"
-                bg="linear-gradient(169.729deg, rgb(33, 38, 48) 2.5008%, rgb(25, 29, 36) 97.499%)"
-                border="2px solid"
-                borderColor="rgba(43, 48, 59, 0.5)"
-                p={6}
-              >
-                <AlertIcon color={isUpcoming ? "brand.primary" : "blue.400"} />
-                <Box>
-                  <AlertTitle color="text.primary" fontSize="18px" mb={2}>
-                    {isUpcoming ? 'Season Coming Soon' : 'No Questions Yet'}
-                  </AlertTitle>
-                  <AlertDescription color="text.secondary" fontSize="16px">
-                    {isUpcoming
-                      ? 'Questions will be available after Week 1 airs. Check back after the season starts to make your predictions!'
-                      : "Questions for this episode haven't been set up yet. Check back later!"}
-                  </AlertDescription>
-                </Box>
-              </Alert>
+              <EpisodeStatusMessage
+                state={episodeState}
+                episodeNumber={currentEpisodeNumber}
+                isCommissioner={isCommissioner}
+                leagueId={leagueId}
+                seasonId={activeSeason?.id || ''}
+              />
             </VStack>
           </Container>
         </Box>
