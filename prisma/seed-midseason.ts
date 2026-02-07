@@ -36,6 +36,26 @@ const teamNames = [
   'Puzzle Pros',
   'Challenge Beasts',
   'Social Strategists',
+  'Blindside Brigade',
+  'Tribal Titans',
+  'Alliance Aces',
+  'Immunity Icons',
+  'Outwit Outlast',
+  'Final Four',
+  'Hidden Idols',
+  'Reward Winners',
+  'Camp Crushers',
+  'Buff Collectors',
+  'Ponderosa Pals',
+  'Advantage Seekers',
+  'Coconut Crew',
+  'Bamboo Builders',
+  'Flame Keepers',
+  'Raft Riders',
+  'Sand Sharks',
+  'Jungle Cats',
+  'Reef Raiders',
+  'Storm Survivors',
 ];
 
 // User data for team owners
@@ -50,12 +70,38 @@ const users = [
   { name: 'Parker Thomas', email: 'parker.thomas@example.com' },
   { name: 'Quinn Garcia', email: 'quinn.garcia@example.com' },
   { name: 'Cameron Lee', email: 'cameron.lee@example.com' },
+  { name: 'Drew Mitchell', email: 'drew.mitchell@example.com' },
+  { name: 'Avery White', email: 'avery.white@example.com' },
+  { name: 'Blake Harris', email: 'blake.harris@example.com' },
+  { name: 'Charlie Martin', email: 'charlie.martin@example.com' },
+  { name: 'Dakota Young', email: 'dakota.young@example.com' },
+  { name: 'Elliott King', email: 'elliott.king@example.com' },
+  { name: 'Finley Scott', email: 'finley.scott@example.com' },
+  { name: 'Harley Adams', email: 'harley.adams@example.com' },
+  { name: 'Jayden Baker', email: 'jayden.baker@example.com' },
+  { name: 'Kendall Nelson', email: 'kendall.nelson@example.com' },
+  { name: 'Logan Carter', email: 'logan.carter@example.com' },
+  { name: 'Micah Evans', email: 'micah.evans@example.com' },
+  { name: 'Noel Turner', email: 'noel.turner@example.com' },
+  { name: 'Peyton Hall', email: 'peyton.hall@example.com' },
+  { name: 'Reese Allen', email: 'reese.allen@example.com' },
+  { name: 'Sage Wright', email: 'sage.wright@example.com' },
+  { name: 'Skyler Lopez', email: 'skyler.lopez@example.com' },
+  { name: 'Tatum Hill', email: 'tatum.hill@example.com' },
+  { name: 'Wren Morgan', email: 'wren.morgan@example.com' },
+  { name: 'Zion Campbell', email: 'zion.campbell@example.com' },
 ];
 
 // Commissioner
 const commissioner = {
   name: 'Commissioner Mike',
   email: 'commissioner@example.com',
+};
+
+// Mike Spangler - league member
+const mikeSpangler = {
+  name: 'Mike Spangler',
+  email: 'spangler.mike@gmail.com',
 };
 
 // Question sets for each episode
@@ -265,6 +311,69 @@ const episodeQuestions = [
       maxWager: 25,
     },
   ],
+  // Episode 9
+  [
+    {
+      text: 'Who wins the reward challenge?',
+      type: 'FILL_IN_THE_BLANK',
+      correctAnswer: 'Marcus Chen',
+      pointValue: 5,
+    },
+    {
+      text: 'Who wins immunity?',
+      type: 'MULTIPLE_CHOICE',
+      options: ['Marcus Chen', 'Sarah Thompson', 'Devon Williams', 'Sophia Clark'],
+      correctAnswer: 'Sarah Thompson',
+      pointValue: 5,
+    },
+    {
+      text: 'Who is voted out?',
+      type: 'FILL_IN_THE_BLANK',
+      correctAnswer: 'Emma Martinez',
+      pointValue: 10,
+    },
+    {
+      text: 'Will an idol be played at Tribal Council?',
+      type: 'MULTIPLE_CHOICE',
+      options: ['Yes', 'No'],
+      correctAnswer: 'No',
+      pointValue: 5,
+      isWager: true,
+      minWager: 1,
+      maxWager: 20,
+    },
+  ],
+  // Episode 10
+  [
+    {
+      text: 'Who wins the final immunity challenge?',
+      type: 'FILL_IN_THE_BLANK',
+      correctAnswer: 'Devon Williams',
+      pointValue: 10,
+    },
+    {
+      text: 'Will there be a fire-making challenge?',
+      type: 'MULTIPLE_CHOICE',
+      options: ['Yes', 'No'],
+      correctAnswer: 'Yes',
+      pointValue: 5,
+    },
+    {
+      text: 'Who wins the fire-making challenge?',
+      type: 'FILL_IN_THE_BLANK',
+      correctAnswer: 'Aisha Patel',
+      pointValue: 10,
+    },
+    {
+      text: 'Who is the Sole Survivor?',
+      type: 'FILL_IN_THE_BLANK',
+      correctAnswer: 'Marcus Chen',
+      pointValue: 25,
+      isWager: true,
+      minWager: 5,
+      maxWager: 50,
+    },
+  ],
 ];
 
 async function main() {
@@ -297,7 +406,7 @@ async function main() {
       name: 'Island of Secrets',
       status: 'ACTIVE',
       startDate: new Date('2024-09-18'),
-      activeEpisode: 8,
+      activeEpisode: 10,
     },
   });
 
@@ -327,11 +436,11 @@ async function main() {
     castaways.push(castaway);
   }
 
-  // Create 8 episodes
-  console.log('📅 Creating 8 episodes...');
+  // Create 10 episodes
+  console.log('📅 Creating 10 episodes...');
   const episodes = [];
   const baseDate = new Date('2024-09-18T20:00:00-04:00');
-  for (let i = 1; i <= 8; i++) {
+  for (let i = 1; i <= 10; i++) {
     const episodeDate = new Date(baseDate);
     episodeDate.setDate(baseDate.getDate() + (i - 1) * 7); // Weekly episodes
 
@@ -354,6 +463,17 @@ async function main() {
       email: commissioner.email,
       name: commissioner.name,
       systemRole: 'admin',
+    },
+  });
+
+  // Create Mike Spangler user
+  console.log('👤 Creating Mike Spangler...');
+  const mikeSpanglerUser = await prisma.user.create({
+    data: {
+      clerkId: `clerk_mike_spangler_${Date.now()}`,
+      email: mikeSpangler.email,
+      name: mikeSpangler.name,
+      systemRole: 'user',
     },
   });
 
@@ -398,10 +518,10 @@ async function main() {
     },
   });
 
-  // Create 10 users and their teams
-  console.log('👥 Creating 10 teams with owners...');
+  // Create 30 users and their teams
+  console.log('👥 Creating 30 teams with owners...');
   const teams = [];
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 30; i++) {
     const user = await prisma.user.create({
       data: {
         clerkId: `clerk_user_${i}_${Date.now()}`,
@@ -422,13 +542,26 @@ async function main() {
     teams.push({ team, user });
   }
 
-  // Add commissioner to league members
+  // Create a team for Mike Spangler
+  console.log('🏆 Creating team for Mike Spangler...');
+  const mikeTeam = await prisma.team.create({
+    data: {
+      name: 'Tribal Council',
+      leagueSeasonId: leagueSeason.id,
+      ownerId: mikeSpanglerUser.id,
+      totalPoints: 0,
+    },
+  });
+  teams.push({ team: mikeTeam, user: mikeSpanglerUser });
+
+  // Add commissioner and Mike Spangler to league members
   await prisma.league.update({
     where: { id: league.id },
     data: {
       members: {
         connect: [
           { id: commissionerUser.id },
+          { id: mikeSpanglerUser.id },
           ...teams.map(t => ({ id: t.user.id })),
         ],
       },
@@ -488,9 +621,9 @@ async function main() {
     }
   }
 
-  // Create retention configs for episodes 1-8
+  // Create retention configs for episodes 1-10
   console.log('💰 Creating retention configs...');
-  for (let ep = 1; ep <= 8; ep++) {
+  for (let ep = 1; ep <= 10; ep++) {
     await prisma.retentionConfig.create({
       data: {
         leagueSeasonId: leagueSeason.id,
@@ -500,9 +633,9 @@ async function main() {
     });
   }
 
-  // Create questions for all 8 episodes
-  console.log('❓ Creating questions for episodes 1-8...');
-  for (let ep = 1; ep <= 8; ep++) {
+  // Create questions for all 10 episodes
+  console.log('❓ Creating questions for episodes 1-10...');
+  for (let ep = 1; ep <= 10; ep++) {
     const questions = episodeQuestions[ep - 1];
 
     for (let q = 0; q < questions.length; q++) {
@@ -547,6 +680,26 @@ async function main() {
     [1, 1, 1], // Team 7: all correct
     [0, 0, 0], // Team 8: all wrong
     [1, 0, 1], // Team 9: mostly correct
+    [1, 1, 0], // Team 10: mostly correct
+    [0, 1, 1], // Team 11: mostly correct
+    [1, 0, 1], // Team 12: mostly correct
+    [0, 0, 1], // Team 13: some correct
+    [1, 1, 1], // Team 14: all correct
+    [0, 1, 0], // Team 15: some correct
+    [1, 0, 0], // Team 16: some correct
+    [0, 0, 0], // Team 17: all wrong
+    [1, 1, 0], // Team 18: mostly correct
+    [0, 1, 1], // Team 19: mostly correct
+    [1, 0, 1], // Team 20: mostly correct
+    [1, 1, 1], // Team 21: all correct
+    [0, 0, 1], // Team 22: some correct
+    [1, 0, 0], // Team 23: some correct
+    [0, 1, 0], // Team 24: some correct
+    [1, 1, 0], // Team 25: mostly correct
+    [0, 0, 0], // Team 26: all wrong
+    [1, 0, 1], // Team 27: mostly correct
+    [0, 1, 1], // Team 28: mostly correct
+    [1, 1, 1], // Team 29: all correct
   ];
 
   for (let i = 0; i < teams.length; i++) {
@@ -555,7 +708,7 @@ async function main() {
 
     for (const question of allQuestions) {
       // Only answer if episode has passed
-      if (question.episodeNumber <= 8) {
+      if (question.episodeNumber <= 10) {
         // Determine if this answer is correct based on pattern
         const patternIndex = question.sortOrder % pattern.length;
         const shouldBeCorrect = pattern[patternIndex] === 1;
@@ -603,7 +756,7 @@ async function main() {
   for (const { team } of teams) {
     let runningTotal = 0;
 
-    for (let ep = 1; ep <= 8; ep++) {
+    for (let ep = 1; ep <= 10; ep++) {
       // Question points
       const questionPoints = await prisma.playerAnswer.aggregate({
         where: {
@@ -656,7 +809,7 @@ async function main() {
   console.log('\n📋 Summary:');
   console.log(`   Season: ${season.number} - ${season.name}`);
   console.log(`   Castaways: ${castaways.length} (10 active, 4 jury, 4 eliminated)`);
-  console.log(`   Episodes: 8`);
+  console.log(`   Episodes: 10`);
   console.log(`   League: ${league.name}`);
   console.log(`   Teams: ${teams.length}`);
   console.log(`   Questions: ${allQuestions.length} total across all episodes`);

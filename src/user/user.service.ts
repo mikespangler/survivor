@@ -64,16 +64,12 @@ export class UserService {
     email: string | null;
     name: string | null;
   }) {
-    // Check if this email should always be admin
     const shouldBeAdmin =
       clerkUser.email && ADMIN_EMAILS.includes(clerkUser.email.toLowerCase());
 
-    // Try to find existing user by clerkId
-    const existingUser = await this.findByClerkId(clerkUser.clerkId);
-
-    if (existingUser) {
-      // Don't override name if user has set it - only update email and admin role
-      // This decouples the user's display name from Clerk
+    // 1. Try to find by clerkId first
+    const existingByClerkId = await this.findByClerkId(clerkUser.clerkId);
+    if (existingByClerkId) {
       return this.prisma.user.update({
         where: { clerkId: clerkUser.clerkId },
         data: {
@@ -83,8 +79,24 @@ export class UserService {
       });
     }
 
-    // Create new user (Just-in-Time sync)
-    // Only use Clerk name for initial creation
+    // 2. Try to find by email (account linking)
+    if (clerkUser.email) {
+      const existingByEmail = await this.prisma.user.findUnique({
+        where: { email: clerkUser.email },
+      });
+      if (existingByEmail) {
+        // Link this Clerk account to existing user
+        return this.prisma.user.update({
+          where: { email: clerkUser.email },
+          data: {
+            clerkId: clerkUser.clerkId,
+            ...(shouldBeAdmin && { systemRole: 'admin' }),
+          },
+        });
+      }
+    }
+
+    // 3. Create new user
     return this.prisma.user.create({
       data: {
         clerkId: clerkUser.clerkId,

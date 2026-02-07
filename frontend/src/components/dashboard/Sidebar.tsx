@@ -159,7 +159,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
       transition="all 0.3s ease"
       overflow="hidden"
     >
-      <VStack align="stretch" flex="1" px={1} py={8} gap={3}>
+      <VStack align="stretch" flex="1" px={1} pt={4} pb={8} gap={3}>
         {/* Logo Section */}
         <HStack
           gap={4}
@@ -200,123 +200,43 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
           )}
         </HStack>
 
-        {/* League Selector - Only show if in league context */}
-        {league && (
+        {/* League Selector - Only show if user has multiple leagues */}
+        {league && userLeagues.length > 1 && (
           <Box
             px={3}
             pb={6}
             borderBottom="2px solid"
             borderColor="rgba(48, 53, 65, 0.5)"
           >
-            {userLeagues.length > 1 ? (
-              // Multiple leagues: Show dropdown menu
-              <Menu placement="bottom-end">
-                <MenuButton
-                  as={Button}
-                  w="full"
-                  h="51px"
-                  bg="brand.primary"
-                  color="text.button"
-                  borderRadius="20px"
-                  boxShadow="0px 6px 0px 0px #C34322"
-                  _hover={{ bg: '#E85A3A' }}
-                  _active={{ transform: 'translateY(2px)', boxShadow: '0px 3px 0px 0px #C34322' }}
-                  px={3}
-                >
-                  {isCollapsed ? (
-                    <HStack w="full" justify="center" minW={0}>
-                      <Text
-                        fontFamily="heading"
-                        fontSize="12px"
-                        fontWeight="bold"
-                        color="#1D222A"
-                        noOfLines={1}
-                        isTruncated
-                      >
-                        {league.name}
-                      </Text>
-                    </HStack>
-                  ) : (
-                    <HStack w="full" justify="space-between" gap={2} minW={0}>
-                      <Text
-                        fontFamily="heading"
-                        fontSize="14px"
-                        color="#14181F"
-                        noOfLines={2}
-                        flex="1"
-                        minW={0}
-                        lineHeight="1.2"
-                      >
-                        {league.name}
-                      </Text>
-                      <ChevronDownIcon boxSize="16px" color="#14181F" flexShrink={0} />
-                    </HStack>
-                  )}
-                </MenuButton>
-                <Portal>
-                  <MenuList
-                    bg="bg.secondary"
-                    borderColor="rgba(48, 53, 65, 0.5)"
-                    minW="240px"
-                    py={2}
-                  >
-                    {userLeagues.map((l) => (
-                      <MenuItem
-                        key={l.id}
-                        onClick={() => handleLeagueSwitch(l.id)}
-                        bg={l.id === league.id ? 'rgba(240, 101, 66, 0.1)' : 'transparent'}
-                        _hover={{ bg: 'rgba(240, 101, 66, 0.05)' }}
-                        px={4}
-                        py={3}
-                      >
-                        <HStack gap={3} w="full" minW={0}>
-                          <VStack align="start" gap={0} flex="1" minW={0}>
-                            <Text
-                              fontFamily="heading"
-                              fontSize="14px"
-                              color="text.primary"
-                              fontWeight={l.id === league.id ? 'bold' : 'medium'}
-                              noOfLines={1}
-                              isTruncated
-                            >
-                              {l.name}
-                            </Text>
-                          </VStack>
-                          {l.id === league.id && (
-                            <Box
-                              boxSize="8px"
-                              borderRadius="full"
-                              bg="brand.primary"
-                              flexShrink={0}
-                            />
-                          )}
-                        </HStack>
-                      </MenuItem>
-                    ))}
-                  </MenuList>
-                </Portal>
-              </Menu>
-            ) : (
-              // Single league: Non-interactive display
-              <Box
+            <Menu placement="bottom-end">
+              <MenuButton
+                as={Button}
                 w="full"
-                h="51px"
-                bg="brand.primary"
-                color="text.button"
-                borderRadius="20px"
-                boxShadow="0px 6px 0px 0px #C34322"
+                h="48px"
+                bg="rgba(30, 36, 48, 0.85)"
+                backdropFilter="blur(8px)"
+                border="1px solid"
+                borderColor="rgba(255, 255, 255, 0.08)"
+                borderRadius="12px"
+                _hover={{
+                  bg: 'rgba(40, 46, 58, 0.9)',
+                  borderColor: 'rgba(240, 101, 66, 0.3)',
+                  boxShadow: '0 0 20px rgba(240, 101, 66, 0.1)'
+                }}
+                _active={{
+                  bg: 'rgba(35, 41, 53, 0.95)',
+                  transform: 'scale(0.98)'
+                }}
                 px={3}
-                display="flex"
-                alignItems="center"
-                cursor="default"
+                transition="all 0.2s ease"
               >
                 {isCollapsed ? (
                   <HStack w="full" justify="center" minW={0}>
                     <Text
                       fontFamily="heading"
                       fontSize="12px"
-                      fontWeight="bold"
-                      color="#1D222A"
+                      fontWeight="semibold"
+                      color="text.primary"
                       noOfLines={1}
                       isTruncated
                     >
@@ -324,20 +244,66 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                     </Text>
                   </HStack>
                 ) : (
-                  <Text
-                    fontFamily="heading"
-                    fontSize="14px"
-                    color="#14181F"
-                    noOfLines={2}
-                    w="full"
-                    minW={0}
-                    lineHeight="1.2"
-                  >
-                    {league.name}
-                  </Text>
+                  <HStack w="full" justify="space-between" gap={2} minW={0}>
+                    <Text
+                      fontFamily="heading"
+                      fontSize="14px"
+                      fontWeight="medium"
+                      color="text.primary"
+                      noOfLines={2}
+                      flex="1"
+                      minW={0}
+                      lineHeight="1.3"
+                    >
+                      {league.name}
+                    </Text>
+                    <ChevronDownIcon boxSize="16px" color="text.secondary" flexShrink={0} />
+                  </HStack>
                 )}
-              </Box>
-            )}
+              </MenuButton>
+              <Portal>
+                <MenuList
+                  bg="bg.secondary"
+                  borderColor="rgba(48, 53, 65, 0.5)"
+                  minW="240px"
+                  py={2}
+                >
+                  {userLeagues.map((l) => (
+                    <MenuItem
+                      key={l.id}
+                      onClick={() => handleLeagueSwitch(l.id)}
+                      bg={l.id === league.id ? 'rgba(240, 101, 66, 0.1)' : 'transparent'}
+                      _hover={{ bg: 'rgba(240, 101, 66, 0.05)' }}
+                      px={4}
+                      py={3}
+                    >
+                      <HStack gap={3} w="full" minW={0}>
+                        <VStack align="start" gap={0} flex="1" minW={0}>
+                          <Text
+                            fontFamily="heading"
+                            fontSize="14px"
+                            color="text.primary"
+                            fontWeight={l.id === league.id ? 'bold' : 'medium'}
+                            noOfLines={1}
+                            isTruncated
+                          >
+                            {l.name}
+                          </Text>
+                        </VStack>
+                        {l.id === league.id && (
+                          <Box
+                            boxSize="8px"
+                            borderRadius="full"
+                            bg="brand.primary"
+                            flexShrink={0}
+                          />
+                        )}
+                      </HStack>
+                    </MenuItem>
+                  ))}
+                </MenuList>
+              </Portal>
+            </Menu>
           </Box>
         )}
 

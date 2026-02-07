@@ -141,7 +141,12 @@ class ApiClient {
         throw new Error(error.message || `API Error: ${response.statusText}`);
       }
 
-      return response.json();
+      // Handle empty responses (e.g., 204 No Content or null returns)
+      const text = await response.text();
+      if (!text) {
+        return null as T;
+      }
+      return JSON.parse(text) as T;
     } catch (error) {
       console.error('API request failed:', error);
       throw error;
