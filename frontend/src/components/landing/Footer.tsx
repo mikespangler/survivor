@@ -15,23 +15,12 @@ import Link from 'next/link';
 const footerLinks = {
   Product: [
     { label: 'How It Works', href: '#how-it-works' },
-    { label: 'Features', href: '#features' },
     { label: 'Create a League', href: '/leagues/create' },
     { label: 'Join a League', href: '/sign-up' },
   ],
   Account: [
     { label: 'Login', href: '/sign-in' },
     { label: 'Sign Up', href: '/sign-up' },
-    { label: 'Forgot Password', href: '/sign-in' },
-  ],
-  Support: [
-    { label: 'Rules & Scoring', href: '#' },
-    { label: 'FAQ', href: '#' },
-    { label: 'Contact Support', href: '#' },
-  ],
-  Legal: [
-    { label: 'Terms of Service', href: '#' },
-    { label: 'Privacy Policy', href: '#' },
   ],
 };
 
@@ -90,7 +79,7 @@ export const Footer = () => {
             </VStack>
 
             {/* Link Columns */}
-            <SimpleGrid columns={{ base: 2, md: 4 }} gap={8}>
+            <SimpleGrid columns={2} gap={8}>
               {Object.entries(footerLinks).map(([category, links]) => (
                 <VStack key={category} align="start" gap={4}>
                   <Heading
