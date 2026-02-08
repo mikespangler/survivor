@@ -24,6 +24,7 @@ import {
   CollapseIcon,
   ChevronDownIcon,
   AdminIcon,
+  FireIcon,
 } from './icons';
 import type { League, SeasonMetadata, User, EpisodeState, LeagueEpisodeState } from '@/types/api';
 
@@ -426,6 +427,16 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
             isCollapsed={isCollapsed}
           >
             Join League
+          </NavLink>
+
+          {/* How to Play */}
+          <NavLink
+            href="/how-to-play"
+            icon={<FireIcon boxSize="20px" />}
+            isActive={pathname === '/how-to-play'}
+            isCollapsed={isCollapsed}
+          >
+            How to Play
           </NavLink>
 
           {/* Super Admin Link - Only show for admin users */}
