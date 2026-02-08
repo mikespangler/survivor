@@ -101,10 +101,10 @@ export class TeamService {
     // Or just set end = start - 1?
     // If startEpisode == activeEpisode, and we remove them, they were never really on the team for a scored episode.
     // But keeping the record shows they were drafted and dropped.
-    
+
     // Logic: endEpisode = activeEpisode - 1.
     // If activeEpisode is 1, endEpisode becomes 0.
-    
+
     return this.prisma.teamCastaway.update({
       where: { id: activeEntry.id },
       data: {
@@ -122,11 +122,11 @@ export class TeamService {
             castaway: true,
           },
           where: {
-             endEpisode: null
-          }
+            endEpisode: null,
+          },
         },
         owner: true,
-      }
+      },
     });
   }
 
@@ -136,9 +136,9 @@ export class TeamService {
       where: { id: teamId },
       include: {
         leagueSeason: {
-          include: { season: true }
-        }
-      }
+          include: { season: true },
+        },
+      },
     });
 
     if (!team) {
@@ -152,8 +152,8 @@ export class TeamService {
       where: {
         teamId,
         castawayId: { in: bulkDto.castawayIds },
-        endEpisode: null
-      }
+        endEpisode: null,
+      },
     });
 
     if (existingRoster.length > 0) {
@@ -162,48 +162,48 @@ export class TeamService {
 
     // 3. Bulk create in transaction
     return this.prisma.$transaction(
-      bulkDto.castawayIds.map(castawayId =>
+      bulkDto.castawayIds.map((castawayId) =>
         this.prisma.teamCastaway.create({
           data: {
             teamId,
             castawayId,
-            startEpisode: activeEpisode
+            startEpisode: activeEpisode,
           },
-          include: { castaway: true }
-        })
-      )
+          include: { castaway: true },
+        }),
+      ),
     );
   }
 
   async replaceCastaways(
     teamId: string,
     bulkDto: BulkAddCastawaysDto,
-    currentEpisode: number
+    currentEpisode: number,
   ) {
     return this.prisma.$transaction(async (tx) => {
       // 1. Close all existing active roster entries
       await tx.teamCastaway.updateMany({
         where: {
           teamId,
-          endEpisode: null
+          endEpisode: null,
         },
         data: {
-          endEpisode: currentEpisode - 1
-        }
+          endEpisode: currentEpisode - 1,
+        },
       });
 
       // 2. Create new roster entries
       return Promise.all(
-        bulkDto.castawayIds.map(castawayId =>
+        bulkDto.castawayIds.map((castawayId) =>
           tx.teamCastaway.create({
             data: {
               teamId,
               castawayId,
-              startEpisode: currentEpisode
+              startEpisode: currentEpisode,
             },
-            include: { castaway: true }
-          })
-        )
+            include: { castaway: true },
+          }),
+        ),
       );
     });
   }
@@ -243,4 +243,3 @@ export class TeamService {
     return team;
   }
 }
-

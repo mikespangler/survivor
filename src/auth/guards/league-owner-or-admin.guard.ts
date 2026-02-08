@@ -30,7 +30,7 @@ export class LeagueCommissionerOrAdminGuard implements CanActivate {
     // Check if league exists and if user is the owner or a commissioner
     const league = await this.prisma.league.findUnique({
       where: { id: leagueId },
-      select: { 
+      select: {
         ownerId: true,
         commissioners: {
           select: { id: true },

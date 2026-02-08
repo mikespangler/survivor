@@ -19,19 +19,29 @@ export class EmailService {
 
   constructor(private config: ConfigService) {
     const apiKey = this.config.get('RESEND_API_KEY');
-    this.fromEmail = this.config.get('FROM_EMAIL') || 'noreply@outpickoutlast.com';
+    this.fromEmail =
+      this.config.get('FROM_EMAIL') || 'noreply@outpickoutlast.com';
 
     this.logger.log(`EmailService initialized`);
     this.logger.log(`FROM_EMAIL: ${this.fromEmail}`);
     this.logger.log(`RESEND_API_KEY present: ${!!apiKey}`);
     this.logger.log(`RESEND_API_KEY length: ${apiKey?.length || 0}`);
-    this.logger.log(`RESEND_API_KEY prefix: ${apiKey?.substring(0, 8) || 'N/A'}...`);
+    this.logger.log(
+      `RESEND_API_KEY prefix: ${apiKey?.substring(0, 8) || 'N/A'}...`,
+    );
 
     this.resend = new Resend(apiKey);
   }
 
   async sendLeagueInvite(params: LeagueInviteEmailParams): Promise<void> {
-    const { to, leagueName, leagueDescription, inviterName, joinUrl, expiresAt } = params;
+    const {
+      to,
+      leagueName,
+      leagueDescription,
+      inviterName,
+      joinUrl,
+      expiresAt,
+    } = params;
 
     this.logger.log(`=== SENDING LEAGUE INVITE EMAIL ===`);
     this.logger.log(`To: ${to}`);
@@ -41,7 +51,7 @@ export class EmailService {
     this.logger.log(`Expires At: ${expiresAt}`);
 
     const expiryDays = Math.ceil(
-      (expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      (expiresAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
     );
 
     const emailPayload = {
@@ -79,7 +89,8 @@ export class EmailService {
     joinUrl: string;
     expiryDays: number;
   }): string {
-    const logoUrl = 'https://res.cloudinary.com/dm2gfa9t8/image/upload/e_trim,h_80,c_fit,f_png,q_auto/main-logo';
+    const logoUrl =
+      'https://res.cloudinary.com/dm2gfa9t8/image/upload/e_trim,h_80,c_fit,f_png,q_auto/main-logo';
 
     return `
       <!DOCTYPE html>

@@ -13,7 +13,11 @@ export const uploadConfig: MulterOptions = {
 
     const ext = file.originalname.toLowerCase().match(/\.[^.]*$/)?.[0];
 
-    if (!allowedMimes.includes(file.mimetype) || !ext || !allowedExts.includes(ext)) {
+    if (
+      !allowedMimes.includes(file.mimetype) ||
+      !ext ||
+      !allowedExts.includes(ext)
+    ) {
       return callback(
         new BadRequestException('Only JPG, PNG, and WebP images are allowed'),
         false,

@@ -3,7 +3,8 @@ export interface BaseTemplateParams {
   preferencesUrl: string;
 }
 
-const LOGO_URL = 'https://res.cloudinary.com/dm2gfa9t8/image/upload/e_trim,h_80,c_fit,f_png,q_auto/main-logo';
+const LOGO_URL =
+  'https://res.cloudinary.com/dm2gfa9t8/image/upload/e_trim,h_80,c_fit,f_png,q_auto/main-logo';
 
 export function getBaseEmailHtml(
   content: string,

@@ -10,7 +10,13 @@ import { EmailModule } from '../email/email.module';
 import { UserService } from '../user/user.service';
 
 @Module({
-  imports: [PrismaModule, AuthModule, forwardRef(() => QuestionModule), EpisodeModule, EmailModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    forwardRef(() => QuestionModule),
+    EpisodeModule,
+    EmailModule,
+  ],
   controllers: [LeagueBaseController, LeagueController],
   providers: [LeagueService, UserService],
   exports: [LeagueService],

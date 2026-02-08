@@ -76,7 +76,10 @@ export class TeamController {
     }
 
     // Upload to Cloudinary with transformations for team logos
-    const imageUrl = await this.cloudinaryService.uploadImage(file, `teams/${teamId}`);
+    const imageUrl = await this.cloudinaryService.uploadImage(
+      file,
+      `teams/${teamId}`,
+    );
 
     // Update team logo URL
     return this.teamService.updateLogo(teamId, imageUrl);
@@ -84,10 +87,7 @@ export class TeamController {
 
   @Delete(':id/logo')
   @UseGuards(AuthGuard)
-  async deleteTeamLogo(
-    @Param('id') teamId: string,
-    @CurrentUser() user: any,
-  ) {
+  async deleteTeamLogo(@Param('id') teamId: string, @CurrentUser() user: any) {
     // Verify user owns the team
     const team = await this.teamService.findOne(teamId);
     if (team.ownerId !== user.id) {
@@ -120,4 +120,3 @@ export class TeamController {
     return this.teamService.updateName(teamId, updateTeamNameDto.name);
   }
 }
-

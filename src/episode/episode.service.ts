@@ -4,7 +4,11 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateEpisodeDto, UpdateEpisodeDto, BulkCreateEpisodesDto } from './dto';
+import {
+  CreateEpisodeDto,
+  UpdateEpisodeDto,
+  BulkCreateEpisodesDto,
+} from './dto';
 
 @Injectable()
 export class EpisodeService {

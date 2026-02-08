@@ -1,4 +1,12 @@
-import { IsBoolean, IsOptional, IsString, IsInt, Min, Max, IsIn } from 'class-validator';
+import {
+  IsBoolean,
+  IsOptional,
+  IsString,
+  IsInt,
+  Min,
+  Max,
+  IsIn,
+} from 'class-validator';
 
 export class UpdateNotificationPreferencesDto {
   @IsOptional()

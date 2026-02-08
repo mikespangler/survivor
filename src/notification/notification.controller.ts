@@ -1,4 +1,11 @@
-import { Controller, Get, Patch, Post, Body, ForbiddenException } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Body,
+  ForbiddenException,
+} from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { UpdateNotificationPreferencesDto } from './dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';

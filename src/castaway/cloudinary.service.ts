@@ -11,7 +11,10 @@ export class CloudinaryService {
     });
   }
 
-  async uploadImage(file: Express.Multer.File, identifier: string): Promise<string> {
+  async uploadImage(
+    file: Express.Multer.File,
+    identifier: string,
+  ): Promise<string> {
     return new Promise((resolve, reject) => {
       const baseFolder = process.env.CLOUDINARY_FOLDER || 'survivor';
 
@@ -19,22 +22,27 @@ export class CloudinaryService {
       const isTeamLogo = identifier.startsWith('teams/');
 
       // Set up transformations for team logos
-      const transformation = isTeamLogo ? [
-        { width: 400, height: 400, crop: 'fill', gravity: 'auto' }, // Square crop
-        { radius: 24 }, // Rounded corners (24px for 400x400 image = 6% radius)
-        { quality: 'auto', fetch_format: 'auto' }, // Optimization
-      ] : undefined;
+      const transformation = isTeamLogo
+        ? [
+            { width: 400, height: 400, crop: 'fill', gravity: 'auto' }, // Square crop
+            { radius: 24 }, // Rounded corners (24px for 400x400 image = 6% radius)
+            { quality: 'auto', fetch_format: 'auto' }, // Optimization
+          ]
+        : undefined;
 
       const uploadStream = cloudinary.uploader.upload_stream(
         {
           folder: `${baseFolder}/${isTeamLogo ? '' : 'castaways'}`,
-          public_id: isTeamLogo ? identifier.replace('teams/', 'team_') : `castaway_${identifier}`,
+          public_id: isTeamLogo
+            ? identifier.replace('teams/', 'team_')
+            : `castaway_${identifier}`,
           overwrite: true,
           resource_type: 'image',
           transformation,
         },
         (error, result) => {
-          if (error) return reject(new InternalServerErrorException('Upload failed'));
+          if (error)
+            return reject(new InternalServerErrorException('Upload failed'));
           resolve(result.secure_url);
         },
       );

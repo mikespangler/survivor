@@ -120,8 +120,7 @@ export class EpisodeStateService {
     const activeEpisode = leagueSeason.season.activeEpisode;
     const isOwner = leagueSeason.league.ownerId === userId;
     const isCommissioner =
-      isOwner ||
-      leagueSeason.league.commissioners.some((c) => c.id === userId);
+      isOwner || leagueSeason.league.commissioners.some((c) => c.id === userId);
 
     // Get all questions for this league season grouped by episode
     const questions = await this.prisma.leagueQuestion.findMany({
@@ -135,10 +134,7 @@ export class EpisodeStateService {
     });
 
     // Group questions by episode
-    const questionsByEpisode = new Map<
-      number,
-      { isScored: boolean }[]
-    >();
+    const questionsByEpisode = new Map<number, { isScored: boolean }[]>();
     for (const q of questions) {
       const existing = questionsByEpisode.get(q.episodeNumber) || [];
       existing.push({ isScored: q.isScored });
@@ -178,7 +174,10 @@ export class EpisodeStateService {
 
       // Add commissioner actions
       if (isCommissioner) {
-        if (state === 'QUESTIONS_NOT_READY' && episode.number <= activeEpisode) {
+        if (
+          state === 'QUESTIONS_NOT_READY' &&
+          episode.number <= activeEpisode
+        ) {
           commissionerActions.push({
             episodeNumber: episode.number,
             action: 'CREATE_QUESTIONS',
@@ -225,9 +224,15 @@ export class EpisodeStateService {
     seasonId: string,
     userId: string,
   ): Promise<ComputedEpisodeState | null> {
-    const result = await this.getLeagueEpisodeStates(leagueId, seasonId, userId);
+    const result = await this.getLeagueEpisodeStates(
+      leagueId,
+      seasonId,
+      userId,
+    );
     return (
-      result.episodes.find((e) => e.isCurrentEpisode) || result.episodes[0] || null
+      result.episodes.find((e) => e.isCurrentEpisode) ||
+      result.episodes[0] ||
+      null
     );
   }
 

@@ -11,7 +11,9 @@ export interface QuestionsReminderParams {
   answeredCount: number;
 }
 
-export function getQuestionsReminderHtml(params: QuestionsReminderParams): string {
+export function getQuestionsReminderHtml(
+  params: QuestionsReminderParams,
+): string {
   const {
     userName,
     leagueName,
@@ -41,16 +43,20 @@ export function getQuestionsReminderHtml(params: QuestionsReminderParams): strin
       <strong>Deadline:</strong> ${deadlineStr}
     </div>
 
-    ${remaining > 0 ? `
+    ${
+      remaining > 0
+        ? `
       <div class="info-box">
         <strong>${remaining} question${remaining === 1 ? '' : 's'}</strong> remaining to answer
         ${answeredCount > 0 ? `(${answeredCount} of ${questionsCount} completed)` : ''}
       </div>
-    ` : `
+    `
+        : `
       <div class="info-box">
         You've answered all questions! Review your answers before the deadline.
       </div>
-    `}
+    `
+    }
 
     <center>
       <a href="${questionsUrl}" class="cta-button">

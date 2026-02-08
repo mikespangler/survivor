@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Box,
@@ -20,26 +20,17 @@ import type { League } from '@/types/api';
 export default function JoinByTokenPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, isSignedIn } = useUser();
+  const { user, isSignedIn, isLoaded } = useUser();
   const token = params.token as string;
 
   const [league, setLeague] = useState<League | null>(null);
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasJoined, setHasJoined] = useState(false);
+  const autoJoinAttempted = useRef(false);
 
-  useEffect(() => {
-    if (!token) {
-      setError('Invalid invite link');
-      setLoading(false);
-      return;
-    }
-
-    // Validate token (this endpoint should be public or handle unauthenticated users)
-    loadLeagueInfo();
-  }, [token]);
-
-  const loadLeagueInfo = async () => {
+  const loadLeagueInfo = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -47,13 +38,14 @@ export default function JoinByTokenPage() {
       const tokenData = await api.validateInviteToken(token);
       setLeague(tokenData.league);
       setLoading(false);
-    } catch (err: any) {
-      setError(err.message || 'Invalid or expired invite link');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Invalid or expired invite link';
+      setError(message);
       setLoading(false);
     }
-  };
+  }, [token]);
 
-  const handleJoin = async () => {
+  const handleJoin = useCallback(async () => {
     if (!isSignedIn || !user) {
       router.push(`/sign-in?redirect=/leagues/join/${token}`);
       return;
@@ -64,14 +56,52 @@ export default function JoinByTokenPage() {
       setError(null);
 
       const joinedLeague = await api.joinLeagueByToken({ token });
-      
+      setHasJoined(true);
+
       // Redirect to league dashboard
       router.push(`/leagues/${joinedLeague.id}/dashboard`);
-    } catch (err: any) {
-      setError(err.message || 'Failed to join league');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to join league';
+      // If user is already a member, redirect to league dashboard
+      if (message.includes('already a member') || message.includes('already the owner')) {
+        setHasJoined(true);
+        if (league) {
+          router.push(`/leagues/${league.id}/dashboard`);
+        }
+        return;
+      }
+      setError(message);
       setJoining(false);
     }
-  };
+  }, [isSignedIn, user, token, league, router]);
+
+  useEffect(() => {
+    if (!token) {
+      setError('Invalid invite link');
+      setLoading(false);
+      return;
+    }
+
+    loadLeagueInfo();
+  }, [token, loadLeagueInfo]);
+
+  // Auto-join when authenticated with valid token
+  useEffect(() => {
+    if (
+      isLoaded &&
+      isSignedIn &&
+      user &&
+      league &&
+      !loading &&
+      !joining &&
+      !error &&
+      !hasJoined &&
+      !autoJoinAttempted.current
+    ) {
+      autoJoinAttempted.current = true;
+      handleJoin();
+    }
+  }, [isLoaded, isSignedIn, user, league, loading, joining, error, hasJoined, handleJoin]);
 
   if (loading) {
     return (

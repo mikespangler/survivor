@@ -27,16 +27,18 @@ export function getScoringReminderHtml(params: ScoringReminderParams): string {
   const content = `
     <h2>Hey ${userName || 'there'}!</h2>
     <p>
-      ${isPartiallyScored
-        ? `You have unfinished scoring for <strong>Episode ${episodeNumber}</strong> in <strong>${leagueName}</strong>.`
-        : `Episode ${episodeNumber} has aired! It's time to score the questions for <strong>${leagueName}</strong>.`
+      ${
+        isPartiallyScored
+          ? `You have unfinished scoring for <strong>Episode ${episodeNumber}</strong> in <strong>${leagueName}</strong>.`
+          : `Episode ${episodeNumber} has aired! It's time to score the questions for <strong>${leagueName}</strong>.`
       }
     </p>
 
     <div class="info-box">
-      ${isPartiallyScored
-        ? `<strong>${scoredQuestions} of ${totalQuestions}</strong> questions scored - <strong>${remaining} remaining</strong>`
-        : `<strong>${totalQuestions} question${totalQuestions === 1 ? '' : 's'}</strong> ready to score`
+      ${
+        isPartiallyScored
+          ? `<strong>${scoredQuestions} of ${totalQuestions}</strong> questions scored - <strong>${remaining} remaining</strong>`
+          : `<strong>${totalQuestions} question${totalQuestions === 1 ? '' : 's'}</strong> ready to score`
       }
     </div>
 

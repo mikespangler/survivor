@@ -4,4 +4,3 @@ export class AddCastawayDto {
   @IsString()
   castawayId: string;
 }
-

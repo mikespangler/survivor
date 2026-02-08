@@ -18,6 +18,7 @@ import { useMemberManagement } from './useMemberManagement';
 import { MemberTable } from './MemberTable';
 import { AddMemberModal } from './AddMemberModal';
 import { EmailInviteModal } from './EmailInviteModal';
+import { PendingInvites } from './PendingInvites';
 import type { MemberManagementProps, LeagueMember } from './types';
 
 export function MemberManagement({
@@ -133,6 +134,8 @@ export function MemberManagement({
           />
         </CardBody>
       </Card>
+
+      <PendingInvites leagueId={leagueId} />
 
       <AddMemberModal
         isOpen={isAddOpen}

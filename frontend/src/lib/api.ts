@@ -44,6 +44,7 @@ import type {
   JoinByTokenDto,
   AddCommissionerDto,
   CommissionersResponse,
+  PendingInvite,
   RetentionConfig,
   UpdateRetentionConfigDto,
   DetailedStandingsResponse,
@@ -849,6 +850,10 @@ class ApiClient {
       league: League;
       expiresAt: string;
     }>(`/leagues/validate-token/${token}`);
+  }
+
+  async getPendingInvites(leagueId: string): Promise<PendingInvite[]> {
+    return this.request<PendingInvite[]>(`/leagues/${leagueId}/pending-invites`);
   }
 
   // ================== Commissioner endpoints ==================

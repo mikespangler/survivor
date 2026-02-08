@@ -205,19 +205,21 @@ model PlayerAnswer {
 
 // Invite tokens for league invitations
 model InviteToken {
-  id         String   @id @default(cuid())
-  leagueId   String
-  league     League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
-  token      String   @unique
-  createdById String
-  createdBy  User     @relation(fields: [createdById], references: [id])
-  expiresAt  DateTime
-  usedAt     DateTime?
-  usedById   String?
-  createdAt  DateTime @default(now())
+  id           String    @id @default(cuid())
+  leagueId     String
+  league       League    @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  token        String    @unique
+  createdById  String
+  createdBy    User      @relation(fields: [createdById], references: [id])
+  expiresAt    DateTime
+  usedAt       DateTime?
+  usedById     String?
+  invitedEmail String?
+  createdAt    DateTime  @default(now())
 
   @@index([token])
   @@index([leagueId])
+  @@index([invitedEmail])
 }
 
 // Retention points configuration per episode

@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationService } from './notification.service';
-import { EpisodeState } from '../episode/episode-state.service';
 
 @Injectable()
 export class NotificationSchedulerService {
@@ -83,7 +82,8 @@ export class NotificationSchedulerService {
         if (prefs.emailFrequency === 'never') continue;
 
         // Check if we're within the reminder window
-        const hoursUntilDeadline = (airDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+        const hoursUntilDeadline =
+          (airDate.getTime() - now.getTime()) / (1000 * 60 * 60);
         if (hoursUntilDeadline > prefs.reminderHoursBefore) continue;
 
         // Check if user has a team and hasn't answered all questions
@@ -166,7 +166,8 @@ export class NotificationSchedulerService {
         if (prefs.emailFrequency === 'never') continue;
 
         // Check if we're within the reminder window
-        const hoursUntilDraft = (draftDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+        const hoursUntilDraft =
+          (draftDate.getTime() - now.getTime()) / (1000 * 60 * 60);
         if (hoursUntilDraft > prefs.reminderHoursBefore) continue;
 
         // Check if user has already completed their draft
@@ -347,7 +348,8 @@ export class NotificationSchedulerService {
         // Check timing - send if within reminder window before air date
         if (episode?.airDate) {
           const airDate = new Date(episode.airDate);
-          const hoursUntilAir = (airDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+          const hoursUntilAir =
+            (airDate.getTime() - now.getTime()) / (1000 * 60 * 60);
 
           // Only send if within 48 hours of air date and air date hasn't passed
           if (hoursUntilAir > 48 || hoursUntilAir < 0) continue;

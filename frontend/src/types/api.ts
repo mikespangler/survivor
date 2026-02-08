@@ -473,6 +473,17 @@ export interface InviteLink {
   isValid: boolean;
 }
 
+export interface PendingInvite {
+  id: string;
+  invitedEmail: string;
+  createdAt: string;
+  expiresAt: string;
+  createdBy: {
+    name: string | null;
+    email: string | null;
+  };
+}
+
 export interface InviteByEmailDto {
   emails: string[];
 }

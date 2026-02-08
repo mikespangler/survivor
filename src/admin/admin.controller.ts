@@ -1,4 +1,13 @@
-import { Controller, Get, Param, Query, UseGuards, Post, Delete, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  UseGuards,
+  Post,
+  Delete,
+  Body,
+} from '@nestjs/common';
 import { SystemAdminGuard } from '../auth/guards/system-admin.guard';
 import { AdminService } from './admin.service';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -48,18 +57,16 @@ export class AdminController {
   async addMemberToLeague(
     @Param('leagueId') leagueId: string,
     @Body() dto: AddMemberDto,
-    @CurrentUser() admin: User,
   ) {
-    return this.adminService.addMemberToLeague(leagueId, dto.userId, admin.id);
+    return this.adminService.addMemberToLeague(leagueId, dto.userId);
   }
 
   @Delete('leagues/:leagueId/members/:userId')
   async removeMemberFromLeague(
     @Param('leagueId') leagueId: string,
     @Param('userId') userId: string,
-    @CurrentUser() admin: User,
   ) {
-    await this.adminService.removeMemberFromLeague(leagueId, userId, admin.id);
+    await this.adminService.removeMemberFromLeague(leagueId, userId);
     return { success: true };
   }
 

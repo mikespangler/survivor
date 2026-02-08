@@ -112,6 +112,15 @@ export class LeagueBaseController {
     return this.leagueService.revokeInviteToken(tokenId, user.id);
   }
 
+  @Get(':id/pending-invites')
+  @UseGuards(LeagueCommissionerOrAdminGuard)
+  async getPendingInvites(
+    @Param('id') leagueId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.leagueService.getPendingInvites(leagueId, user.id);
+  }
+
   @Post(':id/invite-email')
   @UseGuards(LeagueCommissionerOrAdminGuard)
   @HttpCode(HttpStatus.OK)
@@ -162,11 +171,8 @@ export class LeagueBaseController {
   // Commissioner member management endpoints
   @Get(':id/members')
   @UseGuards(LeagueCommissionerOrAdminGuard)
-  async getLeagueMembers(
-    @Param('id') leagueId: string,
-    @CurrentUser() user: any,
-  ) {
-    return this.leagueService.getLeagueMembers(leagueId, user.id);
+  async getLeagueMembers(@Param('id') leagueId: string) {
+    return this.leagueService.getLeagueMembers(leagueId);
   }
 
   @Post(':id/members')
@@ -175,9 +181,8 @@ export class LeagueBaseController {
   async addMember(
     @Param('id') leagueId: string,
     @Body() dto: { userId: string },
-    @CurrentUser() user: any,
   ) {
-    return this.leagueService.addMemberToLeague(leagueId, dto.userId, user.id);
+    return this.leagueService.addMemberToLeague(leagueId, dto.userId);
   }
 
   @Delete(':id/members/:userId')
@@ -186,9 +191,8 @@ export class LeagueBaseController {
   async removeMember(
     @Param('id') leagueId: string,
     @Param('userId') userId: string,
-    @CurrentUser() user: any,
   ) {
-    await this.leagueService.removeMemberFromLeague(leagueId, userId, user.id);
+    await this.leagueService.removeMemberFromLeague(leagueId, userId);
     return { success: true };
   }
 
@@ -197,8 +201,7 @@ export class LeagueBaseController {
   async searchUsersForLeague(
     @Param('id') leagueId: string,
     @Query('q') query: string,
-    @CurrentUser() user: any,
   ) {
-    return this.leagueService.searchUsersForLeague(leagueId, query, user.id);
+    return this.leagueService.searchUsersForLeague(leagueId, query);
   }
 }

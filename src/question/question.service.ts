@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LeagueService } from '../league/league.service';
-import { EpisodeStateService, EpisodeState } from '../episode/episode-state.service';
+import { EpisodeStateService } from '../episode/episode-state.service';
 import { NotificationService } from '../notification/notification.service';
 import {
   CreateQuestionTemplateDto,
@@ -464,7 +464,10 @@ export class QuestionService {
       orderBy: { sortOrder: 'asc' },
     });
 
-    const canSubmit = await this.canSubmitAnswers(leagueSeason.id, episodeNumber);
+    const canSubmit = await this.canSubmitAnswers(
+      leagueSeason.id,
+      episodeNumber,
+    );
 
     // Get episode info for deadline
     const episode = leagueSeason.season.episodes.find(
@@ -759,10 +762,11 @@ export class QuestionService {
       if (isFullyScored) {
         // Send results notifications to all league members
         try {
-          const sentCount = await this.notificationService.sendResultsForEpisode(
-            leagueSeason.id,
-            episodeNumber,
-          );
+          const sentCount =
+            await this.notificationService.sendResultsForEpisode(
+              leagueSeason.id,
+              episodeNumber,
+            );
           this.logger.log(
             `Sent ${sentCount} results notifications for episode ${episodeNumber}`,
           );
@@ -796,7 +800,10 @@ export class QuestionService {
     });
 
     // Check if deadline has passed
-    const canSubmit = await this.canSubmitAnswers(leagueSeason.id, episodeNumber);
+    const canSubmit = await this.canSubmitAnswers(
+      leagueSeason.id,
+      episodeNumber,
+    );
 
     // Get all questions with all answers
     const questions = await this.prisma.leagueQuestion.findMany({
@@ -857,7 +864,12 @@ export class QuestionService {
     // Calculate leaderboard for this episode
     const teamScores = new Map<
       string,
-      { teamId: string; teamName: string; ownerName: string | null; points: number }
+      {
+        teamId: string;
+        teamName: string;
+        ownerName: string | null;
+        points: number;
+      }
     >();
 
     for (const q of questions) {
@@ -938,7 +950,10 @@ export class QuestionService {
       ? questions.filter((q) => q.answers && q.answers.length > 0).length
       : 0;
 
-    const canSubmit = await this.canSubmitAnswers(leagueSeason.id, currentEpisode);
+    const canSubmit = await this.canSubmitAnswers(
+      leagueSeason.id,
+      currentEpisode,
+    );
 
     return {
       currentEpisode,

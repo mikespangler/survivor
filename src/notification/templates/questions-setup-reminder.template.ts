@@ -9,7 +9,9 @@ export interface QuestionsSetupReminderParams {
   airDate?: Date;
 }
 
-export function getQuestionsSetupReminderHtml(params: QuestionsSetupReminderParams): string {
+export function getQuestionsSetupReminderHtml(
+  params: QuestionsSetupReminderParams,
+): string {
   const {
     userName,
     leagueName,
@@ -36,11 +38,15 @@ export function getQuestionsSetupReminderHtml(params: QuestionsSetupReminderPara
       <strong>Episode ${episodeNumber}</strong> questions haven't been set up yet for <strong>${leagueName}</strong>.
     </p>
 
-    ${airDateStr ? `
+    ${
+      airDateStr
+        ? `
       <div class="deadline">
         <strong>Episode airs:</strong> ${airDateStr}
       </div>
-    ` : ''}
+    `
+        : ''
+    }
 
     <div class="info-box">
       Players won't be able to submit their predictions until questions are created!

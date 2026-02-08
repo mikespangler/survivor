@@ -11,7 +11,9 @@ export interface ResultsAvailableParams {
   totalTeams?: number;
 }
 
-export function getResultsAvailableHtml(params: ResultsAvailableParams): string {
+export function getResultsAvailableHtml(
+  params: ResultsAvailableParams,
+): string {
   const {
     userName,
     leagueName,
@@ -29,19 +31,27 @@ export function getResultsAvailableHtml(params: ResultsAvailableParams): string 
     <h2>Hey ${userName || 'there'}!</h2>
     <p>Results are in for <strong>Episode ${episodeNumber}</strong> in <strong>${leagueName}</strong>!</p>
 
-    ${hasStats ? `
+    ${
+      hasStats
+        ? `
       <div class="info-box">
         <p style="margin: 0 0 10px 0;"><strong>Your Episode ${episodeNumber} Performance:</strong></p>
         <p style="margin: 0; font-size: 24px;">
           <strong>${userPoints} points</strong>
         </p>
-        ${userRank && totalTeams ? `
+        ${
+          userRank && totalTeams
+            ? `
           <p style="margin: 10px 0 0 0;">
             Rank: ${userRank} of ${totalTeams}
           </p>
-        ` : ''}
+        `
+            : ''
+        }
       </div>
-    ` : ''}
+    `
+        : ''
+    }
 
     <center>
       <a href="${resultsUrl}" class="cta-button">View Full Results</a>

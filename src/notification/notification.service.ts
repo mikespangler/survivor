@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import { PrismaService } from '../prisma/prisma.service';
@@ -36,9 +36,12 @@ export class NotificationService {
     private readonly config: ConfigService,
   ) {
     const apiKey = this.config.get('RESEND_API_KEY');
-    this.logger.log(`Initializing NotificationService with API key: ${apiKey ? 'SET' : 'NOT SET'}`);
+    this.logger.log(
+      `Initializing NotificationService with API key: ${apiKey ? 'SET' : 'NOT SET'}`,
+    );
     this.resend = new Resend(apiKey);
-    this.fromEmail = this.config.get('FROM_EMAIL') || 'noreply@outpickoutlast.com';
+    this.fromEmail =
+      this.config.get('FROM_EMAIL') || 'noreply@outpickoutlast.com';
     this.appUrl = this.config.get('APP_URL') || 'https://outpickoutlast.com';
     this.logger.log(`From email: ${this.fromEmail}, App URL: ${this.appUrl}`);
   }
@@ -60,7 +63,10 @@ export class NotificationService {
     return preferences;
   }
 
-  async updatePreferences(userId: string, dto: UpdateNotificationPreferencesDto) {
+  async updatePreferences(
+    userId: string,
+    dto: UpdateNotificationPreferencesDto,
+  ) {
     // Upsert preferences
     return this.prisma.notificationPreferences.upsert({
       where: { userId },
@@ -94,7 +100,9 @@ export class NotificationService {
     });
 
     if (existing) {
-      this.logger.log(`Notification ${type} already sent to user ${userId} - skipping`);
+      this.logger.log(
+        `Notification ${type} already sent to user ${userId} - skipping`,
+      );
       return false;
     }
 
@@ -102,7 +110,9 @@ export class NotificationService {
     const preferences = await this.getPreferences(userId);
 
     if (preferences.emailFrequency === 'never') {
-      this.logger.log(`User ${userId} has email frequency set to 'never' - skipping`);
+      this.logger.log(
+        `User ${userId} has email frequency set to 'never' - skipping`,
+      );
       return false;
     }
 
@@ -127,7 +137,9 @@ export class NotificationService {
     }
 
     if (!allowed) {
-      this.logger.log(`User ${userId} has ${type} preference disabled - skipping`);
+      this.logger.log(
+        `User ${userId} has ${type} preference disabled - skipping`,
+      );
     } else {
       this.logger.log(`User ${userId} approved for ${type} notification`);
     }
@@ -167,7 +179,9 @@ export class NotificationService {
         html,
       });
 
-      this.logger.log(`Email sent successfully! Result: ${JSON.stringify(result)}`);
+      this.logger.log(
+        `Email sent successfully! Result: ${JSON.stringify(result)}`,
+      );
       return true;
     } catch (error) {
       this.logger.error(`Failed to send email to ${to}: ${error.message}`);
@@ -186,7 +200,13 @@ export class NotificationService {
   ): Promise<boolean> {
     const context: NotificationContext = { leagueId, episodeNumber };
 
-    if (!(await this.shouldSendNotification(userId, 'QUESTIONS_REMINDER', context))) {
+    if (
+      !(await this.shouldSendNotification(
+        userId,
+        'QUESTIONS_REMINDER',
+        context,
+      ))
+    ) {
       return false;
     }
 
@@ -259,7 +279,9 @@ export class NotificationService {
   ): Promise<boolean> {
     const context: NotificationContext = { leagueId, draftConfigId };
 
-    if (!(await this.shouldSendNotification(userId, 'DRAFT_REMINDER', context))) {
+    if (
+      !(await this.shouldSendNotification(userId, 'DRAFT_REMINDER', context))
+    ) {
       return false;
     }
 
@@ -307,7 +329,9 @@ export class NotificationService {
   ): Promise<boolean> {
     const context: NotificationContext = { leagueId, episodeNumber };
 
-    if (!(await this.shouldSendNotification(userId, 'RESULTS_AVAILABLE', context))) {
+    if (
+      !(await this.shouldSendNotification(userId, 'RESULTS_AVAILABLE', context))
+    ) {
       return false;
     }
 
@@ -386,7 +410,9 @@ export class NotificationService {
   ): Promise<boolean> {
     const context: NotificationContext = { leagueId, episodeNumber };
 
-    if (!(await this.shouldSendNotification(userId, 'SCORING_REMINDER', context))) {
+    if (
+      !(await this.shouldSendNotification(userId, 'SCORING_REMINDER', context))
+    ) {
       return false;
     }
 
@@ -440,7 +466,13 @@ export class NotificationService {
   ): Promise<boolean> {
     const context: NotificationContext = { leagueId, episodeNumber };
 
-    if (!(await this.shouldSendNotification(userId, 'QUESTIONS_SETUP_REMINDER', context))) {
+    if (
+      !(await this.shouldSendNotification(
+        userId,
+        'QUESTIONS_SETUP_REMINDER',
+        context,
+      ))
+    ) {
       return false;
     }
 
@@ -481,7 +513,11 @@ export class NotificationService {
     );
 
     if (sent) {
-      await this.markNotificationSent(userId, 'QUESTIONS_SETUP_REMINDER', context);
+      await this.markNotificationSent(
+        userId,
+        'QUESTIONS_SETUP_REMINDER',
+        context,
+      );
     }
     return sent;
   }
@@ -519,7 +555,9 @@ export class NotificationService {
 
   // ================== TEST METHOD ==================
 
-  async sendTestEmail(userId: string): Promise<{ success: boolean; message: string }> {
+  async sendTestEmail(
+    userId: string,
+  ): Promise<{ success: boolean; message: string }> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
     if (!user?.email) {

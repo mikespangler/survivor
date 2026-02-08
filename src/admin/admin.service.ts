@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LeagueMemberResponse } from './dto/league-member-response.dto';
 import { EmailService } from '../email/email.service';
@@ -141,7 +146,6 @@ export class AdminService {
   async addMemberToLeague(
     leagueId: string,
     userId: string,
-    adminId: string,
   ): Promise<{ member: any; team: any }> {
     const league = await this.getAnyLeague(leagueId);
 
@@ -227,7 +231,6 @@ export class AdminService {
   async removeMemberFromLeague(
     leagueId: string,
     userId: string,
-    adminId: string,
   ): Promise<void> {
     const league = await this.getAnyLeague(leagueId);
 
@@ -341,7 +344,8 @@ export class AdminService {
       this.logger.log(`Invite token created: ${inviteToken.id}`);
 
       // Send email
-      const frontendUrl = process.env.FRONTEND_URL || 'https://outpickoutlast.com';
+      const frontendUrl =
+        process.env.FRONTEND_URL || 'https://outpickoutlast.com';
       this.logger.log(`Frontend URL: ${frontendUrl}`);
       this.logger.log(`Calling emailService.sendLeagueInvite...`);
 

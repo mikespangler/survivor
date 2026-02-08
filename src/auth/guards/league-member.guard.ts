@@ -30,7 +30,7 @@ export class LeagueMemberGuard implements CanActivate {
     // Check if league exists and if user is the owner or a member
     const league = await this.prisma.league.findUnique({
       where: { id: leagueId },
-      select: { 
+      select: {
         ownerId: true,
         members: {
           select: { id: true },
@@ -44,7 +44,7 @@ export class LeagueMemberGuard implements CanActivate {
 
     // Check if user is owner or member
     const isOwner = league.ownerId === user.id;
-    const isMember = league.members.some(member => member.id === user.id);
+    const isMember = league.members.some((member) => member.id === user.id);
 
     if (!isOwner && !isMember) {
       throw new ForbiddenException(

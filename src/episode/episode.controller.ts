@@ -10,7 +10,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { EpisodeService } from './episode.service';
-import { CreateEpisodeDto, UpdateEpisodeDto, BulkCreateEpisodesDto } from './dto';
+import {
+  CreateEpisodeDto,
+  UpdateEpisodeDto,
+  BulkCreateEpisodesDto,
+} from './dto';
 import { SystemAdminGuard } from '../auth/guards/system-admin.guard';
 
 @Controller('episodes')
