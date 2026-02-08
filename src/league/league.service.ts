@@ -1285,12 +1285,28 @@ export class LeagueService {
       .filter(Boolean) as string[];
     const toInvite = emails.filter((e) => !alreadyMembers.includes(e));
 
+    // Check for existing pending invites
+    const existingPendingInvites = await this.prisma.inviteToken.findMany({
+      where: {
+        leagueId,
+        invitedEmail: { in: toInvite },
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      select: { invitedEmail: true },
+    });
+    const alreadyInvited = existingPendingInvites
+      .map((t) => t.invitedEmail)
+      .filter(Boolean) as string[];
+    const emailsToProcess = toInvite.filter((e) => !alreadyInvited.includes(e));
+
     this.logger.log(`Already members: ${alreadyMembers.join(', ') || 'none'}`);
-    this.logger.log(`To invite: ${toInvite.join(', ') || 'none'}`);
+    this.logger.log(`Already invited: ${alreadyInvited.join(', ') || 'none'}`);
+    this.logger.log(`To invite: ${emailsToProcess.join(', ') || 'none'}`);
 
     // Generate tokens and send emails
     const invited: string[] = [];
-    for (const email of toInvite) {
+    for (const email of emailsToProcess) {
       this.logger.log(`Processing invite for: ${email}`);
 
       // Generate token
@@ -1339,6 +1355,7 @@ export class LeagueService {
       success: true,
       emails: invited,
       alreadyMembers,
+      alreadyInvited,
       message: `Sent ${invited.length} invite(s)`,
     };
   }
@@ -2117,13 +2134,19 @@ export class LeagueService {
 
   async getCommissionerMessages(
     leagueId: string,
-    options?: { limit?: number; offset?: number },
+    options?: { limit?: number; offset?: number; userId?: string },
   ) {
-    const { limit = 20, offset = 0 } = options || {};
+    const { limit = 20, offset = 0, userId } = options || {};
+
+    // Build where clause, filtering out dismissed messages when userId is provided
+    const where: any = { leagueId };
+    if (userId) {
+      where.NOT = { dismissals: { some: { userId } } };
+    }
 
     // Get messages with pinned first, then by date
     const messages = await this.prisma.commissionerMessage.findMany({
-      where: { leagueId },
+      where,
       include: {
         author: {
           select: {
@@ -2139,10 +2162,32 @@ export class LeagueService {
     });
 
     const total = await this.prisma.commissionerMessage.count({
-      where: { leagueId },
+      where,
     });
 
     return { messages, total };
+  }
+
+  async dismissCommissionerMessage(messageId: string, userId: string) {
+    // Verify the message exists
+    const message = await this.prisma.commissionerMessage.findUnique({
+      where: { id: messageId },
+    });
+
+    if (!message) {
+      throw new NotFoundException(`Message with ID ${messageId} not found`);
+    }
+
+    // Upsert the dismissal (idempotent via unique constraint)
+    await this.prisma.commissionerMessageDismissal.upsert({
+      where: {
+        userId_messageId: { userId, messageId },
+      },
+      create: { userId, messageId },
+      update: {},
+    });
+
+    return { success: true };
   }
 
   async updateCommissionerMessage(

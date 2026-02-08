@@ -233,6 +233,7 @@ export default function DraftPage() {
     (t) => t.hasCompleted
   ).length;
   const isReDraft = draftData.draftConfig.roundNumber > 1;
+  const hasSubmitted = draftData.currentRoster.length > 0;
 
   return (
     <AuthenticatedLayout>
@@ -307,11 +308,12 @@ export default function DraftPage() {
                   <CastawayCard
                     key={castaway.id}
                     castaway={castaway}
-                    isSelected={selectedCastawayIds.has(castaway.id)}
+                    isSelected={!hasSubmitted && selectedCastawayIds.has(castaway.id)}
                     isDisabled={
-                      !selectedCastawayIds.has(castaway.id) &&
-                      selectedCastawayIds.size >=
-                        draftData.draftConfig.castawaysPerTeam
+                      hasSubmitted ||
+                      (!selectedCastawayIds.has(castaway.id) &&
+                        selectedCastawayIds.size >=
+                          draftData.draftConfig.castawaysPerTeam)
                     }
                     onSelect={handleSelectCastaway}
                     onDeselect={handleDeselectCastaway}
@@ -331,31 +333,59 @@ export default function DraftPage() {
             {/* Right: Selected Roster (Sticky) */}
             <Box position="sticky" top="100px" height="fit-content">
               <VStack gap={4}>
+                {hasSubmitted && (
+                  <Alert status="success" borderRadius="16px">
+                    <AlertIcon />
+                    <Box flex="1">
+                      <AlertTitle>Roster Submitted</AlertTitle>
+                      <AlertDescription color="text.secondary">
+                        Your roster has been submitted. Good luck this season!
+                      </AlertDescription>
+                    </Box>
+                  </Alert>
+                )}
+
                 <SelectedRosterPreview
                   selectedCastaways={selectedCastaways}
                   requiredCount={draftData.draftConfig.castawaysPerTeam}
                   onRemove={handleDeselectCastaway}
+                  readOnly={hasSubmitted}
                 />
 
-                <Button
-                  width="full"
-                  size="lg"
-                  colorScheme="orange"
-                  isDisabled={!canSubmit}
-                  isLoading={submitting}
-                  onClick={handleSubmit}
-                >
-                  Submit Roster ({selectedCastawayIds.size}/
-                  {draftData.draftConfig.castawaysPerTeam})
-                </Button>
+                {!hasSubmitted && (
+                  <>
+                    <Button
+                      width="full"
+                      size="lg"
+                      colorScheme="orange"
+                      isDisabled={!canSubmit}
+                      isLoading={submitting}
+                      onClick={handleSubmit}
+                    >
+                      Submit Roster ({selectedCastawayIds.size}/
+                      {draftData.draftConfig.castawaysPerTeam})
+                    </Button>
 
-                {!canSubmit && selectedCastawayIds.size > 0 && (
-                  <Text fontSize="sm" color="text.secondary" textAlign="center">
-                    Select{' '}
-                    {draftData.draftConfig.castawaysPerTeam -
-                      selectedCastawayIds.size}{' '}
-                    more castaway(s)
-                  </Text>
+                    {!canSubmit && selectedCastawayIds.size > 0 && (
+                      <Text fontSize="sm" color="text.secondary" textAlign="center">
+                        Select{' '}
+                        {draftData.draftConfig.castawaysPerTeam -
+                          selectedCastawayIds.size}{' '}
+                        more castaway(s)
+                      </Text>
+                    )}
+                  </>
+                )}
+
+                {hasSubmitted && (
+                  <Button
+                    width="full"
+                    variant="outline"
+                    colorScheme="orange"
+                    onClick={() => router.push(`/leagues/${leagueId}/dashboard`)}
+                  >
+                    Back to Dashboard
+                  </Button>
                 )}
               </VStack>
             </Box>

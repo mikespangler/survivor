@@ -1,261 +1,196 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import {
   Box,
   VStack,
   HStack,
   Text,
-  Avatar,
-  Button,
-  Grid,
   Flex,
-  Divider,
 } from '@chakra-ui/react';
-import { StarIcon } from './icons';
 import type { MyTeamResponse } from '@/types/api';
 
 interface MyTeamCardProps {
   myTeam: MyTeamResponse;
-  leagueId: string;
 }
 
-// Mock points per castaway - would come from API in production
-const getMockCastawayPoints = (castawayId: string): number => {
-  const hash = castawayId.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-  return 40 + (hash % 50); // Random between 40-90
-};
+// Generate a deterministic color for player avatars
+function getPlayerColor(name: string): string {
+  const colors = ['#5a7abf', '#4a9a6a', '#c47a3a', '#c45454', '#8a6ec4', '#e8622a', '#6aaa78', '#7a5ab0'];
+  const hash = name.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+  return colors[hash % colors.length];
+}
 
-export function MyTeamCard({ myTeam, leagueId }: MyTeamCardProps) {
-  const router = useRouter();
+export function MyTeamCard({ myTeam }: MyTeamCardProps) {
   const roster = myTeam.roster || [];
 
-  // Split roster into rows of 3
+  // All roster members, active first
   const activeRoster = roster.filter((r) => r.isActive);
   const eliminatedRoster = roster.filter((r) => !r.isActive);
-
-  // Display up to 6 castaways (5 active + 1 eliminated for visual)
-  const displayRoster = [...activeRoster, ...eliminatedRoster].slice(0, 6);
+  const displayRoster = [...activeRoster, ...eliminatedRoster];
 
   return (
-    <VStack align="stretch" gap={4} flex="1" h="full">
+    <Box
+      bg="rgba(26, 25, 32, 1)"
+      border="1px solid rgba(255,255,255,0.08)"
+      borderRadius="14px"
+      overflow="hidden"
+    >
       {/* Header */}
-      <HStack justify="space-between">
-        <Text fontFamily="display" fontSize="24px" fontWeight="bold" color="text.primary">
-          My Team
-        </Text>
-        <Button
-          variant="link"
-          color="brand.primary"
-          fontSize="14px"
-          fontWeight="bold"
-          onClick={() => router.push(`/leagues/${leagueId}/team/${myTeam.id}`)}
+      <Box px="22px" pt="18px" pb="14px">
+        <Text
+          fontFamily="heading"
+          fontSize="22px"
+          letterSpacing="1.5px"
+          color="text.primary"
         >
-          View Team →
-        </Button>
-      </HStack>
+          My Team — {myTeam.name}
+        </Text>
+      </Box>
 
-      {/* Card */}
-      <Box
-        bg="linear-gradient(146.157deg, rgb(33, 38, 48) 2.5008%, rgb(25, 29, 36) 97.499%)"
-        border="2px solid"
-        borderColor="rgba(43, 48, 59, 0.5)"
-        borderRadius="24px"
-        p={4}
-        flex="1"
-        display="flex"
-        flexDirection="column"
-      >
-        {/* Team Name & Stats */}
-        <VStack gap={0} pb={3}>
-          <Text
-            fontFamily="heading"
-            fontSize="20px"
-            color="text.primary"
-            textAlign="center"
-          >
-            {myTeam.name}
-          </Text>
-          <HStack gap={6} justify="center" py={3}>
-            <VStack gap={0}>
-              <Text
-                fontFamily="display"
-                fontSize="32px"
-                fontWeight="bold"
-                color="brand.primary"
-                lineHeight="48px"
-              >
-                {myTeam.stats.activeCastaways}
-              </Text>
-              <Text fontSize="12px" fontWeight="medium" color="text.secondary">
-                ACTIVE
-              </Text>
-            </VStack>
-            <VStack gap={0}>
-              <Text
-                fontFamily="display"
-                fontSize="32px"
-                fontWeight="bold"
-                color="text.secondary"
-                lineHeight="48px"
-              >
-                {myTeam.stats.eliminatedCastaways}
-              </Text>
-              <Text fontSize="12px" fontWeight="medium" color="text.secondary">
-                ELIMINATED
-              </Text>
-            </VStack>
-            <VStack gap={0}>
-              <Text
-                fontFamily="display"
-                fontSize="32px"
-                fontWeight="bold"
-                color="brand.primary"
-                lineHeight="48px"
-              >
-                {myTeam.totalPoints}
-              </Text>
-              <Text fontSize="12px" fontWeight="medium" color="text.secondary">
-                TOTAL POINTS
-              </Text>
-            </VStack>
-          </HStack>
-        </VStack>
+      <Box px="22px" pb="20px">
+        {/* Segmented Stat Bar */}
+        <Flex
+          gap="2px"
+          mb={4}
+          bg="rgba(11, 10, 15, 1)"
+          borderRadius="10px"
+          p="3px"
+        >
+          <Box flex="1" textAlign="center" py={3} px={2} borderRadius="8px" bg="rgba(32, 31, 39, 1)">
+            <Text fontFamily="heading" fontSize="28px" lineHeight="1" color="#4ecb71">
+              {myTeam.stats.activeCastaways}
+            </Text>
+            <Text
+              fontFamily="heading"
+              fontSize="10px"
+              fontWeight="600"
+              letterSpacing="2px"
+              textTransform="uppercase"
+              color="text.secondary"
+              mt="4px"
+            >
+              Active
+            </Text>
+          </Box>
+          <Box flex="1" textAlign="center" py={3} px={2} borderRadius="8px">
+            <Text fontFamily="heading" fontSize="28px" lineHeight="1" color="#e85454">
+              {myTeam.stats.eliminatedCastaways}
+            </Text>
+            <Text
+              fontFamily="heading"
+              fontSize="10px"
+              fontWeight="600"
+              letterSpacing="2px"
+              textTransform="uppercase"
+              color="text.secondary"
+              mt="4px"
+            >
+              Eliminated
+            </Text>
+          </Box>
+          <Box flex="1" textAlign="center" py={3} px={2} borderRadius="8px">
+            <Text fontFamily="heading" fontSize="28px" lineHeight="1" color="brand.primary">
+              {myTeam.totalPoints}
+            </Text>
+            <Text
+              fontFamily="heading"
+              fontSize="10px"
+              fontWeight="600"
+              letterSpacing="2px"
+              textTransform="uppercase"
+              color="text.secondary"
+              mt="4px"
+            >
+              Total Pts
+            </Text>
+          </Box>
+        </Flex>
 
-        {/* Roster Grid */}
-        <VStack flex="1" gap={4} justify="space-between">
-          {/* First row */}
-          <HStack w="full" justify="center" gap={0}>
-            {displayRoster.slice(0, 3).map((member, idx) => (
-              <CastawayCell
+        {/* Player Rows */}
+        <VStack gap={0} align="stretch">
+          {displayRoster.map((member, idx) => {
+            const isEliminated = !member.isActive || member.castaway.status === 'ELIMINATED';
+            const castaway = member.castaway;
+
+            return (
+              <HStack
                 key={member.id}
-                member={member}
-                showRightBorder={idx < 2}
-                points={getMockCastawayPoints(member.castaway.id)}
-              />
-            ))}
-          </HStack>
+                gap={3}
+                py="9px"
+                borderBottom={idx < displayRoster.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none'}
+                opacity={isEliminated ? 0.5 : 1}
+              >
+                {/* Avatar with status dot */}
+                <Box position="relative" flexShrink={0}>
+                  <Flex
+                    w="38px"
+                    h="38px"
+                    borderRadius="50%"
+                    align="center"
+                    justify="center"
+                    fontFamily="heading"
+                    fontWeight="700"
+                    fontSize="13px"
+                    color="white"
+                    bg={getPlayerColor(castaway.name)}
+                  >
+                    {castaway.name
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </Flex>
+                  <Box
+                    position="absolute"
+                    bottom={0}
+                    right={0}
+                    w="10px"
+                    h="10px"
+                    borderRadius="50%"
+                    border="2px solid rgba(26, 25, 32, 1)"
+                    bg={isEliminated ? '#e85454' : '#4ecb71'}
+                  />
+                </Box>
 
-          {/* Divider */}
-          <Divider borderColor="rgba(48, 53, 65, 0.5)" />
+                {/* Name + tribe */}
+                <Box flex="1">
+                  <Text
+                    fontWeight="600"
+                    fontSize="14px"
+                    color="text.primary"
+                    textDecoration={isEliminated ? 'line-through' : 'none'}
+                  >
+                    {castaway.name}
+                  </Text>
+                  {/* Tribe info placeholder - would come from castaway data */}
+                  <Text fontSize="12px" color="text.secondary" fontWeight="500">
+                    {castaway.status === 'ELIMINATED'
+                      ? 'Eliminated'
+                      : castaway.status === 'JURY'
+                        ? 'Jury'
+                        : 'Active'}
+                  </Text>
+                </Box>
 
-          {/* Second row */}
-          <HStack w="full" justify="center" gap={0}>
-            {displayRoster.slice(3, 6).map((member, idx) => (
-              <CastawayCell
-                key={member.id}
-                member={member}
-                showRightBorder={idx < 2 && displayRoster.length > 4}
-                points={getMockCastawayPoints(member.castaway.id)}
-              />
-            ))}
-            {/* Empty cells if less than 6 */}
-            {displayRoster.length < 5 && <EmptyCell showRightBorder />}
-            {displayRoster.length < 6 && <EmptyCell showRightBorder={false} />}
-          </HStack>
+                {/* Points */}
+                <HStack gap={1} flexShrink={0}>
+                  <Text color="brand.primary" fontSize="12px">★</Text>
+                  <Text
+                    fontFamily="heading"
+                    fontWeight="700"
+                    fontSize="15px"
+                    color="#f4a93a"
+                  >
+                    {/* Points per castaway not available in current API, show dash */}
+                    —
+                  </Text>
+                </HStack>
+              </HStack>
+            );
+          })}
         </VStack>
       </Box>
-    </VStack>
-  );
-}
-
-interface CastawayCellProps {
-  member: {
-    id: string;
-    castaway: {
-      id: string;
-      name: string;
-      status: 'ACTIVE' | 'ELIMINATED' | 'JURY';
-      imageUrl?: string | null;
-    };
-    isActive: boolean;
-  };
-  showRightBorder: boolean;
-  points: number;
-}
-
-function CastawayCell({ member, showRightBorder, points }: CastawayCellProps) {
-  const isEliminated = !member.isActive || member.castaway.status === 'ELIMINATED';
-
-  return (
-    <Flex
-      flex="1"
-      direction="column"
-      align="center"
-      gap={1}
-      py={0}
-      px={11}
-      borderRight={showRightBorder ? '2px solid' : 'none'}
-      borderColor="rgba(48, 53, 65, 0.5)"
-      opacity={isEliminated ? 0.35 : 1}
-      position="relative"
-    >
-      {/* Eliminated X badge */}
-      {isEliminated && (
-        <Box
-          position="absolute"
-          top="0.5px"
-          right="38px"
-          bg="rgba(244, 67, 54, 0.8)"
-          borderRadius="full"
-          boxSize="16px"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-        >
-          <Text fontSize="10px" color="white" fontWeight="bold">
-            ✕
-          </Text>
-        </Box>
-      )}
-
-      <Avatar
-        size="lg"
-        name={member.castaway.name}
-        src={member.castaway.imageUrl || undefined}
-        boxSize="60px"
-        border="2px solid"
-        borderColor={isEliminated ? 'text.secondary' : 'brand.primary'}
-      />
-      <Text
-        fontSize="12px"
-        fontWeight="bold"
-        color="text.primary"
-        textAlign="center"
-        textDecoration={isEliminated ? 'line-through' : 'none'}
-      >
-        {member.castaway.name}
-      </Text>
-      <HStack gap={1.5} justify="center">
-        <StarIcon boxSize="12px" color="brand.primary" />
-        <Text
-          fontSize="11px"
-          fontWeight="medium"
-          color="brand.primary"
-        >
-          {points}
-        </Text>
-      </HStack>
-    </Flex>
-  );
-}
-
-function EmptyCell({ showRightBorder }: { showRightBorder: boolean }) {
-  return (
-    <Flex
-      flex="1"
-      direction="column"
-      align="center"
-      gap={1}
-      py={0}
-      px={11}
-      borderRight={showRightBorder ? '2px solid' : 'none'}
-      borderColor="rgba(48, 53, 65, 0.5)"
-      opacity={0}
-    >
-      <Avatar size="lg" boxSize="60px" />
-      <Text fontSize="12px">—</Text>
-      <Text fontSize="11px">—</Text>
-    </Flex>
+    </Box>
   );
 }

@@ -15,12 +15,14 @@ interface SelectedRosterPreviewProps {
   selectedCastaways: Castaway[];
   requiredCount: number;
   onRemove: (id: string) => void;
+  readOnly?: boolean;
 }
 
 export function SelectedRosterPreview({
   selectedCastaways,
   requiredCount,
   onRemove,
+  readOnly = false,
 }: SelectedRosterPreviewProps) {
   const emptySlots = requiredCount - selectedCastaways.length;
 
@@ -61,16 +63,18 @@ export function SelectedRosterPreview({
               borderColor="brand.primary"
               position="relative"
             >
-              <IconButton
-                aria-label="Remove castaway"
-                icon={<CloseIcon />}
-                size="xs"
-                position="absolute"
-                top={1}
-                right={1}
-                colorScheme="red"
-                onClick={() => onRemove(castaway.id)}
-              />
+              {!readOnly && (
+                <IconButton
+                  aria-label="Remove castaway"
+                  icon={<CloseIcon />}
+                  size="xs"
+                  position="absolute"
+                  top={1}
+                  right={1}
+                  colorScheme="red"
+                  onClick={() => onRemove(castaway.id)}
+                />
+              )}
 
               <VStack gap={2}>
                 <Avatar

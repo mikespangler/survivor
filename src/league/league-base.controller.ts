@@ -209,12 +209,14 @@ export class LeagueBaseController {
   @UseGuards(LeagueMemberGuard)
   async getCommissionerMessages(
     @Param('id') leagueId: string,
+    @CurrentUser() user: any,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
   ) {
     return this.leagueService.getCommissionerMessages(leagueId, {
       limit: limit ? parseInt(limit, 10) : undefined,
       offset: offset ? parseInt(offset, 10) : undefined,
+      userId: user.id,
     });
   }
 
@@ -238,6 +240,16 @@ export class LeagueBaseController {
     @CurrentUser() user: any,
   ) {
     return this.leagueService.updateCommissionerMessage(messageId, user.id, dto);
+  }
+
+  @Post(':id/messages/:messageId/dismiss')
+  @UseGuards(LeagueMemberGuard)
+  @HttpCode(HttpStatus.OK)
+  async dismissCommissionerMessage(
+    @Param('messageId') messageId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.leagueService.dismissCommissionerMessage(messageId, user.id);
   }
 
   @Delete(':id/messages/:messageId')

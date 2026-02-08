@@ -1074,6 +1074,18 @@ class ApiClient {
     );
   }
 
+  async dismissCommissionerMessage(
+    leagueId: string,
+    messageId: string,
+  ): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(
+      `/leagues/${leagueId}/messages/${messageId}/dismiss`,
+      {
+        method: 'POST',
+      },
+    );
+  }
+
   async deleteCommissionerMessage(
     leagueId: string,
     messageId: string,

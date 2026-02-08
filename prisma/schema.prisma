@@ -26,6 +26,7 @@ model User {
   notificationPreferences NotificationPreferences?
   sentNotifications       SentNotification[]
   commissionerMessages    CommissionerMessage[]
+  dismissedMessages       CommissionerMessageDismissal[]
 
   @@index([clerkId])
   @@index([lastViewedLeagueId])
@@ -311,6 +312,20 @@ model CommissionerMessage {
   emailSentAt  DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  dismissals   CommissionerMessageDismissal[]
 
   @@index([leagueId, createdAt])
+}
+
+// Track which users have dismissed which announcements
+model CommissionerMessageDismissal {
+  id        String              @id @default(cuid())
+  userId    String
+  messageId String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   CommissionerMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  createdAt DateTime            @default(now())
+
+  @@unique([userId, messageId])
+  @@index([userId])
 }

@@ -138,7 +138,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
 
   return (
     <Box minH="100vh" bg="bg.primary">
-      <AuthenticatedHeader userName={currentUser?.name} />
+      <AuthenticatedHeader userName={currentUser?.name} seasonMetadata={seasonMetadata} leagueId={league?.id} />
       <Flex pt="64px">
         <Sidebar
           league={league}

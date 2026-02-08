@@ -16,15 +16,34 @@ import {
   Avatar,
   Portal,
 } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react';
 import { getCloudinaryUrl } from '@/lib/cloudinary';
 import { ChevronDownIcon, ProfileIcon, SettingsIcon, LogoutIcon } from '@/components/dashboard/icons';
 import Link from 'next/link';
+import type { SeasonMetadata } from '@/types/api';
+
+const pulseAnimation = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+`;
 
 interface AuthenticatedHeaderProps {
   userName?: string | null;
+  seasonMetadata?: SeasonMetadata | null;
+  leagueId?: string | null;
 }
 
-export function AuthenticatedHeader({ userName }: AuthenticatedHeaderProps) {
+function formatDeadline(airDate: string | null): string {
+  if (!airDate) return 'TBD';
+  const date = new Date(airDate);
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+export function AuthenticatedHeader({ userName, seasonMetadata, leagueId }: AuthenticatedHeaderProps) {
   const router = useRouter();
   const { user } = useUser();
   const { signOut, openUserProfile } = useClerk();
@@ -81,6 +100,60 @@ export function AuthenticatedHeader({ userName }: AuthenticatedHeaderProps) {
             </HStack>
           </HStack>
         </Link>
+
+        {/* Episode context - aligned with content area below (after sidebar) */}
+        {seasonMetadata?.status === 'ACTIVE' && (
+          <HStack
+            gap={5}
+            position="absolute"
+            left="256px"
+            pl={8}
+            h="full"
+            align="center"
+          >
+            <Text
+              fontFamily="heading"
+              fontSize="13px"
+              fontWeight="500"
+              color="text.secondary"
+              letterSpacing="0.5px"
+            >
+              <Text as="span" color="text.primary" fontWeight="600">
+                Episode {seasonMetadata.activeEpisode || '—'}
+              </Text>
+              {' '}· Season {seasonMetadata.number}
+            </Text>
+            <Link href={leagueId ? `/leagues/${leagueId}/questions` : '#'}>
+              <HStack
+                gap="6px"
+                bg="rgba(244,169,58,0.1)"
+                px={3}
+                py="5px"
+                borderRadius="20px"
+                cursor="pointer"
+                transition="all 0.15s"
+                _hover={{ bg: 'rgba(244,169,58,0.18)' }}
+              >
+                <Box
+                  w="6px"
+                  h="6px"
+                  borderRadius="50%"
+                  bg="#f4a93a"
+                  animation={`${pulseAnimation} 2s ease-in-out infinite`}
+                />
+                <Text
+                  fontFamily="heading"
+                  fontSize="13px"
+                  fontWeight="600"
+                  color="#f4a93a"
+                  letterSpacing="0.3px"
+                >
+                  Picks due {formatDeadline(seasonMetadata.currentEpisode?.airDate || null)}
+                </Text>
+              </HStack>
+            </Link>
+          </HStack>
+        )}
 
         {/* Right: User menu */}
         <Menu placement="bottom-end">

@@ -12,26 +12,24 @@ import {
   HStack,
   Spinner,
   Grid,
-  Badge,
+  Flex,
 } from '@chakra-ui/react';
 import { api } from '@/lib/api';
 import { AuthenticatedLayout } from '@/components/navigation';
 import {
-  StatCard,
   LeagueStandingsCard,
   MyTeamCard,
   WeeklyQuestionsCTA,
   WeekResultsCard,
-  FireIcon,
   UpcomingSeasonCard,
   CommissionerMessageCard,
 } from '@/components/dashboard';
 import type {
-  League,
   SeasonMetadata,
-  LeagueStandings,
+  DetailedStandingsResponse,
   MyTeamResponse,
   CommissionerMessage,
+  EpisodeResultsResponse,
 } from '@/types/api';
 
 interface LeagueDashboardPageProps {
@@ -44,10 +42,11 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
   const { user, isSignedIn, isLoaded } = useUser();
 
   const [seasonMetadata, setSeasonMetadata] = useState<SeasonMetadata | null>(null);
-  const [standings, setStandings] = useState<LeagueStandings | null>(null);
+  const [detailedStandings, setDetailedStandings] = useState<DetailedStandingsResponse | null>(null);
   const [myTeam, setMyTeam] = useState<MyTeamResponse | null>(null);
   const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
   const [commissionerMessages, setCommissionerMessages] = useState<CommissionerMessage[]>([]);
+  const [lastEpisodeResults, setLastEpisodeResults] = useState<EpisodeResultsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -94,7 +93,7 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
         // Admin can view any league
         try {
           currentLeague = await api.getAdminLeague(leagueId);
-        } catch (err) {
+        } catch {
           setError('League not found');
           setLoading(false);
           return;
@@ -134,18 +133,14 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
       const currentSeasonRef = (activeSeason || upcomingSeason)!;
       setActiveSeasonId(currentSeasonRef.seasonId);
 
-      // Load season metadata, standings, team data, and commissioner messages
-      // Note: Load standings for BOTH active and upcoming seasons
-      // Upcoming seasons will show all teams with 0 points (like fantasy football pre-season)
+      // Load season metadata, detailed standings, team data, and commissioner messages
       const promises: Promise<any>[] = [
         api.getSeasonMetadata(currentSeasonRef.seasonId),
-        api.getLeagueStandings(leagueId, currentSeasonRef.seasonId),
+        api.getDetailedStandings(leagueId, currentSeasonRef.seasonId).catch(() => null),
         api.getCommissionerMessages(leagueId, { limit: 3 }).catch(() => ({ messages: [] })),
       ];
 
-      // Load team data if available (both admins and regular users may not have teams)
-      // - Admins viewing non-member leagues won't have a team
-      // - Regular users may not have joined the current season yet
+      // Load team data if available
       promises.push(
         api.getMyTeam(leagueId, currentSeasonRef.seasonId).catch(() => null)
       );
@@ -153,9 +148,26 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
       const [metadata, standingsData, messagesData, teamData] = await Promise.all(promises);
 
       setSeasonMetadata(metadata);
-      setStandings(standingsData);
+      setDetailedStandings(standingsData);
       setCommissionerMessages(messagesData.messages || []);
       setMyTeam(teamData);
+
+      // Fetch previous episode results for the result strip
+      // (only if active season and we're past episode 1)
+      if (metadata?.status === 'ACTIVE' && metadata.activeEpisode && metadata.activeEpisode > 1) {
+        try {
+          const prevResults = await api.getEpisodeResults(
+            leagueId,
+            currentSeasonRef.seasonId,
+            metadata.activeEpisode - 1
+          );
+          if (prevResults?.isFullyScored) {
+            setLastEpisodeResults(prevResults);
+          }
+        } catch {
+          // Silently fail - result strip is optional
+        }
+      }
     } catch (err: any) {
       console.error('Failed to load dashboard:', err);
       setError(err.message || 'Failed to load dashboard data');
@@ -164,13 +176,31 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
     }
   };
 
-  const formatDeadline = (airDate: string | null) => {
-    if (!airDate) return 'TBD';
-    const date = new Date(airDate);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      hour: 'numeric',
-      minute: '2-digit',
+  // Compute rank delta text from detailed standings
+  const getRankDelta = (): string | null => {
+    if (!detailedStandings) return null;
+    const myStanding = detailedStandings.teams.find((t) => t.isCurrentUser);
+    if (!myStanding || myStanding.rankChange === 0) return null;
+    if (myStanding.rankChange > 0) return `+${myStanding.rankChange} from last week`;
+    return `${myStanding.rankChange} from last week`;
+  };
+
+  // Compute points earned this episode
+  const getPointsDelta = (): string | null => {
+    if (!detailedStandings) return null;
+    const myStanding = detailedStandings.teams.find((t) => t.isCurrentUser);
+    if (!myStanding || myStanding.episodeHistory.length === 0) return null;
+    const lastEp = myStanding.episodeHistory[myStanding.episodeHistory.length - 1];
+    if (lastEp.totalEpisodePoints === 0) return null;
+    return `+${lastEp.totalEpisodePoints} this episode`;
+  };
+
+  const handleDismissMessage = (messageId: string) => {
+    // Optimistically remove from state
+    setCommissionerMessages((prev) => prev.filter((m) => m.id !== messageId));
+    // Persist dismissal on the server
+    api.dismissCommissionerMessage(leagueId, messageId).catch((err) => {
+      console.error('Failed to dismiss message:', err);
     });
   };
 
@@ -209,124 +239,213 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
     );
   }
 
+  const isActive = seasonMetadata?.status === 'ACTIVE';
+  const rankDelta = getRankDelta();
+  const pointsDelta = getPointsDelta();
+
   return (
     <AuthenticatedLayout>
-      <Box p={8} maxW="1400px">
-        <VStack align="stretch" gap={8}>
-          {/* Header */}
-          <Box>
-            <HStack justify="space-between" align="center" mb={2}>
-              <Heading
-                fontFamily="heading"
-                fontSize="48px"
-                color="text.primary"
-                letterSpacing="-1.2px"
-                lineHeight="48px"
-              >
-                Come on in, {user?.firstName || 'Player'}
-              </Heading>
-              {seasonMetadata?.status === 'ACTIVE' && (
-                <Badge
-                  bg="rgba(240, 101, 66, 0.15)"
-                  border="1px solid"
-                  borderColor="rgba(240, 101, 66, 0.2)"
-                  color="brand.primary"
-                  px={4}
-                  py={3}
-                  borderRadius="full"
-                  fontWeight="bold"
-                  fontSize="14px"
-                  display="flex"
-                  alignItems="center"
-                  gap={1}
-                >
-                  <FireIcon boxSize="14px" />
-                  Week {seasonMetadata?.activeEpisode || '—'}
-                </Badge>
-              )}
-            </HStack>
-            <Text color="text.secondary" fontSize="16px" fontWeight="medium">
-              {seasonMetadata?.status === 'UPCOMING'
-                ? "Get ready! The season is starting soon."
-                : "Here's your league status and what needs your attention."}
-            </Text>
-          </Box>
+      <Box maxW="1200px">
+        <Box px={8} py={8}>
+          <VStack align="stretch" gap={7}>
+            {/* Show commissioner messages if any */}
+            {commissionerMessages.length > 0 && (
+              <VStack align="stretch" gap={4}>
+                {commissionerMessages.map((message) => (
+                  <CommissionerMessageCard key={message.id} message={message} onDismiss={handleDismissMessage} />
+                ))}
+              </VStack>
+            )}
 
-          {/* Show commissioner messages if any */}
-          {commissionerMessages.length > 0 && (
-            <VStack align="stretch" gap={4}>
-              {commissionerMessages.map((message) => (
-                <CommissionerMessageCard key={message.id} message={message} />
-              ))}
-            </VStack>
-          )}
-
-          {/* Show UpcomingSeasonCard if season is UPCOMING */}
-          {seasonMetadata?.status === 'UPCOMING' && (
-            <UpcomingSeasonCard
-              seasonMetadata={seasonMetadata}
-              leagueId={leagueId}
-            />
-          )}
-
-          {/* Show stat cards ONLY for ACTIVE seasons */}
-          {seasonMetadata?.status === 'ACTIVE' && (
-            <Grid templateColumns="repeat(4, 1fr)" gap={6}>
-              <StatCard
-                type="episode"
-                value={`Ep. ${seasonMetadata?.activeEpisode || '—'}`}
-              />
-              <StatCard
-                type="deadline"
-                value={formatDeadline(seasonMetadata?.currentEpisode?.airDate || null)}
-              />
-              <StatCard
-                type="rank"
-                value={`#${myTeam?.rank || '—'}`}
-                subValue={`/${myTeam?.totalTeams || '—'}`}
-              />
-              <StatCard
-                type="points"
-                value={myTeam?.totalPoints?.toString() || '0'}
-              />
-            </Grid>
-          )}
-
-          {/* Show Weekly Questions CTA for both ACTIVE and UPCOMING seasons */}
-          {activeSeasonId && (
-            <WeeklyQuestionsCTA
-              leagueId={leagueId}
-              seasonId={activeSeasonId}
-              seasonStatus={seasonMetadata?.status}
-            />
-          )}
-
-          {/* Show standings for BOTH active and upcoming seasons */}
-          {/* For upcoming: Shows all teams with 0 points (fantasy football style) */}
-          <Grid templateColumns="repeat(2, 1fr)" gap={6}>
-            {standings && (
-              <LeagueStandingsCard
-                standings={standings}
-                myTeam={myTeam}
+            {/* Show UpcomingSeasonCard if season is UPCOMING */}
+            {seasonMetadata?.status === 'UPCOMING' && (
+              <UpcomingSeasonCard
+                seasonMetadata={seasonMetadata}
                 leagueId={leagueId}
               />
             )}
-            {myTeam && (
-              <MyTeamCard myTeam={myTeam} leagueId={leagueId} />
-            )}
-          </Grid>
 
-          {/* Show Week Results ONLY for ACTIVE seasons */}
-          {seasonMetadata?.status === 'ACTIVE' &&
-           activeSeasonId &&
-           seasonMetadata.activeEpisode && (
-            <WeekResultsCard
-              leagueId={leagueId}
-              seasonId={activeSeasonId}
-              episodeNumber={seasonMetadata.activeEpisode}
-            />
-          )}
-        </VStack>
+            {/* Hero Row: Greeting + Rank/Points hero cards */}
+            <Flex
+              justify="space-between"
+              align="flex-end"
+              gap={8}
+            >
+              <Box>
+                <Heading
+                  fontFamily="heading"
+                  fontSize="56px"
+                  color="text.primary"
+                  letterSpacing="-1.5px"
+                  lineHeight="1"
+                >
+                  Come on in, {user?.firstName || 'Player'}
+                </Heading>
+                <Text color="text.secondary" fontSize="15px" fontWeight="400" mt="6px">
+                  {seasonMetadata?.status === 'UPCOMING'
+                    ? "Get ready! The season is starting soon."
+                    : "Here's your league status and what needs your attention."}
+                </Text>
+              </Box>
+
+              {/* Rank + Points hero cards */}
+              {isActive && myTeam && (
+                <HStack gap={4} flexShrink={0}>
+                  {/* Rank Card */}
+                  <Box
+                    textAlign="center"
+                    px={7}
+                    py={5}
+                    borderRadius="14px"
+                    position="relative"
+                    overflow="hidden"
+                    w="190px"
+                    h="140px"
+                    display="flex"
+                    flexDirection="column"
+                    justifyContent="center"
+                    bg="linear-gradient(145deg, rgba(244, 200, 66, 0.12) 0%, rgba(244, 200, 66, 0.04) 100%)"
+                    border="1px solid rgba(244, 200, 66, 0.2)"
+                  >
+                    <Box
+                      position="absolute"
+                      top="-30px"
+                      right="-30px"
+                      w="80px"
+                      h="80px"
+                      bg="radial-gradient(circle, rgba(244, 200, 66, 0.15) 0%, transparent 70%)"
+                    />
+                    <Text
+                      fontFamily="heading"
+                      fontSize="11px"
+                      fontWeight="600"
+                      letterSpacing="2.5px"
+                      textTransform="uppercase"
+                      color="text.secondary"
+                      mb="6px"
+                    >
+                      Your Rank
+                    </Text>
+                    <Text
+                      fontFamily="heading"
+                      fontSize="48px"
+                      lineHeight="1"
+                      letterSpacing="1px"
+                      color="#f4c842"
+                    >
+                      #{myTeam.rank}
+                      <Text as="span" fontSize="24px" color="text.secondary">
+                        /{myTeam.totalTeams}
+                      </Text>
+                    </Text>
+                    {rankDelta && (
+                      <HStack
+                        justify="center"
+                        gap="3px"
+                        mt="4px"
+                        fontFamily="heading"
+                        fontSize="13px"
+                        fontWeight="600"
+                        color="#4ecb71"
+                      >
+                        <Text>▲ {rankDelta}</Text>
+                      </HStack>
+                    )}
+                  </Box>
+
+                  {/* Points Card */}
+                  <Box
+                    textAlign="center"
+                    px={7}
+                    py={5}
+                    borderRadius="14px"
+                    position="relative"
+                    overflow="hidden"
+                    w="190px"
+                    h="140px"
+                    display="flex"
+                    flexDirection="column"
+                    justifyContent="center"
+                    bg="linear-gradient(145deg, rgba(232, 98, 42, 0.14) 0%, rgba(232, 98, 42, 0.04) 100%)"
+                    border="1px solid rgba(232, 98, 42, 0.2)"
+                  >
+                    <Box
+                      position="absolute"
+                      top="-30px"
+                      right="-30px"
+                      w="80px"
+                      h="80px"
+                      bg="radial-gradient(circle, rgba(232, 98, 42, 0.15) 0%, transparent 70%)"
+                    />
+                    <Text
+                      fontFamily="heading"
+                      fontSize="11px"
+                      fontWeight="600"
+                      letterSpacing="2.5px"
+                      textTransform="uppercase"
+                      color="text.secondary"
+                      mb="6px"
+                    >
+                      Total Points
+                    </Text>
+                    <Text
+                      fontFamily="heading"
+                      fontSize="48px"
+                      lineHeight="1"
+                      letterSpacing="1px"
+                      color="brand.primary"
+                    >
+                      {myTeam.totalPoints}
+                    </Text>
+                    {pointsDelta && (
+                      <HStack
+                        justify="center"
+                        gap="3px"
+                        mt="4px"
+                        fontFamily="heading"
+                        fontSize="13px"
+                        fontWeight="600"
+                        color="#4ecb71"
+                      >
+                        <Text>{pointsDelta}</Text>
+                      </HStack>
+                    )}
+                  </Box>
+                </HStack>
+              )}
+            </Flex>
+
+            {/* Episode Result Strip */}
+            {isActive && lastEpisodeResults && (
+              <WeekResultsCard
+                episodeResults={lastEpisodeResults}
+              />
+            )}
+
+            {/* Two Column Grid: Standings + (Team + Picks CTA) */}
+            <Grid templateColumns="1fr 1fr" gap={5}>
+              {detailedStandings && (
+                <LeagueStandingsCard
+                  standings={detailedStandings}
+                  leagueId={leagueId}
+                />
+              )}
+              <VStack gap={5} align="stretch">
+                {myTeam && (
+                  <MyTeamCard myTeam={myTeam} />
+                )}
+                {/* Make Your Picks CTA */}
+                {activeSeasonId && (
+                  <WeeklyQuestionsCTA
+                    leagueId={leagueId}
+                    seasonId={activeSeasonId}
+                    seasonStatus={seasonMetadata?.status}
+                  />
+                )}
+              </VStack>
+            </Grid>
+          </VStack>
+        </Box>
       </Box>
     </AuthenticatedLayout>
   );

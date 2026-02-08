@@ -6,251 +6,276 @@ import {
   VStack,
   HStack,
   Text,
-  Avatar,
-  Badge,
   Flex,
   Button,
 } from '@chakra-ui/react';
-import { ArrowUpIcon, ArrowDownIcon } from './icons';
-import type { LeagueStandings, MyTeamResponse } from '@/types/api';
+import type { DetailedStandingsResponse } from '@/types/api';
 
 interface LeagueStandingsCardProps {
-  standings: LeagueStandings;
-  myTeam: MyTeamResponse | null;
+  standings: DetailedStandingsResponse;
   leagueId: string;
-  // Mock rank changes - would come from API in production
-  rankChanges?: Record<string, 'up' | 'down' | 'same'>;
 }
 
-// Mock rank changes for demo
-const mockRankChanges: Record<string, 'up' | 'down' | 'same'> = {};
+const RANK_COLORS: Record<number, string> = {
+  1: '#f4c842', // gold
+  2: '#b0b8c8', // silver
+  3: '#cd8e5a', // bronze
+};
+
+// Generate a deterministic color for team avatars
+function getAvatarColor(name: string): string {
+  const colors = ['#e8622a', '#5a7abf', '#6aaa78', '#c45454', '#8a6ec4', '#c47a3a', '#4a9a6a', '#7a5ab0'];
+  const hash = name.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+  return colors[hash % colors.length];
+}
 
 export function LeagueStandingsCard({
   standings,
-  myTeam,
   leagueId,
-  rankChanges = mockRankChanges,
 }: LeagueStandingsCardProps) {
   const router = useRouter();
-  const top3 = standings.teams.slice(0, 3);
-  const userRank = myTeam?.rank || 0;
+  const top5 = standings.teams.slice(0, 5);
 
-  // Get teams for display below top 3 (user's position and one below if not in top 3)
-  const getExtraTeams = () => {
-    if (userRank <= 3) {
-      // User is in top 3, show 4th and 5th
-      return standings.teams.slice(3, 5);
-    }
-    // User not in top 3, show their position and the one after
-    const userIndex = standings.teams.findIndex((t) => t.isCurrentUser);
-    if (userIndex >= 0) {
-      return standings.teams.slice(userIndex, Math.min(userIndex + 2, standings.teams.length));
-    }
-    return [];
-  };
-
-  const extraTeams = getExtraTeams();
-
-  const getRankChange = (teamId: string) => {
-    // Assign random changes for demo purposes
-    const hash = teamId.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-    return hash % 3 === 0 ? 'up' : hash % 3 === 1 ? 'down' : 'up';
-  };
-
-  const RankChangeIndicator = ({ teamId }: { teamId: string }) => {
-    const change = rankChanges[teamId] || getRankChange(teamId);
-    const isUp = change === 'up';
-    const bgColor = isUp ? 'rgba(76, 175, 80, 0.2)' : 'rgba(244, 67, 54, 0.2)';
-
-    return (
-      <Flex
-        bg={bgColor}
-        borderRadius="full"
-        boxSize="24px"
-        align="center"
-        justify="center"
-      >
-        {isUp ? (
-          <ArrowUpIcon boxSize="14px" color="#4CAF50" />
-        ) : (
-          <ArrowDownIcon boxSize="14px" color="#F44336" />
-        )}
-      </Flex>
-    );
-  };
+  // Find the current user's team for sparkline data
+  const myTeam = standings.teams.find((t) => t.isCurrentUser);
+  const episodeHistory = myTeam?.episodeHistory || [];
 
   return (
-    <VStack align="stretch" gap={4} flex="1">
+    <Box
+      bg="rgba(26, 25, 32, 1)"
+      border="1px solid rgba(255,255,255,0.08)"
+      borderRadius="14px"
+      overflow="hidden"
+    >
       {/* Header */}
-      <HStack justify="space-between">
-        <Text fontFamily="display" fontSize="24px" fontWeight="bold" color="text.primary">
+      <Flex justify="space-between" align="center" px="22px" pt="18px" pb="14px">
+        <Text
+          fontFamily="heading"
+          fontSize="22px"
+          letterSpacing="1.5px"
+          color="text.primary"
+        >
           League Standings
         </Text>
         <Button
           variant="link"
+          fontFamily="heading"
+          fontSize="12px"
+          fontWeight="700"
+          letterSpacing="2px"
+          textTransform="uppercase"
           color="brand.primary"
-          fontSize="14px"
-          fontWeight="bold"
+          _hover={{ color: '#f4a93a' }}
           onClick={() => router.push(`/leagues/${leagueId}/standings`)}
         >
           View Full →
         </Button>
-      </HStack>
+      </Flex>
 
-      {/* Card */}
-      <Box
-        bg="linear-gradient(146.157deg, rgb(33, 38, 48) 2.5008%, rgb(25, 29, 36) 97.499%)"
-        border="2px solid"
-        borderColor="rgba(43, 48, 59, 0.5)"
-        borderRadius="24px"
-        overflow="hidden"
-        flex="1"
-      >
-        {/* Top 3 */}
-        <HStack
-          justify="space-around"
-          p={6}
-          borderBottom="2px solid"
-          borderColor="rgba(48, 53, 65, 0.5)"
-        >
-          {top3.map((team, idx) => (
-            <VStack key={team.id} gap={2}>
-              <Text
-                fontFamily="display"
-                fontSize="20px"
-                fontWeight="bold"
-                color="text.secondary"
-                lineHeight="30px"
+      {/* Standings rows */}
+      <Box px="22px" pb={episodeHistory.length > 0 ? 0 : '20px'}>
+        <VStack gap={0} align="stretch">
+          {top5.map((team) => {
+            const isYou = team.isCurrentUser;
+            const rankColor = RANK_COLORS[team.rank] || 'rgba(90, 86, 102, 1)';
+            const trendUp = team.rankChange > 0;
+            const trendDown = team.rankChange < 0;
+
+            return (
+              <Flex
+                key={team.id}
+                align="center"
+                px={3}
+                py="10px"
+                borderRadius="8px"
+                gap={3}
+                cursor="pointer"
+                transition="background 0.15s"
+                _hover={{ bg: 'rgba(255,255,255,0.03)' }}
+                {...(isYou
+                  ? {
+                      bg: 'rgba(232, 98, 42, 0.08)',
+                      border: '1px solid rgba(232, 98, 42, 0.15)',
+                    }
+                  : {})}
               >
-                {idx + 1}
-              </Text>
-              <VStack gap={4}>
-                <Avatar
-                  size="lg"
-                  name={team.name}
-                  src={team.logoImageUrl || undefined}
-                  borderRadius="12px"
-                  bg="rgba(48, 53, 65, 0.5)"
-                />
+                {/* Rank number */}
                 <Text
-                  fontFamily="body"
+                  fontFamily="heading"
                   fontSize="20px"
-                  fontWeight="bold"
-                  color="text.primary"
-                >
-                  {team.name}
-                </Text>
-              </VStack>
-              <HStack gap={3}>
-                <HStack gap={0}>
-                  <Text
-                    fontFamily="display"
-                    fontSize="20px"
-                    fontWeight="bold"
-                    color="text.primary"
-                  >
-                    {team.totalPoints}
-                  </Text>
-                  <Text fontSize="12px" fontWeight="medium" color="text.secondary" ml={1}>
-                    pts
-                  </Text>
-                </HStack>
-                <RankChangeIndicator teamId={team.id} />
-              </HStack>
-            </VStack>
-          ))}
-        </HStack>
-
-        {/* Extra rows (user position or 4th/5th place) */}
-        <VStack align="stretch" gap={0}>
-          {extraTeams.map((team, idx) => (
-            <HStack
-              key={team.id}
-              justify="space-between"
-              px={3}
-              py={4}
-              bg={team.isCurrentUser ? 'rgba(240, 101, 66, 0.05)' : 'transparent'}
-              borderTop={idx > 0 ? '1px solid' : 'none'}
-              borderColor="rgba(48, 53, 65, 0.5)"
-            >
-              <HStack gap={8}>
-                <Text
-                  fontFamily="display"
-                  fontSize="20px"
-                  fontWeight="bold"
-                  color="text.secondary"
-                  w="24px"
+                  w="28px"
                   textAlign="center"
+                  flexShrink={0}
+                  color={rankColor}
                 >
                   {team.rank}
                 </Text>
-                <HStack gap={4}>
-                  <Flex
-                    bg="rgba(240, 101, 66, 0.1)"
-                    border="1px solid"
-                    borderColor="rgba(240, 101, 66, 0.2)"
-                    borderRadius="full"
-                    boxSize="48px"
-                    align="center"
-                    justify="center"
-                  >
-                    <Text
-                      fontFamily="display"
-                      fontSize="16px"
-                      fontWeight="bold"
-                      color="brand.primary"
-                    >
-                      {team.name.slice(0, 2).toUpperCase()}
-                    </Text>
-                  </Flex>
+
+                {/* Avatar */}
+                <Flex
+                  w="32px"
+                  h="32px"
+                  borderRadius="8px"
+                  align="center"
+                  justify="center"
+                  fontFamily="heading"
+                  fontWeight="700"
+                  fontSize="12px"
+                  color="white"
+                  flexShrink={0}
+                  bg={getAvatarColor(team.name)}
+                >
+                  {team.name.slice(0, 2).toUpperCase()}
+                </Flex>
+
+                {/* Name + YOU badge */}
+                <Box flex="1" minW={0}>
                   <HStack gap={2}>
                     <Text
-                      fontFamily="body"
-                      fontSize="16px"
-                      fontWeight="bold"
-                      color="text.primary"
+                      fontWeight="600"
+                      fontSize="14px"
+                      color={isYou ? 'brand.primary' : 'text.primary'}
+                      whiteSpace="nowrap"
+                      overflow="hidden"
+                      textOverflow="ellipsis"
                     >
                       {team.name}
                     </Text>
-                    {team.isCurrentUser && (
-                      <Badge
-                        bg="rgba(240, 101, 66, 0.2)"
-                        border="1px solid"
-                        borderColor="rgba(240, 101, 66, 0.3)"
-                        color="brand.primary"
+                    {isYou && (
+                      <Box
+                        fontFamily="heading"
                         fontSize="10px"
-                        fontWeight="bold"
-                        px={2}
-                        borderRadius="6px"
-                        textTransform="uppercase"
-                        letterSpacing="0.5px"
+                        fontWeight="700"
+                        letterSpacing="1.5px"
+                        color="brand.primary"
+                        bg="rgba(232, 98, 42, 0.15)"
+                        px="7px"
+                        py="2px"
+                        borderRadius="4px"
+                        flexShrink={0}
                       >
                         YOU
-                      </Badge>
+                      </Box>
                     )}
                   </HStack>
-                </HStack>
-              </HStack>
-              <HStack gap={3}>
-                <HStack gap={0}>
-                  <Text
-                    fontFamily="display"
-                    fontSize="18px"
-                    fontWeight="bold"
-                    color="text.primary"
-                  >
-                    {team.totalPoints}
-                  </Text>
-                  <Text fontSize="12px" fontWeight="medium" color="text.secondary" ml={1}>
-                    pts
-                  </Text>
-                </HStack>
-                <RankChangeIndicator teamId={team.id} />
-              </HStack>
-            </HStack>
-          ))}
+                </Box>
+
+                {/* Points */}
+                <Text
+                  fontFamily="heading"
+                  fontWeight="700"
+                  fontSize="16px"
+                  color="text.primary"
+                  textAlign="right"
+                  minW="50px"
+                >
+                  {team.totalPoints}
+                </Text>
+
+                {/* Trend arrow */}
+                <Box w="20px" textAlign="center" fontSize="11px" flexShrink={0}>
+                  {trendUp && (
+                    <Text color="#4ecb71">▲</Text>
+                  )}
+                  {trendDown && (
+                    <Text color="#e85454">▼</Text>
+                  )}
+                  {!trendUp && !trendDown && (
+                    <Text color="text.secondary">—</Text>
+                  )}
+                </Box>
+              </Flex>
+            );
+          })}
         </VStack>
       </Box>
-    </VStack>
+
+      {/* Sparkline: Your Points by Week */}
+      {episodeHistory.length > 0 && (
+        <Box
+          mt={4}
+          pt={4}
+          px="22px"
+          pb="20px"
+          borderTop="1px solid rgba(255,255,255,0.05)"
+        >
+          <Text
+            fontFamily="heading"
+            fontSize="11px"
+            fontWeight="600"
+            letterSpacing="2px"
+            textTransform="uppercase"
+            color="text.secondary"
+            mb="10px"
+          >
+            Your Points by Week
+          </Text>
+
+          {/* Bars */}
+          <Flex align="flex-end" gap="5px" h="50px">
+            {episodeHistory.map((ep, idx) => {
+              const maxPts = Math.max(...episodeHistory.map((e) => e.totalEpisodePoints), 1);
+              const heightPct = Math.max((ep.totalEpisodePoints / maxPts) * 100, 8);
+              const opacity = 0.5 + (idx / Math.max(episodeHistory.length - 1, 1)) * 0.4;
+
+              return (
+                <Box
+                  key={ep.episodeNumber}
+                  flex="1"
+                  h={`${heightPct}%`}
+                  borderRadius="3px 3px 0 0"
+                  bg="brand.primary"
+                  opacity={opacity}
+                  cursor="pointer"
+                  transition="all 0.15s"
+                  _hover={{ filter: 'brightness(1.2)' }}
+                  position="relative"
+                  role="group"
+                >
+                  <Box
+                    display="none"
+                    _groupHover={{ display: 'block' }}
+                    position="absolute"
+                    top="-28px"
+                    left="50%"
+                    transform="translateX(-50%)"
+                    bg="rgba(32, 31, 39, 1)"
+                    border="1px solid rgba(255,255,255,0.08)"
+                    px={2}
+                    py="3px"
+                    borderRadius="4px"
+                    fontFamily="heading"
+                    fontSize="12px"
+                    fontWeight="600"
+                    color="text.primary"
+                    whiteSpace="nowrap"
+                    zIndex={2}
+                  >
+                    +{ep.totalEpisodePoints}
+                  </Box>
+                </Box>
+              );
+            })}
+          </Flex>
+
+          {/* Week labels */}
+          <Flex gap="5px" mt="6px">
+            {episodeHistory.map((ep) => (
+              <Text
+                key={ep.episodeNumber}
+                flex="1"
+                textAlign="center"
+                fontFamily="heading"
+                fontSize="10px"
+                color="text.secondary"
+                fontWeight="500"
+              >
+                {ep.episodeNumber}
+              </Text>
+            ))}
+          </Flex>
+        </Box>
+      )}
+    </Box>
   );
 }

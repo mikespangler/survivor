@@ -1,14 +1,15 @@
 'use client';
 
-import { Box, VStack, HStack, Heading, Text, Badge } from '@chakra-ui/react';
+import { Box, VStack, HStack, Heading, Text, Badge, IconButton, Tooltip } from '@chakra-ui/react';
 import { RichTextDisplay } from '../common/RichTextDisplay';
 import type { CommissionerMessage } from '@/types/api';
 
 interface CommissionerMessageCardProps {
   message: CommissionerMessage;
+  onDismiss?: (messageId: string) => void;
 }
 
-export function CommissionerMessageCard({ message }: CommissionerMessageCardProps) {
+export function CommissionerMessageCard({ message, onDismiss }: CommissionerMessageCardProps) {
   const authorName = message.author.name || message.author.email || 'Commissioner';
   const formattedDate = new Date(message.createdAt).toLocaleDateString('en-US', {
     month: 'short',
@@ -60,13 +61,48 @@ export function CommissionerMessageCard({ message }: CommissionerMessageCardProp
               Posted by {authorName} on {formattedDate}
             </Text>
           </VStack>
-          <MegaphoneIcon />
+          <HStack gap={2} flexShrink={0}>
+            <MegaphoneIcon />
+            {onDismiss && (
+              <Tooltip label="Dismiss">
+                <IconButton
+                  aria-label="Dismiss announcement"
+                  size="xs"
+                  variant="ghost"
+                  color="text.tertiary"
+                  _hover={{ color: 'text.primary', bg: 'rgba(255,255,255,0.08)' }}
+                  onClick={() => onDismiss(message.id)}
+                >
+                  <CloseIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+          </HStack>
         </HStack>
 
         <Box color="text.secondary">
           <RichTextDisplay content={message.content} />
         </Box>
       </VStack>
+    </Box>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <Box
+      as="svg"
+      width="14px"
+      height="14px"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
     </Box>
   );
 }

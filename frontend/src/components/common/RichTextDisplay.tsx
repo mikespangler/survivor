@@ -11,6 +11,7 @@ interface RichTextDisplayProps {
 
 export function RichTextDisplay({ content }: RichTextDisplayProps) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: false,

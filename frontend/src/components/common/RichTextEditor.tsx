@@ -19,6 +19,7 @@ export function RichTextEditor({
   placeholder = 'Write your message...',
 }: RichTextEditorProps) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: false,
@@ -149,7 +150,7 @@ export function RichTextEditor({
             '&:focus': {
               outline: 'none',
             },
-            'p.is-editor-empty:first-child::before': {
+            'p.is-editor-empty:first-of-type::before': {
               color: 'text.tertiary',
               content: 'attr(data-placeholder)',
               float: 'left',

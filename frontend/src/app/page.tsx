@@ -203,12 +203,13 @@ export default function Home() {
   // Show nothing while mounting to avoid hydration mismatch
   if (!mounted || !isLoaded) {
     return (
-      <Box 
-        minH="100vh" 
-        bg="bg.primary" 
-        display="flex" 
-        alignItems="center" 
+      <Box
+        minH="100vh"
+        bg="bg.primary"
+        display="flex"
+        alignItems="center"
         justifyContent="center"
+        suppressHydrationWarning
       >
         <Spinner size="xl" color="brand.primary" />
       </Box>
