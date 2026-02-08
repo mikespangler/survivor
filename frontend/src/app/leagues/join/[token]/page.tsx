@@ -13,7 +13,7 @@ import {
   Card,
   CardBody,
 } from '@chakra-ui/react';
-import { useUser } from '@clerk/nextjs';
+import { useUser, useAuth } from '@clerk/nextjs';
 import { api } from '@/lib/api';
 import type { League } from '@/types/api';
 
@@ -21,6 +21,7 @@ export default function JoinByTokenPage() {
   const params = useParams();
   const router = useRouter();
   const { user, isSignedIn, isLoaded } = useUser();
+  const { getToken } = useAuth();
   const token = params.token as string;
 
   const [league, setLeague] = useState<League | null>(null);
@@ -28,6 +29,7 @@ export default function JoinByTokenPage() {
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasJoined, setHasJoined] = useState(false);
+  const [tokenReady, setTokenReady] = useState(false);
   const autoJoinAttempted = useRef(false);
 
   const loadLeagueInfo = useCallback(async () => {
@@ -70,6 +72,15 @@ export default function JoinByTokenPage() {
         }
         return;
       }
+      // On auth errors, redirect to sign-in with invite URL preserved
+      if (
+        message.toLowerCase().includes('unauthorized') ||
+        message.toLowerCase().includes('authenticated') ||
+        message.toLowerCase().includes('sign in')
+      ) {
+        router.push(`/sign-in?redirect=/leagues/join/${token}`);
+        return;
+      }
       setError(message);
       setJoining(false);
     }
@@ -85,12 +96,32 @@ export default function JoinByTokenPage() {
     loadLeagueInfo();
   }, [token, loadLeagueInfo]);
 
-  // Auto-join when authenticated with valid token
+  // Wait for Clerk token to be ready (avoids race after sign-in redirect)
+  useEffect(() => {
+    if (!isSignedIn || !user) {
+      setTokenReady(false);
+      return;
+    }
+    let mounted = true;
+    getToken()
+      .then((t) => {
+        if (mounted) setTokenReady(!!t);
+      })
+      .catch(() => {
+        if (mounted) setTokenReady(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [isSignedIn, user, getToken]);
+
+  // Auto-join when authenticated with valid token (only when token is ready)
   useEffect(() => {
     if (
       isLoaded &&
       isSignedIn &&
       user &&
+      tokenReady &&
       league &&
       !loading &&
       !joining &&
@@ -101,7 +132,7 @@ export default function JoinByTokenPage() {
       autoJoinAttempted.current = true;
       handleJoin();
     }
-  }, [isLoaded, isSignedIn, user, league, loading, joining, error, hasJoined, handleJoin]);
+  }, [isLoaded, isSignedIn, user, tokenReady, league, loading, joining, error, hasJoined, handleJoin]);
 
   if (loading) {
     return (
