@@ -39,7 +39,7 @@ export class NotificationService {
     this.logger.log(`Initializing NotificationService with API key: ${apiKey ? 'SET' : 'NOT SET'}`);
     this.resend = new Resend(apiKey);
     this.fromEmail = this.config.get('FROM_EMAIL') || 'noreply@outpickoutlast.com';
-    this.appUrl = this.config.get('APP_URL') || 'http://localhost:3001';
+    this.appUrl = this.config.get('APP_URL') || 'https://outpickoutlast.com';
     this.logger.log(`From email: ${this.fromEmail}, App URL: ${this.appUrl}`);
   }
 

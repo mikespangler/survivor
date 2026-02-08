@@ -19,7 +19,7 @@ export class EmailService {
 
   constructor(private config: ConfigService) {
     const apiKey = this.config.get('RESEND_API_KEY');
-    this.fromEmail = this.config.get('FROM_EMAIL') || 'noreply@survivor.com';
+    this.fromEmail = this.config.get('FROM_EMAIL') || 'noreply@outpickoutlast.com';
 
     this.logger.log(`EmailService initialized`);
     this.logger.log(`FROM_EMAIL: ${this.fromEmail}`);
