@@ -14,6 +14,7 @@ import {
   Grid,
   Flex,
 } from '@chakra-ui/react';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import { AuthenticatedLayout } from '@/components/navigation';
 import {
@@ -83,31 +84,15 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
       setLoading(true);
       setError(null);
 
-      // Check if user is admin
-      const currentUser = await api.getCurrentUser();
-      const isAdmin = currentUser.systemRole === 'admin';
-
       let currentLeague;
 
-      if (isAdmin) {
-        // Admin can view any league
-        try {
-          currentLeague = await api.getAdminLeague(leagueId);
-        } catch {
-          setError('League not found');
-          setLoading(false);
-          return;
-        }
-      } else {
-        // Regular users can only view their own leagues
-        const userLeagues = await api.getLeagues();
-        currentLeague = userLeagues.find((l) => l.id === leagueId);
-
-        if (!currentLeague) {
-          setError('League not found or you are not a member');
-          setLoading(false);
-          return;
-        }
+      // getLeague supports both slug and id lookup, and handles admin access
+      try {
+        currentLeague = await api.getLeague(leagueId);
+      } catch {
+        setError('League not found');
+        setLoading(false);
+        return;
       }
 
       // Find active season for this league
@@ -242,6 +227,7 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
   const isActive = seasonMetadata?.status === 'ACTIVE';
   const rankDelta = getRankDelta();
   const pointsDelta = getPointsDelta();
+  const hasDrafted = myTeam != null && myTeam.roster.length > 0;
 
   return (
     <AuthenticatedLayout>
@@ -431,11 +417,88 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
                 />
               )}
               <VStack gap={5} align="stretch">
-                {myTeam && (
+                {/* Draft Your Team CTA (when undrafted) */}
+                {isActive && !hasDrafted && (
+                  <Link href={`/leagues/${leagueId}/draft`} style={{ textDecoration: 'none' }}>
+                    <Box
+                      bg="linear-gradient(145deg, rgba(240, 101, 66, 0.15) 0%, rgba(240, 101, 66, 0.05) 100%)"
+                      border="1px solid rgba(240, 101, 66, 0.3)"
+                      borderRadius="14px"
+                      p={6}
+                      cursor="pointer"
+                      transition="all 0.2s"
+                      _hover={{ border: '1px solid rgba(240, 101, 66, 0.5)', transform: 'translateY(-1px)' }}
+                    >
+                      <VStack align="start" gap={2}>
+                        <HStack gap={2}>
+                          <Box
+                            w="8px"
+                            h="8px"
+                            borderRadius="50%"
+                            bg="brand.primary"
+                          />
+                          <Text
+                            fontFamily="heading"
+                            fontSize="11px"
+                            fontWeight="600"
+                            letterSpacing="2px"
+                            textTransform="uppercase"
+                            color="brand.primary"
+                          >
+                            Action Required
+                          </Text>
+                        </HStack>
+                        <Heading
+                          fontFamily="heading"
+                          fontSize="22px"
+                          fontWeight="700"
+                          color="text.primary"
+                        >
+                          Draft Your Team
+                        </Heading>
+                        <Text color="text.secondary" fontSize="14px">
+                          Select your castaways before the draft deadline to start earning points.
+                        </Text>
+                        {seasonMetadata?.draftDeadline && (
+                          <Text
+                            fontFamily="heading"
+                            fontSize="13px"
+                            fontWeight="600"
+                            color="brand.primary"
+                            mt={1}
+                          >
+                            Draft due {new Date(seasonMetadata.draftDeadline).toLocaleDateString('en-US', {
+                              weekday: 'long',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })}
+                          </Text>
+                        )}
+                        <Box
+                          mt={2}
+                          px={5}
+                          py="10px"
+                          bg="brand.primary"
+                          color="white"
+                          borderRadius="10px"
+                          fontSize="14px"
+                          fontWeight="600"
+                          fontFamily="heading"
+                          letterSpacing="0.3px"
+                        >
+                          Go to Draft →
+                        </Box>
+                      </VStack>
+                    </Box>
+                  </Link>
+                )}
+                {myTeam && hasDrafted && (
                   <MyTeamCard myTeam={myTeam} />
                 )}
                 {/* Make Your Picks CTA */}
-                {activeSeasonId && (
+                {activeSeasonId && hasDrafted && (
                   <WeeklyQuestionsCTA
                     leagueId={leagueId}
                     seasonId={activeSeasonId}

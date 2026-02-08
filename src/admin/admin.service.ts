@@ -53,8 +53,9 @@ export class AdminService {
 
   async getAnyLeague(leagueId: string) {
     // Same as LeagueService.getLeague but WITHOUT user access check
-    const league = await this.prisma.league.findUnique({
-      where: { id: leagueId },
+    // Supports both id and slug lookups
+    const league = await this.prisma.league.findFirst({
+      where: { OR: [{ id: leagueId }, { slug: leagueId }] },
       include: {
         owner: true,
         members: true,

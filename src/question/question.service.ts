@@ -8,6 +8,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { resolveLeagueId } from '../league/resolve-league-id';
 import { LeagueService } from '../league/league.service';
 import { EpisodeStateService } from '../episode/episode-state.service';
 import { NotificationService } from '../notification/notification.service';
@@ -143,6 +144,7 @@ export class QuestionService {
   // ================== LEAGUE QUESTION METHODS (Commissioner) ==================
 
   private async getLeagueSeason(leagueId: string, seasonId: string) {
+    leagueId = await resolveLeagueId(this.prisma, leagueId);
     const leagueSeason = await this.prisma.leagueSeason.findUnique({
       where: {
         leagueId_seasonId: {

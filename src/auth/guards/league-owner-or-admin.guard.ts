@@ -15,11 +15,6 @@ export class LeagueCommissionerOrAdminGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
-    // System admins can do anything
-    if (user?.systemRole === 'admin') {
-      return true;
-    }
-
     // Get leagueId from route params
     const leagueId = request.params.leagueId || request.params.id;
 
@@ -27,7 +22,7 @@ export class LeagueCommissionerOrAdminGuard implements CanActivate {
       throw new ForbiddenException('League ID not found in request');
     }
 
-    // Check if league exists and if user is the owner or a commissioner
+    // Always resolve slug to real id so downstream code works correctly
     // Supports both id and slug lookups
     const league = await this.prisma.league.findFirst({
       where: { OR: [{ id: leagueId }, { slug: leagueId }] },
@@ -47,6 +42,11 @@ export class LeagueCommissionerOrAdminGuard implements CanActivate {
     // Replace the param with the resolved real id so downstream code uses it
     if (request.params.id) request.params.id = league.id;
     if (request.params.leagueId) request.params.leagueId = league.id;
+
+    // System admins can do anything (after slug resolution)
+    if (user?.systemRole === 'admin') {
+      return true;
+    }
 
     // Owner is automatically a commissioner
     const isOwner = league.ownerId === user.id;

@@ -3,6 +3,8 @@ import {
   IsOptional,
   IsArray,
   IsEmail,
+  IsInt,
+  Min,
   MinLength,
 } from 'class-validator';
 
@@ -19,4 +21,9 @@ export class CreateLeagueDto {
   @IsArray()
   @IsEmail({}, { each: true })
   inviteEmails?: string[];
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  castawaysPerTeam?: number;
 }

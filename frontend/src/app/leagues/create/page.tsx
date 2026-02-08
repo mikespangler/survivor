@@ -25,6 +25,7 @@ export default function CreateLeaguePage() {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [inviteEmails, setInviteEmails] = useState('');
+  const [castawaysPerTeam, setCastawaysPerTeam] = useState<number>(5);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -51,6 +52,7 @@ export default function CreateLeaguePage() {
         name: name.trim(),
         description: description.trim() || undefined,
         inviteEmails: emails.length > 0 ? emails : undefined,
+        castawaysPerTeam: castawaysPerTeam > 0 ? castawaysPerTeam : undefined,
       };
 
       const league = await api.createLeague(createDto);
@@ -139,6 +141,26 @@ export default function CreateLeaguePage() {
 
                 <Divider />
 
+                <FormControl isRequired>
+                  <FormLabel>Castaways per Team</FormLabel>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={18}
+                    value={castawaysPerTeam}
+                    onChange={(e) =>
+                      setCastawaysPerTeam(parseInt(e.target.value, 10) || 0)
+                    }
+                    placeholder="5"
+                  />
+                  <Text fontSize="sm" color="text.secondary" mt={2}>
+                    How many castaways each team drafts. You can change this later
+                    in League Settings before the draft starts.
+                  </Text>
+                </FormControl>
+
+                <Divider />
+
                 <Box>
                   <FormControl>
                     <FormLabel>Invite People (Optional)</FormLabel>
@@ -160,7 +182,7 @@ export default function CreateLeaguePage() {
                   variant="primary"
                   isLoading={loading}
                   loadingText="Creating..."
-                  isDisabled={!name.trim()}
+                  isDisabled={!name.trim() || castawaysPerTeam < 1}
                   size="lg"
                 >
                   Create League

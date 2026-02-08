@@ -56,7 +56,7 @@ export default function TeamPage({ params }: TeamPageProps) {
 
       // Get the league to find the active season
       const userLeagues = await api.getLeagues();
-      const currentLeague = userLeagues.find((l) => l.id === leagueId);
+      const currentLeague = userLeagues.find((l) => l.slug === leagueId || l.id === leagueId);
 
       if (!currentLeague) {
         setError('League not found or you are not a member');

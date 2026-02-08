@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { resolveLeagueId } from '../league/resolve-league-id';
 
 export type EpisodeState =
   | 'FUTURE'
@@ -87,6 +88,7 @@ export class EpisodeStateService {
     seasonId: string,
     userId: string,
   ): Promise<LeagueEpisodeStatesResponse> {
+    leagueId = await resolveLeagueId(this.prisma, leagueId);
     // Get league season with season data
     const leagueSeason = await this.prisma.leagueSeason.findUnique({
       where: {

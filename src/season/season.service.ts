@@ -111,6 +111,17 @@ export class SeasonService {
       },
     });
 
+    // Get episode 2 air date as the draft deadline
+    const episode2 = await this.prisma.episode.findUnique({
+      where: {
+        seasonId_number: {
+          seasonId: id,
+          number: 2,
+        },
+      },
+      select: { airDate: true },
+    });
+
     return {
       id: season.id,
       number: season.number,
@@ -126,6 +137,7 @@ export class SeasonService {
             deadline: currentEpisode.airDate, // Same as airDate
           }
         : null,
+      draftDeadline: episode2?.airDate || null,
     };
   }
 

@@ -30,7 +30,7 @@ import {
   DraftProgressBar,
 } from '@/components/draft';
 import { api } from '@/lib/api';
-import type { DraftPageData, Castaway } from '@/types/api';
+import type { DraftPageData, SeasonMetadata } from '@/types/api';
 
 export default function DraftPage() {
   const params = useParams();
@@ -49,6 +49,7 @@ export default function DraftPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [seasonMetadata, setSeasonMetadata] = useState<SeasonMetadata | null>(null);
 
   // Load draft data
   const loadDraftData = useCallback(async () => {
@@ -68,8 +69,12 @@ export default function DraftPage() {
         return;
       }
 
-      const data = await api.getDraftPageData(leagueId, currentSeason.id, 1);
+      const [data, metadata] = await Promise.all([
+        api.getDraftPageData(leagueId, currentSeason.id, 1),
+        api.getSeasonMetadata(currentSeason.id),
+      ]);
       setDraftData(data);
+      setSeasonMetadata(metadata);
 
       // Pre-populate with current roster if exists
       if (data.currentRoster.length > 0) {
@@ -151,7 +156,7 @@ export default function DraftPage() {
 
   // Validation
   const canSubmit = useMemo(() => {
-    if (!draftData) return false;
+    if (!draftData?.draftConfig) return false;
     return (
       selectedCastawayIds.size === draftData.draftConfig.castawaysPerTeam &&
       draftData.draftConfig.status !== 'COMPLETED'
@@ -229,6 +234,32 @@ export default function DraftPage() {
     );
   }
 
+  // Draft not configured state
+  if (!draftData.draftConfig) {
+    return (
+      <AuthenticatedLayout>
+        <Container maxW="800px" py={10}>
+          <VStack gap={6} align="center" textAlign="center">
+            <Heading size="xl" color="text.primary">
+              Draft Not Configured
+            </Heading>
+            <Text color="text.secondary" fontSize="lg" maxW="500px">
+              The draft hasn&apos;t been set up yet. A league commissioner needs
+              to configure the draft settings before teams can pick their rosters.
+            </Text>
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => router.push(`/leagues/${leagueId}/settings?tab=draft`)}
+            >
+              Go to League Settings
+            </Button>
+          </VStack>
+        </Container>
+      </AuthenticatedLayout>
+    );
+  }
+
   const teamsCompleted = draftData.leagueProgress.filter(
     (t) => t.hasCompleted
   ).length;
@@ -244,11 +275,44 @@ export default function DraftPage() {
             <Heading size="2xl" fontWeight="bold" color="text.primary">
               Build Your Roster
             </Heading>
-            <Text mt={2} color="text.secondary">
-              {isReDraft
-                ? `Re-draft your roster for round ${draftData.draftConfig.roundNumber}`
-                : 'Select your initial roster to start the season'}
-            </Text>
+            <HStack mt={2} gap={3} flexWrap="wrap">
+              <Text color="text.secondary">
+                {isReDraft
+                  ? `Re-draft your roster for round ${draftData.draftConfig.roundNumber}`
+                  : 'Select your initial roster to start the season'}
+              </Text>
+              {!hasSubmitted && seasonMetadata?.draftDeadline && (
+                <HStack
+                  gap="6px"
+                  bg="rgba(240,101,66,0.1)"
+                  px={3}
+                  py="4px"
+                  borderRadius="20px"
+                >
+                  <Box
+                    w="6px"
+                    h="6px"
+                    borderRadius="50%"
+                    bg="brand.primary"
+                  />
+                  <Text
+                    fontFamily="heading"
+                    fontSize="13px"
+                    fontWeight="600"
+                    color="brand.primary"
+                    letterSpacing="0.3px"
+                  >
+                    Draft due {new Date(seasonMetadata.draftDeadline).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })}
+                  </Text>
+                </HStack>
+              )}
+            </HStack>
           </Box>
 
           {/* Instructions */}

@@ -144,6 +144,7 @@ export interface SeasonMetadata {
     title: string | null;
     deadline: string | null;
   } | null;
+  draftDeadline: string | null;
 }
 
 // League standings response
@@ -209,6 +210,7 @@ export interface CreateLeagueDto {
   name: string;
   description?: string;
   inviteEmails?: string[];
+  castawaysPerTeam?: number;
 }
 
 export interface JoinLeagueDto {

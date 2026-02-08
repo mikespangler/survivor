@@ -17,6 +17,7 @@ import { CreateCommissionerMessageDto } from './dto/create-commissioner-message.
 import { UpdateCommissionerMessageDto } from './dto/update-commissioner-message.dto';
 import * as crypto from 'crypto';
 import { generateSlug } from './slug-generator';
+import { resolveLeagueId } from './resolve-league-id';
 
 @Injectable()
 export class LeagueService {
@@ -237,6 +238,18 @@ export class LeagueService {
         },
       });
 
+      // 4. Create draft config if castawaysPerTeam was provided
+      if (createDto.castawaysPerTeam) {
+        await tx.draftConfig.create({
+          data: {
+            leagueSeasonId: leagueSeason.id,
+            roundNumber: 1,
+            castawaysPerTeam: createDto.castawaysPerTeam,
+            status: 'PENDING',
+          },
+        });
+      }
+
       // Return league with all related data
       return tx.league.findUnique({
         where: { id: league.id },
@@ -260,6 +273,7 @@ export class LeagueService {
   }
 
   async getLeagueSeasonSettings(leagueId: string, seasonId: string) {
+    leagueId = await resolveLeagueId(this.prisma, leagueId);
     // Find the league season
     const leagueSeason = await this.prisma.leagueSeason.findUnique({
       where: {
@@ -288,6 +302,7 @@ export class LeagueService {
     seasonId: string,
     updateDto: UpdateLeagueSeasonSettingsDto,
   ) {
+    leagueId = await resolveLeagueId(this.prisma, leagueId);
     // Ensure league season exists
     const leagueSeason = await this.prisma.leagueSeason.findUnique({
       where: {
@@ -324,6 +339,7 @@ export class LeagueService {
     seasonId: string,
     roundNumber: number = 1,
   ) {
+    leagueId = await resolveLeagueId(this.prisma, leagueId);
     // Find the league season
     const leagueSeason = await this.prisma.leagueSeason.findUnique({
       where: {
@@ -359,6 +375,7 @@ export class LeagueService {
     roundNumber: number,
     updateDto: UpdateDraftConfigDto,
   ) {
+    leagueId = await resolveLeagueId(this.prisma, leagueId);
     // Ensure league season exists
     const leagueSeason = await this.prisma.leagueSeason.findUnique({
       where: {
@@ -562,6 +579,7 @@ export class LeagueService {
   }
 
   async getStandings(leagueId: string, seasonId: string, userId: string) {
+    leagueId = await resolveLeagueId(this.prisma, leagueId);
     // Find the league season
     const leagueSeason = await this.prisma.leagueSeason.findUnique({
       where: {
@@ -614,6 +632,7 @@ export class LeagueService {
   }
 
   async getMyTeam(leagueId: string, seasonId: string, userId: string) {
+    leagueId = await resolveLeagueId(this.prisma, leagueId);
     // Find the league season
     const leagueSeason = await this.prisma.leagueSeason.findUnique({
       where: {
@@ -842,6 +861,7 @@ export class LeagueService {
     userId: string,
     episodeFilter?: number,
   ) {
+    leagueId = await resolveLeagueId(this.prisma, leagueId);
     const leagueSeason = await this.prisma.leagueSeason.findUnique({
       where: {
         leagueId_seasonId: {
@@ -958,6 +978,7 @@ export class LeagueService {
   }
 
   async getRetentionConfig(leagueId: string, seasonId: string) {
+    leagueId = await resolveLeagueId(this.prisma, leagueId);
     const leagueSeason = await this.prisma.leagueSeason.findUnique({
       where: {
         leagueId_seasonId: {
@@ -992,6 +1013,7 @@ export class LeagueService {
       episodes: Array<{ episodeNumber: number; pointsPerCastaway: number }>;
     },
   ) {
+    leagueId = await resolveLeagueId(this.prisma, leagueId);
     const leagueSeason = await this.prisma.leagueSeason.findUnique({
       where: {
         leagueId_seasonId: {
@@ -1034,6 +1056,7 @@ export class LeagueService {
   }
 
   async recalculateAllEpisodePoints(leagueId: string, seasonId: string) {
+    leagueId = await resolveLeagueId(this.prisma, leagueId);
     const leagueSeason = await this.prisma.leagueSeason.findUnique({
       where: {
         leagueId_seasonId: {
@@ -2040,6 +2063,7 @@ export class LeagueService {
     roundNumber: number,
     userId: string,
   ) {
+    leagueId = await resolveLeagueId(this.prisma, leagueId);
     // 1. Get league season
     const leagueSeason = await this.prisma.leagueSeason.findUnique({
       where: {
@@ -2076,7 +2100,13 @@ export class LeagueService {
     });
 
     if (!draftConfig) {
-      throw new NotFoundException('Draft configuration not found');
+      return {
+        draftConfig: null,
+        castaways: [],
+        userTeam: null,
+        currentRoster: [],
+        leagueProgress: [],
+      };
     }
 
     // 3. Find user's team

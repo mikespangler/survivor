@@ -31,6 +31,7 @@ interface AuthenticatedHeaderProps {
   userName?: string | null;
   seasonMetadata?: SeasonMetadata | null;
   leagueId?: string | null;
+  hasDrafted?: boolean | null;
 }
 
 function formatDeadline(airDate: string | null): string {
@@ -43,7 +44,7 @@ function formatDeadline(airDate: string | null): string {
   });
 }
 
-export function AuthenticatedHeader({ userName, seasonMetadata, leagueId }: AuthenticatedHeaderProps) {
+export function AuthenticatedHeader({ userName, seasonMetadata, leagueId, hasDrafted }: AuthenticatedHeaderProps) {
   const router = useRouter();
   const { user } = useUser();
   const { signOut, openUserProfile } = useClerk();
@@ -123,35 +124,67 @@ export function AuthenticatedHeader({ userName, seasonMetadata, leagueId }: Auth
               </Text>
               {' '}· Season {seasonMetadata.number}
             </Text>
-            <Link href={leagueId ? `/leagues/${leagueId}/questions` : '#'}>
-              <HStack
-                gap="6px"
-                bg="rgba(244,169,58,0.1)"
-                px={3}
-                py="5px"
-                borderRadius="20px"
-                cursor="pointer"
-                transition="all 0.15s"
-                _hover={{ bg: 'rgba(244,169,58,0.18)' }}
-              >
-                <Box
-                  w="6px"
-                  h="6px"
-                  borderRadius="50%"
-                  bg="#f4a93a"
-                  animation={`${pulseAnimation} 2s ease-in-out infinite`}
-                />
-                <Text
-                  fontFamily="heading"
-                  fontSize="13px"
-                  fontWeight="600"
-                  color="#f4a93a"
-                  letterSpacing="0.3px"
+            {hasDrafted === false && seasonMetadata.draftDeadline ? (
+              <Link href={leagueId ? `/leagues/${leagueId}/draft` : '#'}>
+                <HStack
+                  gap="6px"
+                  bg="rgba(240,101,66,0.1)"
+                  px={3}
+                  py="5px"
+                  borderRadius="20px"
+                  cursor="pointer"
+                  transition="all 0.15s"
+                  _hover={{ bg: 'rgba(240,101,66,0.18)' }}
                 >
-                  Picks due {formatDeadline(seasonMetadata.currentEpisode?.airDate || null)}
-                </Text>
-              </HStack>
-            </Link>
+                  <Box
+                    w="6px"
+                    h="6px"
+                    borderRadius="50%"
+                    bg="brand.primary"
+                    animation={`${pulseAnimation} 2s ease-in-out infinite`}
+                  />
+                  <Text
+                    fontFamily="heading"
+                    fontSize="13px"
+                    fontWeight="600"
+                    color="brand.primary"
+                    letterSpacing="0.3px"
+                  >
+                    Draft due {formatDeadline(seasonMetadata.draftDeadline)}
+                  </Text>
+                </HStack>
+              </Link>
+            ) : (
+              <Link href={leagueId ? `/leagues/${leagueId}/questions` : '#'}>
+                <HStack
+                  gap="6px"
+                  bg="rgba(244,169,58,0.1)"
+                  px={3}
+                  py="5px"
+                  borderRadius="20px"
+                  cursor="pointer"
+                  transition="all 0.15s"
+                  _hover={{ bg: 'rgba(244,169,58,0.18)' }}
+                >
+                  <Box
+                    w="6px"
+                    h="6px"
+                    borderRadius="50%"
+                    bg="#f4a93a"
+                    animation={`${pulseAnimation} 2s ease-in-out infinite`}
+                  />
+                  <Text
+                    fontFamily="heading"
+                    fontSize="13px"
+                    fontWeight="600"
+                    color="#f4a93a"
+                    letterSpacing="0.3px"
+                  >
+                    Picks due {formatDeadline(seasonMetadata.currentEpisode?.airDate || null)}
+                  </Text>
+                </HStack>
+              </Link>
+            )}
           </HStack>
         )}
 

@@ -27,6 +27,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
   const [isCommissioner, setIsCommissioner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userLeagues, setUserLeagues] = useState<League[]>([]);
+  const [hasDrafted, setHasDrafted] = useState<boolean | null>(null);
 
   // Ensure consistent hydration by only rendering after mount
   useEffect(() => {
@@ -89,6 +90,14 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
               setCurrentEpisodeState(null);
               setIsCommissioner(false);
             }
+
+            // Fetch team data to determine draft status
+            try {
+              const myTeam = await api.getMyTeam(leagueId, activeSeason.seasonId);
+              setHasDrafted(myTeam != null && myTeam.roster.length > 0);
+            } catch {
+              setHasDrafted(null);
+            }
           }
         }
       } else {
@@ -98,6 +107,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
         setCurrentEpisodeState(null);
         setIsCommissioner(false);
         setUserLeagues([]);
+        setHasDrafted(null);
       }
     } catch (error) {
       console.error('Failed to load layout data:', error);
@@ -107,6 +117,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
       setSeasonMetadata(null);
       setCurrentEpisodeState(null);
       setIsCommissioner(false);
+      setHasDrafted(null);
     } finally {
       setLoading(false);
     }
@@ -138,7 +149,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
 
   return (
     <Box minH="100vh" bg="bg.primary">
-      <AuthenticatedHeader userName={currentUser?.name} seasonMetadata={seasonMetadata} leagueId={league?.id} />
+      <AuthenticatedHeader userName={currentUser?.name} seasonMetadata={seasonMetadata} leagueId={league?.slug || league?.id} hasDrafted={hasDrafted} />
       <Flex pt="64px">
         <Sidebar
           league={league}
