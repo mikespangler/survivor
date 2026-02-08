@@ -457,7 +457,10 @@ export class LeagueService {
         },
       });
 
-      // 2. Find or create LeagueSeason
+      // 2. Close any pending email invites for this user
+      await this.closePendingInvitesForUser(tx, leagueId, userId, user.email);
+
+      // 3. Find or create LeagueSeason
       let leagueSeason = await tx.leagueSeason.findUnique({
         where: {
           leagueId_seasonId: {
@@ -1099,6 +1102,30 @@ export class LeagueService {
     };
   }
 
+  /**
+   * Close all pending email invites for a user's email in a league.
+   * Called when a user joins a league via any method.
+   */
+  private async closePendingInvitesForUser(
+    tx: any,
+    leagueId: string,
+    userId: string,
+    userEmail: string | null,
+  ) {
+    if (!userEmail) return;
+    await tx.inviteToken.updateMany({
+      where: {
+        leagueId,
+        invitedEmail: userEmail,
+        usedAt: null,
+      },
+      data: {
+        usedAt: new Date(),
+        usedById: userId,
+      },
+    });
+  }
+
   async validateInviteToken(token: string) {
     const inviteToken = await this.prisma.inviteToken.findUnique({
       where: { token },
@@ -1446,7 +1473,10 @@ export class LeagueService {
         },
       });
 
-      // 3. Find or create LeagueSeason
+      // 3. Close any other pending email invites for this user
+      await this.closePendingInvitesForUser(tx, leagueId, userId, user.email);
+
+      // 4. Find or create LeagueSeason
       let leagueSeason = await tx.leagueSeason.findUnique({
         where: {
           leagueId_seasonId: {
