@@ -44,6 +44,9 @@ CREATE TABLE IF NOT EXISTS "InviteToken" (
     CONSTRAINT "InviteToken_pkey" PRIMARY KEY ("id")
 );
 
+-- Add invitedEmail column if table already exists (for existing databases)
+ALTER TABLE "InviteToken" ADD COLUMN IF NOT EXISTS "invitedEmail" TEXT;
+
 CREATE UNIQUE INDEX IF NOT EXISTS "InviteToken_token_key" ON "InviteToken"("token");
 CREATE INDEX IF NOT EXISTS "InviteToken_token_idx" ON "InviteToken"("token");
 CREATE INDEX IF NOT EXISTS "InviteToken_leagueId_idx" ON "InviteToken"("leagueId");
