@@ -21,9 +21,13 @@ const fredoka = Fredoka({
 });
 
 export const metadata: Metadata = {
-  title: "Survivor Fantasy League - Compete with Friends",
+  title: "Outpick Outlast",
   description: "Create fantasy leagues, draft castaways, and compete with friends while watching Survivor. Track scores, manage teams, and crown your champion.",
-  keywords: ["survivor", "fantasy league", "fantasy survivor", "reality tv", "competition"],
+  keywords: ["survivor", "fantasy league", "fantasy survivor", "reality tv", "competition", "outpick outlast"],
+  icons: {
+    icon: "https://res.cloudinary.com/dm2gfa9t8/image/upload/e_trim,w_64,h_64,c_fit,f_png,q_auto/main-logo",
+    apple: "https://res.cloudinary.com/dm2gfa9t8/image/upload/e_trim,w_180,h_180,c_fit,f_png,q_auto/main-logo",
+  },
 };
 
 export default function RootLayout({
