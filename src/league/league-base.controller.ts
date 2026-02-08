@@ -64,15 +64,11 @@ export class LeagueBaseController {
   }
 
   @Post('join-by-token')
-  @Public()
   @HttpCode(HttpStatus.OK)
   async joinLeagueByToken(
     @CurrentUser() user: any,
     @Body() joinByTokenDto: JoinByTokenDto,
   ) {
-    if (!user) {
-      throw new Error('You must be authenticated to join a league');
-    }
     return this.leagueService.joinLeagueByToken(user.id, joinByTokenDto.token);
   }
 

@@ -1,7 +1,13 @@
+'use client';
+
 import { SignIn } from '@clerk/nextjs';
 import { Box } from '@chakra-ui/react';
+import { useSearchParams } from 'next/navigation';
 
 export default function SignInPage() {
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect') || '/';
+
   return (
     <Box
       minH="100vh"
@@ -20,8 +26,8 @@ export default function SignInPage() {
         routing="path"
         path="/sign-in"
         signUpUrl="/sign-up"
-        afterSignInUrl="/"
-        fallbackRedirectUrl="/"
+        afterSignInUrl={redirectUrl}
+        fallbackRedirectUrl={redirectUrl}
       />
     </Box>
   );
