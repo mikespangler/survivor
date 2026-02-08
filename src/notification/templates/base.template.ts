@@ -33,21 +33,27 @@ export function getBaseEmailHtml(
           }
           .header {
             background: linear-gradient(138deg, #212630 0%, #191D24 100%);
-            padding: 32px;
+            padding: 40px 32px;
             text-align: center;
             border-radius: 16px 16px 0 0;
             border: 1px solid rgba(48, 53, 65, 0.5);
             border-bottom: none;
           }
           .header img {
-            height: 40px;
+            height: 64px;
             width: auto;
+          }
+          .app-name {
+            color: #F8F6F2;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 16px 0 8px 0;
+            letter-spacing: 2px;
           }
           .subheader {
             color: #818898;
-            font-size: 13px;
-            margin-top: 8px;
-            letter-spacing: 1px;
+            font-size: 12px;
+            letter-spacing: 2px;
             text-transform: uppercase;
           }
           .content {
@@ -131,6 +137,7 @@ export function getBaseEmailHtml(
           <div class="container">
             <div class="header">
               <img src="${LOGO_URL}" alt="Outpick Outlast" />
+              <div class="app-name">OUTPICK OUTLAST</div>
               <div class="subheader">A Survivor Fantasy League</div>
             </div>
             <div class="content">
