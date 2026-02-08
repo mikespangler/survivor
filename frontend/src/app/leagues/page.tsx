@@ -37,7 +37,7 @@ export default function LeaguesPage() {
 
       // If user has only one league, redirect directly to its dashboard
       if (userLeagues.length === 1) {
-        router.push(`/leagues/${userLeagues[0].id}/dashboard`);
+        router.push(`/leagues/${userLeagues[0].slug || userLeagues[0].id}/dashboard`);
         return;
       }
     } catch (err: unknown) {
@@ -58,8 +58,8 @@ export default function LeaguesPage() {
     loadLeagues();
   }, [isLoaded, isSignedIn, router, loadLeagues]);
 
-  const handleLeagueSelect = (leagueId: string) => {
-    router.push(`/leagues/${leagueId}/dashboard`);
+  const handleLeagueSelect = (league: { id: string; slug: string }) => {
+    router.push(`/leagues/${league.slug || league.id}/dashboard`);
   };
 
   if (!isLoaded || loading) {
@@ -232,7 +232,7 @@ export default function LeaguesPage() {
                     transform: 'translateY(-2px)',
                     boxShadow: '0 8px 24px rgba(240, 101, 66, 0.15)',
                   }}
-                  onClick={() => handleLeagueSelect(league.id)}
+                  onClick={() => handleLeagueSelect(league)}
                 >
                   <VStack align="stretch" gap={4}>
                     {/* League Icon & Name */}

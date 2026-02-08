@@ -90,7 +90,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
   const pathname = usePathname();
   const router = useRouter();
 
-  const baseUrl = league ? `/leagues/${league.id}` : '';
+  const baseUrl = league ? `/leagues/${league.slug || league.id}` : '';
 
   // Get season number - try metadata first, then fallback to league's season data
   const getSeasonNumber = () => {
@@ -193,9 +193,9 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
 
   const questionsBadge = getQuestionsBadge();
 
-  const handleLeagueSwitch = (newLeagueId: string) => {
-    // Navigate to the new league's dashboard
-    router.push(`/leagues/${newLeagueId}/dashboard`);
+  const handleLeagueSwitch = (switchLeague: { id: string; slug: string }) => {
+    // Navigate to the new league's dashboard using slug
+    router.push(`/leagues/${switchLeague.slug || switchLeague.id}/dashboard`);
   };
 
   const handleCollapse = () => {
@@ -293,7 +293,7 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
                   {userLeagues.map((l) => (
                     <MenuItem
                       key={l.id}
-                      onClick={() => handleLeagueSwitch(l.id)}
+                      onClick={() => handleLeagueSwitch(l)}
                       bg={l.id === league.id ? 'rgba(240, 101, 66, 0.1)' : 'transparent'}
                       _hover={{ bg: 'rgba(240, 101, 66, 0.05)' }}
                       px={4}

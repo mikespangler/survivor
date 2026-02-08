@@ -16,6 +16,7 @@ import { JoinLeagueDto } from './dto/join-league.dto';
 import { CreateCommissionerMessageDto } from './dto/create-commissioner-message.dto';
 import { UpdateCommissionerMessageDto } from './dto/update-commissioner-message.dto';
 import * as crypto from 'crypto';
+import { generateSlug } from './slug-generator';
 
 @Injectable()
 export class LeagueService {
@@ -87,12 +88,20 @@ export class LeagueService {
 
     const league = await this.prisma.league.findFirst({
       where: {
-        id: leagueId,
+        // Support lookup by id or slug
+        OR: [{ id: leagueId }, { slug: leagueId }],
         // Admins can view any league, others must be owner or member
         ...(isAdmin
           ? {}
           : {
-              OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
+              AND: [
+                {
+                  OR: [
+                    { ownerId: userId },
+                    { members: { some: { id: userId } } },
+                  ],
+                },
+              ],
             }),
       },
       include: {
@@ -168,6 +177,24 @@ export class LeagueService {
         ? `${user.email.split('@')[0]}'s Team`
         : 'Team';
 
+    // Generate a unique slug with retry
+    let slug: string | undefined;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const candidate = generateSlug();
+      const existing = await this.prisma.league.findUnique({
+        where: { slug: candidate },
+        select: { id: true },
+      });
+      if (!existing) {
+        slug = candidate;
+        break;
+      }
+    }
+    if (!slug) {
+      // Fallback: append timestamp fragment for uniqueness
+      slug = `${generateSlug()}-${Date.now().toString(36).slice(-4)}`;
+    }
+
     // Use transaction to ensure atomicity
     return this.prisma.$transaction(async (tx) => {
       // 1. Create league with the user as owner
@@ -175,6 +202,7 @@ export class LeagueService {
       const league = await tx.league.create({
         data: {
           name: createDto.name,
+          slug,
           description: createDto.description,
           ownerId: userId,
           members: {

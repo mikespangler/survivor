@@ -54,7 +54,7 @@ export default function JoinLeaguePage() {
       }
 
       // Redirect to league dashboard after successful join
-      router.push(`/leagues/${league.id}/dashboard`);
+      router.push(`/leagues/${league.slug || league.id}/dashboard`);
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to join league';
       setError(errorMessage);

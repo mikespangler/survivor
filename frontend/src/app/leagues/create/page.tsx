@@ -59,7 +59,7 @@ export default function CreateLeaguePage() {
       
       // Redirect to league settings page after a short delay
       setTimeout(() => {
-        router.push(`/leagues/${league.id}/settings`);
+        router.push(`/leagues/${league.slug || league.id}/settings`);
       }, 1500);
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to create league';

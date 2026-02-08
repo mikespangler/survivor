@@ -68,7 +68,7 @@ const Dashboard = () => {
       if (lastViewedLeague) {
         const stillExists = userLeagues.some((l) => l.id === lastViewedLeague.id);
         if (stillExists) {
-          router.push(`/leagues/${lastViewedLeague.id}/dashboard`);
+          router.push(`/leagues/${lastViewedLeague.slug || lastViewedLeague.id}/dashboard`);
           return;
         }
       }
@@ -76,7 +76,7 @@ const Dashboard = () => {
       // No valid last viewed league → redirect to most recent
       const mostRecent = userLeagues[0]; // Already sorted by createdAt desc
       await api.updateLastViewedLeague(mostRecent.id);
-      router.push(`/leagues/${mostRecent.id}/dashboard`);
+      router.push(`/leagues/${mostRecent.slug || mostRecent.id}/dashboard`);
     } catch (error) {
       console.error('Auto-redirect failed:', error);
       setRedirecting(false);

@@ -37,10 +37,10 @@ export default function LeagueSelectorPage() {
     }
   };
 
-  const handleLeagueSelect = async (leagueId: string) => {
+  const handleLeagueSelect = async (league: { id: string; slug: string }) => {
     try {
-      await api.updateLastViewedLeague(leagueId);
-      router.push(`/leagues/${leagueId}/dashboard`);
+      await api.updateLastViewedLeague(league.id);
+      router.push(`/leagues/${league.slug || league.id}/dashboard`);
     } catch (error) {
       console.error('Failed to select league:', error);
     }
@@ -76,7 +76,7 @@ export default function LeagueSelectorPage() {
                     key={league.id}
                     variant="feature"
                     cursor="pointer"
-                    onClick={() => handleLeagueSelect(league.id)}
+                    onClick={() => handleLeagueSelect(league)}
                     _hover={{ borderColor: 'brand.primary' }}
                   >
                     <CardBody>

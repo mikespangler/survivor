@@ -61,14 +61,14 @@ export default function JoinByTokenPage() {
       setHasJoined(true);
 
       // Redirect to league dashboard
-      router.push(`/leagues/${joinedLeague.id}/dashboard`);
+      router.push(`/leagues/${joinedLeague.slug || joinedLeague.id}/dashboard`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to join league';
       // If user is already a member, redirect to league dashboard
       if (message.includes('already a member') || message.includes('already the owner')) {
         setHasJoined(true);
         if (league) {
-          router.push(`/leagues/${league.id}/dashboard`);
+          router.push(`/leagues/${league.slug || league.id}/dashboard`);
         }
         return;
       }

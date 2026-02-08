@@ -12,6 +12,7 @@ export interface User {
 
 export interface League {
   id: string;
+  slug: string;
   name: string;
   description?: string;
   ownerId: string;

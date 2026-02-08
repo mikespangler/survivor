@@ -63,7 +63,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
         // Fetch league data
         const userLeagues = await api.getLeagues();
         setUserLeagues(userLeagues);
-        const currentLeague = userLeagues.find((l) => l.id === leagueId);
+        const currentLeague = userLeagues.find((l) => l.slug === leagueId || l.id === leagueId);
 
         if (currentLeague) {
           setLeague(currentLeague);

@@ -27,6 +27,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:reset": "npx prisma migrate reset --force",
     "db:seed": "ts-node prisma/seed-midseason.ts",
+    "db:seed-50": "ts-node prisma/seed-season-50.ts",
     "db:seed-five": "ts-node prisma/seed-five-leagues.ts",
     "db:add-me": "ts-node prisma/add-user-to-league.ts",
     "db:migrate": "prisma migrate dev",
