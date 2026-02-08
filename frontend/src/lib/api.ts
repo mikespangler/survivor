@@ -54,9 +54,19 @@ import type {
   LeagueEpisodeStatesResponse,
   NotificationPreferences,
   UpdateNotificationPreferencesDto,
+  CommissionerMessage,
+  CreateCommissionerMessageDto,
+  UpdateCommissionerMessageDto,
+  CommissionerMessagesResponse,
 } from '@/types/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+
+/** Extends RequestInit with API-specific options */
+interface ApiRequestOptions extends RequestInit {
+  /** When true, throw on 401 instead of triggering onUnauthorized redirect (for pages that handle auth errors) */
+  skipUnauthorizedRedirect?: boolean;
+}
 
 class ApiClient {
   private baseUrl: string;
@@ -79,8 +89,9 @@ class ApiClient {
 
   private async request<T>(
     endpoint: string,
-    options?: RequestInit
+    options?: ApiRequestOptions
   ): Promise<T> {
+    const { skipUnauthorizedRedirect, ...fetchOptions } = options || {};
     const url = `${this.baseUrl}${endpoint}`;
     
     // Get the JWT token from Clerk
@@ -104,7 +115,7 @@ class ApiClient {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...(token && { Authorization: `Bearer ${token}` }),
-      ...options?.headers,
+      ...fetchOptions.headers,
     };
 
     if (!token) {
@@ -112,13 +123,13 @@ class ApiClient {
     }
 
     const config: RequestInit = {
-      ...options,
+      ...fetchOptions,
       headers,
     };
 
     console.log('📤 API Request:', {
       url,
-      method: options?.method || 'GET',
+      method: fetchOptions.method || 'GET',
       hasToken: !!token,
       headers: Object.keys(headers),
     });
@@ -128,6 +139,11 @@ class ApiClient {
 
       if (!response.ok) {
         if (response.status === 401) {
+          // When skipUnauthorizedRedirect, throw so caller can handle (e.g. redirect to sign-in)
+          if (skipUnauthorizedRedirect) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || 'Unauthorized. Please sign in.');
+          }
           // Call redirect callback if available
           if (this.onUnauthorized) {
             this.onUnauthorized();
@@ -837,6 +853,7 @@ class ApiClient {
     return this.request<League>('/leagues/join-by-token', {
       method: 'POST',
       body: JSON.stringify(data),
+      skipUnauthorizedRedirect: true,
     });
   }
 
@@ -1015,6 +1032,57 @@ class ApiClient {
     return this.request<{ success: boolean; message: string }>(
       '/users/me/notification-preferences/test',
       { method: 'POST' },
+    );
+  }
+
+  // ================== Commissioner Message endpoints ==================
+
+  async getCommissionerMessages(
+    leagueId: string,
+    options?: { limit?: number; offset?: number },
+  ): Promise<CommissionerMessagesResponse> {
+    const params = new URLSearchParams();
+    if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.offset) params.append('offset', options.offset.toString());
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request<CommissionerMessagesResponse>(
+      `/leagues/${leagueId}/messages${query}`,
+    );
+  }
+
+  async createCommissionerMessage(
+    leagueId: string,
+    data: CreateCommissionerMessageDto,
+  ): Promise<CommissionerMessage> {
+    return this.request<CommissionerMessage>(`/leagues/${leagueId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateCommissionerMessage(
+    leagueId: string,
+    messageId: string,
+    data: UpdateCommissionerMessageDto,
+  ): Promise<CommissionerMessage> {
+    return this.request<CommissionerMessage>(
+      `/leagues/${leagueId}/messages/${messageId}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      },
+    );
+  }
+
+  async deleteCommissionerMessage(
+    leagueId: string,
+    messageId: string,
+  ): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(
+      `/leagues/${leagueId}/messages/${messageId}`,
+      {
+        method: 'DELETE',
+      },
     );
   }
 }

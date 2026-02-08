@@ -9,6 +9,7 @@ import {
   getResultsAvailableHtml,
   getScoringReminderHtml,
   getQuestionsSetupReminderHtml,
+  getCommissionerMessageHtml,
 } from './templates';
 
 export type NotificationType =
@@ -616,5 +617,89 @@ export class NotificationService {
         ? `Test email sent to ${user.email}`
         : `Failed to send test email to ${user.email} - check server logs`,
     };
+  }
+
+  // ================== COMMISSIONER MESSAGE EMAIL ==================
+
+  async sendCommissionerMessageEmail(
+    userId: string,
+    leagueId: string,
+    messageTitle: string,
+    messagePlainContent: string,
+    authorName: string,
+  ): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.email) return false;
+
+    // Check preferences
+    const preferences = await this.getPreferences(userId);
+    if (
+      preferences.emailFrequency === 'never' ||
+      !preferences.commissionerMessages
+    ) {
+      this.logger.log(
+        `User ${userId} has commissioner message notifications disabled`,
+      );
+      return false;
+    }
+
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+    });
+    if (!league) return false;
+
+    const html = getCommissionerMessageHtml({
+      userName: user.name || '',
+      leagueName: league.name,
+      authorName,
+      messageTitle,
+      messageContent: messagePlainContent,
+      messageUrl: `${this.appUrl}/leagues/${leagueId}/dashboard`,
+      preferencesUrl: `${this.appUrl}/profile`,
+    });
+
+    return this.sendEmail(
+      user.email,
+      `${league.name}: ${messageTitle}`,
+      html,
+    );
+  }
+
+  async sendCommissionerMessageToLeague(
+    leagueId: string,
+    messageTitle: string,
+    messagePlainContent: string,
+    authorId: string,
+  ): Promise<number> {
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+      include: {
+        members: true,
+      },
+    });
+
+    if (!league) return 0;
+
+    const author = await this.prisma.user.findUnique({
+      where: { id: authorId },
+    });
+    const authorName = author?.name || author?.email || 'A commissioner';
+
+    let sentCount = 0;
+    for (const member of league.members) {
+      // Don't send to the author
+      if (member.id === authorId) continue;
+
+      const sent = await this.sendCommissionerMessageEmail(
+        member.id,
+        leagueId,
+        messageTitle,
+        messagePlainContent,
+        authorName,
+      );
+      if (sent) sentCount++;
+    }
+
+    return sentCount;
   }
 }

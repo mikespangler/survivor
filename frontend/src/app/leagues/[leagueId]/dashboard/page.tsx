@@ -24,12 +24,14 @@ import {
   WeekResultsCard,
   FireIcon,
   UpcomingSeasonCard,
+  CommissionerMessageCard,
 } from '@/components/dashboard';
 import type {
   League,
   SeasonMetadata,
   LeagueStandings,
   MyTeamResponse,
+  CommissionerMessage,
 } from '@/types/api';
 
 interface LeagueDashboardPageProps {
@@ -45,6 +47,7 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
   const [standings, setStandings] = useState<LeagueStandings | null>(null);
   const [myTeam, setMyTeam] = useState<MyTeamResponse | null>(null);
   const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
+  const [commissionerMessages, setCommissionerMessages] = useState<CommissionerMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -131,12 +134,13 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
       const currentSeasonRef = (activeSeason || upcomingSeason)!;
       setActiveSeasonId(currentSeasonRef.seasonId);
 
-      // Load season metadata, standings, and team data
+      // Load season metadata, standings, team data, and commissioner messages
       // Note: Load standings for BOTH active and upcoming seasons
       // Upcoming seasons will show all teams with 0 points (like fantasy football pre-season)
       const promises: Promise<any>[] = [
         api.getSeasonMetadata(currentSeasonRef.seasonId),
         api.getLeagueStandings(leagueId, currentSeasonRef.seasonId),
+        api.getCommissionerMessages(leagueId, { limit: 3 }).catch(() => ({ messages: [] })),
       ];
 
       // Load team data if available (both admins and regular users may not have teams)
@@ -146,10 +150,11 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
         api.getMyTeam(leagueId, currentSeasonRef.seasonId).catch(() => null)
       );
 
-      const [metadata, standingsData, teamData] = await Promise.all(promises);
+      const [metadata, standingsData, messagesData, teamData] = await Promise.all(promises);
 
       setSeasonMetadata(metadata);
       setStandings(standingsData);
+      setCommissionerMessages(messagesData.messages || []);
       setMyTeam(teamData);
     } catch (err: any) {
       console.error('Failed to load dashboard:', err);
@@ -246,6 +251,15 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
                 : "Here's your league status and what needs your attention."}
             </Text>
           </Box>
+
+          {/* Show commissioner messages if any */}
+          {commissionerMessages.length > 0 && (
+            <VStack align="stretch" gap={4}>
+              {commissionerMessages.map((message) => (
+                <CommissionerMessageCard key={message.id} message={message} />
+              ))}
+            </VStack>
+          )}
 
           {/* Show UpcomingSeasonCard if season is UPCOMING */}
           {seasonMetadata?.status === 'UPCOMING' && (

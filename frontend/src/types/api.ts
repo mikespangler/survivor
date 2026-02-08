@@ -638,6 +638,7 @@ export interface NotificationPreferences {
   weeklyQuestionsReminder: boolean;
   draftReminder: boolean;
   resultsAvailable: boolean;
+  commissionerMessages: boolean;
   scoringReminder: boolean;
   questionsSetupReminder: boolean;
   emailFrequency: EmailFrequency;
@@ -650,9 +651,50 @@ export interface UpdateNotificationPreferencesDto {
   weeklyQuestionsReminder?: boolean;
   draftReminder?: boolean;
   resultsAvailable?: boolean;
+  commissionerMessages?: boolean;
   scoringReminder?: boolean;
   questionsSetupReminder?: boolean;
   emailFrequency?: EmailFrequency;
   reminderHoursBefore?: number;
+}
+
+// Commissioner message types
+export interface CommissionerMessage {
+  id: string;
+  leagueId: string;
+  authorId: string;
+  author: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  };
+  title: string;
+  content: any; // TipTap JSON
+  contentPlain: string;
+  isPinned: boolean;
+  emailSent: boolean;
+  emailSentAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCommissionerMessageDto {
+  title: string;
+  content: any; // TipTap JSON
+  contentPlain: string;
+  isPinned?: boolean;
+  sendEmail?: boolean;
+}
+
+export interface UpdateCommissionerMessageDto {
+  title?: string;
+  content?: any; // TipTap JSON
+  contentPlain?: string;
+  isPinned?: boolean;
+}
+
+export interface CommissionerMessagesResponse {
+  messages: CommissionerMessage[];
+  total: number;
 }
 

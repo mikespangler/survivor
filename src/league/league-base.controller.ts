@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Body,
   Param,
@@ -16,6 +17,8 @@ import { JoinLeagueDto } from './dto/join-league.dto';
 import { InviteByEmailDto } from './dto/invite-by-email.dto';
 import { JoinByTokenDto } from './dto/join-by-token.dto';
 import { AddCommissionerDto } from './dto/add-commissioner.dto';
+import { CreateCommissionerMessageDto } from './dto/create-commissioner-message.dto';
+import { UpdateCommissionerMessageDto } from './dto/update-commissioner-message.dto';
 import { LeagueCommissionerOrAdminGuard } from '../auth/guards/league-owner-or-admin.guard';
 import { LeagueMemberGuard } from '../auth/guards/league-member.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -199,5 +202,52 @@ export class LeagueBaseController {
     @Query('q') query: string,
   ) {
     return this.leagueService.searchUsersForLeague(leagueId, query);
+  }
+
+  // Commissioner message endpoints
+  @Get(':id/messages')
+  @UseGuards(LeagueMemberGuard)
+  async getCommissionerMessages(
+    @Param('id') leagueId: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    return this.leagueService.getCommissionerMessages(leagueId, {
+      limit: limit ? parseInt(limit, 10) : undefined,
+      offset: offset ? parseInt(offset, 10) : undefined,
+    });
+  }
+
+  @Post(':id/messages')
+  @UseGuards(LeagueCommissionerOrAdminGuard)
+  @HttpCode(HttpStatus.CREATED)
+  async createCommissionerMessage(
+    @Param('id') leagueId: string,
+    @Body() dto: CreateCommissionerMessageDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.leagueService.createCommissionerMessage(leagueId, user.id, dto);
+  }
+
+  @Patch(':id/messages/:messageId')
+  @UseGuards(LeagueCommissionerOrAdminGuard)
+  async updateCommissionerMessage(
+    @Param('id') leagueId: string,
+    @Param('messageId') messageId: string,
+    @Body() dto: UpdateCommissionerMessageDto,
+    @CurrentUser() user: any,
+  ) {
+    return this.leagueService.updateCommissionerMessage(messageId, user.id, dto);
+  }
+
+  @Delete(':id/messages/:messageId')
+  @UseGuards(LeagueCommissionerOrAdminGuard)
+  @HttpCode(HttpStatus.OK)
+  async deleteCommissionerMessage(
+    @Param('id') leagueId: string,
+    @Param('messageId') messageId: string,
+    @CurrentUser() user: any,
+  ) {
+    return this.leagueService.deleteCommissionerMessage(messageId, user.id);
   }
 }

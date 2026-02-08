@@ -354,6 +354,28 @@ export default function ProfilePage() {
                               }}
                             />
                           </HStack>
+
+                          <HStack justify="space-between">
+                            <Box>
+                              <Text fontSize="sm" fontWeight="medium">Commissioner Announcements</Text>
+                              <Text fontSize="xs" color="text.secondary">
+                                Messages posted by league commissioners
+                              </Text>
+                            </Box>
+                            <Switch
+                              isChecked={notificationPrefs.commissionerMessages}
+                              onChange={(e) =>
+                                handleUpdateNotificationPref('commissionerMessages', e.target.checked)
+                              }
+                              isDisabled={isSavingPrefs}
+                              colorScheme="orange"
+                              sx={{
+                                'span.chakra-switch__track': {
+                                  bg: notificationPrefs.commissionerMessages ? undefined : 'gray.600',
+                                },
+                              }}
+                            />
+                          </HStack>
                         </VStack>
                       </Box>
 

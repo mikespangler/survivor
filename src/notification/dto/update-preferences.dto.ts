@@ -23,6 +23,10 @@ export class UpdateNotificationPreferencesDto {
 
   @IsOptional()
   @IsBoolean()
+  commissionerMessages?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   scoringReminder?: boolean;
 
   @IsOptional()

@@ -23,7 +23,7 @@ import {
 import { useUser } from '@clerk/nextjs';
 import { api } from '@/lib/api';
 import { AuthenticatedLayout } from '@/components/navigation';
-import { QuestionsManager, RetentionManager } from '@/components/settings';
+import { QuestionsManager, RetentionManager, AnnouncementsManager } from '@/components/settings';
 import { MemberManagement } from '@/components/members';
 import type { League, DraftConfig, Season } from '@/types/api';
 
@@ -51,12 +51,21 @@ export default function LeagueSettingsPage() {
   const initialTabIndex = useMemo(() => {
     if (!tabParam) return 0;
 
-    const tabMap: { [key: string]: number } = {
-      'questions': 0,
-      'members': isCommissioner ? 1 : -1, // Only valid if commissioner
-      'points': isCommissioner ? 2 : 1,
-      'draft': isCommissioner ? 3 : 2,
-    };
+    // Commissioner tabs: Questions, Announcements, Members, Points, Draft
+    // Non-commissioner tabs: Questions, Points, Draft
+    const tabMap: { [key: string]: number } = isCommissioner
+      ? {
+          'questions': 0,
+          'announcements': 1,
+          'members': 2,
+          'points': 3,
+          'draft': 4,
+        }
+      : {
+          'questions': 0,
+          'points': 1,
+          'draft': 2,
+        };
 
     const index = tabMap[tabParam.toLowerCase()];
     return index !== undefined && index >= 0 ? index : 0;
@@ -240,6 +249,7 @@ export default function LeagueSettingsPage() {
             <Tabs index={tabIndex} onChange={setTabIndex} variant="enclosed">
               <TabList>
                 <Tab>Questions</Tab>
+                {isCommissioner && <Tab>Announcements</Tab>}
                 {isCommissioner && <Tab>Members</Tab>}
                 <Tab>Points</Tab>
                 <Tab>Draft</Tab>
@@ -262,6 +272,13 @@ export default function LeagueSettingsPage() {
                     </Text>
                   )}
                 </TabPanel>
+
+                {/* Announcements Tab (commissioners only) */}
+                {isCommissioner && (
+                  <TabPanel px={0} py={6}>
+                    <AnnouncementsManager leagueId={leagueId} />
+                  </TabPanel>
+                )}
 
                 {/* Members Tab (commissioners only) */}
                 {isCommissioner && (

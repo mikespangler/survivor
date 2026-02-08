@@ -8,10 +8,13 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
+import { NotificationService } from '../notification/notification.service';
 import { UpdateLeagueSeasonSettingsDto } from './dto/update-league-season-settings.dto';
 import { UpdateDraftConfigDto } from './dto/update-draft-config.dto';
 import { CreateLeagueDto } from './dto/create-league.dto';
 import { JoinLeagueDto } from './dto/join-league.dto';
+import { CreateCommissionerMessageDto } from './dto/create-commissioner-message.dto';
+import { UpdateCommissionerMessageDto } from './dto/update-commissioner-message.dto';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -21,6 +24,7 @@ export class LeagueService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async getLeagues(userId: string) {
@@ -2033,5 +2037,201 @@ export class LeagueService {
       })),
       leagueProgress,
     };
+  }
+
+  // ================== Commissioner Message Methods ==================
+
+  async createCommissionerMessage(
+    leagueId: string,
+    userId: string,
+    dto: CreateCommissionerMessageDto,
+  ) {
+    // Verify user is commissioner
+    const league = await this.prisma.league.findUnique({
+      where: { id: leagueId },
+      include: {
+        commissioners: { select: { id: true } },
+      },
+    });
+
+    if (!league) {
+      throw new NotFoundException(`League with ID ${leagueId} not found`);
+    }
+
+    const isOwner = league.ownerId === userId;
+    const isCommissioner = league.commissioners.some((c) => c.id === userId);
+
+    if (!isOwner && !isCommissioner) {
+      throw new ForbiddenException(
+        'You must be a league commissioner to create messages',
+      );
+    }
+
+    // Create the message
+    const message = await this.prisma.commissionerMessage.create({
+      data: {
+        leagueId,
+        authorId: userId,
+        title: dto.title,
+        content: dto.content,
+        contentPlain: dto.contentPlain,
+        isPinned: dto.isPinned || false,
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    // Send emails if requested
+    if (dto.sendEmail) {
+      const sentCount =
+        await this.notificationService.sendCommissionerMessageToLeague(
+          leagueId,
+          dto.title,
+          dto.contentPlain,
+          userId,
+        );
+
+      // Update the message to mark emails as sent
+      await this.prisma.commissionerMessage.update({
+        where: { id: message.id },
+        data: {
+          emailSent: true,
+          emailSentAt: new Date(),
+        },
+      });
+
+      this.logger.log(
+        `Commissioner message "${dto.title}" sent to ${sentCount} members`,
+      );
+    }
+
+    return message;
+  }
+
+  async getCommissionerMessages(
+    leagueId: string,
+    options?: { limit?: number; offset?: number },
+  ) {
+    const { limit = 20, offset = 0 } = options || {};
+
+    // Get messages with pinned first, then by date
+    const messages = await this.prisma.commissionerMessage.findMany({
+      where: { leagueId },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
+      take: limit,
+      skip: offset,
+    });
+
+    const total = await this.prisma.commissionerMessage.count({
+      where: { leagueId },
+    });
+
+    return { messages, total };
+  }
+
+  async updateCommissionerMessage(
+    messageId: string,
+    userId: string,
+    dto: UpdateCommissionerMessageDto,
+  ) {
+    // Get the message
+    const message = await this.prisma.commissionerMessage.findUnique({
+      where: { id: messageId },
+      include: {
+        league: {
+          include: {
+            commissioners: { select: { id: true } },
+          },
+        },
+      },
+    });
+
+    if (!message) {
+      throw new NotFoundException(`Message with ID ${messageId} not found`);
+    }
+
+    // Verify user is commissioner
+    const isOwner = message.league.ownerId === userId;
+    const isCommissioner = message.league.commissioners.some(
+      (c) => c.id === userId,
+    );
+
+    if (!isOwner && !isCommissioner) {
+      throw new ForbiddenException(
+        'You must be a league commissioner to update messages',
+      );
+    }
+
+    // Update the message
+    return this.prisma.commissionerMessage.update({
+      where: { id: messageId },
+      data: {
+        ...(dto.title !== undefined && { title: dto.title }),
+        ...(dto.content !== undefined && { content: dto.content }),
+        ...(dto.contentPlain !== undefined && { contentPlain: dto.contentPlain }),
+        ...(dto.isPinned !== undefined && { isPinned: dto.isPinned }),
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
+  async deleteCommissionerMessage(messageId: string, userId: string) {
+    // Get the message
+    const message = await this.prisma.commissionerMessage.findUnique({
+      where: { id: messageId },
+      include: {
+        league: {
+          include: {
+            commissioners: { select: { id: true } },
+          },
+        },
+      },
+    });
+
+    if (!message) {
+      throw new NotFoundException(`Message with ID ${messageId} not found`);
+    }
+
+    // Verify user is commissioner
+    const isOwner = message.league.ownerId === userId;
+    const isCommissioner = message.league.commissioners.some(
+      (c) => c.id === userId,
+    );
+
+    if (!isOwner && !isCommissioner) {
+      throw new ForbiddenException(
+        'You must be a league commissioner to delete messages',
+      );
+    }
+
+    await this.prisma.commissionerMessage.delete({
+      where: { id: messageId },
+    });
+
+    return { success: true };
   }
 }

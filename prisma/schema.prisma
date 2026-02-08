@@ -25,23 +25,25 @@ model User {
   lastViewedLeague        League?                  @relation("LastViewedLeague", fields: [lastViewedLeagueId], references: [id], onDelete: SetNull)
   notificationPreferences NotificationPreferences?
   sentNotifications       SentNotification[]
+  commissionerMessages    CommissionerMessage[]
 
   @@index([clerkId])
   @@index([lastViewedLeagueId])
 }
 
 model League {
-  id            String         @id @default(cuid())
-  name          String
-  description   String?
-  ownerId       String
-  createdAt     DateTime       @default(now())
-  owner         User           @relation(fields: [ownerId], references: [id])
-  leagueSeasons LeagueSeason[]
-  members       User[]         @relation("LeagueMembers")
-  commissioners User[]         @relation("LeagueCommissioners")
-  inviteTokens  InviteToken[]
-  lastViewedBy  User[]         @relation("LastViewedLeague")
+  id                   String                @id @default(cuid())
+  name                 String
+  description          String?
+  ownerId              String
+  createdAt            DateTime              @default(now())
+  owner                User                  @relation(fields: [ownerId], references: [id])
+  leagueSeasons        LeagueSeason[]
+  members              User[]                @relation("LeagueMembers")
+  commissioners        User[]                @relation("LeagueCommissioners")
+  inviteTokens         InviteToken[]
+  lastViewedBy         User[]                @relation("LastViewedLeague")
+  commissionerMessages CommissionerMessage[]
 }
 
 model LeagueSeason {
@@ -266,6 +268,7 @@ model NotificationPreferences {
   weeklyQuestionsReminder  Boolean  @default(true)
   draftReminder            Boolean  @default(true)
   resultsAvailable         Boolean  @default(true)
+  commissionerMessages     Boolean  @default(true)
 
   // Commissioner notifications
   scoringReminder          Boolean  @default(true)
@@ -291,4 +294,23 @@ model SentNotification {
 
   @@unique([userId, notificationType, leagueId, episodeNumber])
   @@index([userId])
+}
+
+// Commissioner messages/announcements for leagues
+model CommissionerMessage {
+  id           String    @id @default(cuid())
+  leagueId     String
+  league       League    @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  authorId     String
+  author       User      @relation(fields: [authorId], references: [id])
+  title        String
+  content      Json      // Rich text as TipTap JSON
+  contentPlain String    // Plain text for emails
+  isPinned     Boolean   @default(false)
+  emailSent    Boolean   @default(false)
+  emailSentAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([leagueId, createdAt])
 }

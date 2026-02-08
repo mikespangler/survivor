@@ -7,6 +7,7 @@ import { AuthModule } from '../auth/auth.module';
 import { QuestionModule } from '../question/question.module';
 import { EpisodeModule } from '../episode/episode.module';
 import { EmailModule } from '../email/email.module';
+import { NotificationModule } from '../notification/notification.module';
 import { UserService } from '../user/user.service';
 
 @Module({
@@ -16,6 +17,7 @@ import { UserService } from '../user/user.service';
     forwardRef(() => QuestionModule),
     EpisodeModule,
     EmailModule,
+    NotificationModule,
   ],
   controllers: [LeagueBaseController, LeagueController],
   providers: [LeagueService, UserService],
