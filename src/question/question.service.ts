@@ -967,4 +967,60 @@ export class QuestionService {
       hasQuestions: totalQuestions > 0,
     };
   }
+
+  // ================== TRENDING QUESTIONS ==================
+
+  async getTrendingQuestions(
+    leagueId: string,
+    seasonId: string,
+    episodeNumber: number,
+  ) {
+    leagueId = await resolveLeagueId(this.prisma, leagueId);
+
+    // Use raw SQL for case-insensitive grouping across all leagues in this season,
+    // excluding the requesting commissioner's own league.
+    const results = await this.prisma.$queryRaw<
+      {
+        text: string;
+        type: string;
+        options: any;
+        pointValue: number;
+        leagueCount: bigint;
+        isWager: boolean;
+        minWager: number | null;
+        maxWager: number | null;
+      }[]
+    >`
+      SELECT
+        lq."text",
+        lq."type",
+        lq."options",
+        lq."pointValue",
+        COUNT(DISTINCT ls."leagueId")::bigint AS "leagueCount",
+        lq."isWager",
+        lq."minWager",
+        lq."maxWager"
+      FROM "LeagueQuestion" lq
+      JOIN "LeagueSeason" ls ON ls."id" = lq."leagueSeasonId"
+      WHERE ls."seasonId" = ${seasonId}
+        AND lq."episodeNumber" = ${episodeNumber}
+        AND ls."leagueId" != ${leagueId}
+      GROUP BY LOWER(lq."text"), lq."text", lq."type", lq."options",
+               lq."pointValue", lq."isWager", lq."minWager", lq."maxWager"
+      HAVING COUNT(DISTINCT ls."leagueId") >= 1
+      ORDER BY "leagueCount" DESC, lq."text" ASC
+      LIMIT 25
+    `;
+
+    return results.map((r) => ({
+      text: r.text,
+      type: r.type,
+      options: r.options,
+      pointValue: r.pointValue,
+      leagueCount: Number(r.leagueCount),
+      isWager: r.isWager,
+      minWager: r.minWager,
+      maxWager: r.maxWager,
+    }));
+  }
 }

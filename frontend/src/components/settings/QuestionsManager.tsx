@@ -46,7 +46,9 @@ import type {
   QuestionTemplate,
   CreateLeagueQuestionDto,
   QuestionType,
+  TrendingQuestion,
 } from '@/types/api';
+import { TrendingQuestionsCarousel } from './TrendingQuestionsCarousel';
 
 const QUESTION_TYPES: QuestionType[] = ['MULTIPLE_CHOICE', 'FILL_IN_THE_BLANK'];
 
@@ -365,6 +367,24 @@ export function QuestionsManager({
     );
   };
 
+  const handleAddTrendingQuestion = useCallback(
+    (question: TrendingQuestion) => {
+      setForm({
+        id: '',
+        episodeNumber: selectedEpisode,
+        text: question.text,
+        type: question.type as QuestionType,
+        options: (question.options as string[]) || [],
+        pointValue: question.pointValue,
+        newOption: '',
+        scoringType: question.isWager ? 'wager' : 'fixed',
+        minWager: question.minWager || 0,
+        maxWager: question.maxWager || 100,
+      });
+    },
+    [selectedEpisode],
+  );
+
   if (isLoading) {
     return (
       <VStack gap={4} py={10}>
@@ -427,6 +447,14 @@ export function QuestionsManager({
           </Badge>
         </Box>
       </HStack>
+
+      {/* Trending Questions Carousel */}
+      <TrendingQuestionsCarousel
+        leagueId={leagueId}
+        seasonId={seasonId}
+        episodeNumber={selectedEpisode}
+        onAddQuestion={handleAddTrendingQuestion}
+      />
 
       {/* Question Form */}
       <Box as="form" onSubmit={handleSubmitQuestion}>

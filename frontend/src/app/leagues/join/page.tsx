@@ -12,9 +12,11 @@ import {
   Input,
   Button,
   Text,
+  HStack,
 } from '@chakra-ui/react';
 import { api } from '@/lib/api';
 import { AuthenticatedLayout } from '@/components/navigation';
+import { ReturnToLeagueButton } from '@/components/common';
 
 export default function JoinLeaguePage() {
   const router = useRouter();
@@ -68,9 +70,12 @@ export default function JoinLeaguePage() {
       <Box as="main" minH="100vh" py={10}>
         <Container maxW="container.md">
           <VStack gap={6} align="stretch">
-            <Heading as="h1" size="xl">
-              Join a League
-            </Heading>
+            <HStack justify="space-between" align="center" w="full">
+              <Heading as="h1" size="xl">
+                Join a League
+              </Heading>
+              <ReturnToLeagueButton />
+            </HStack>
 
           {error && (
             <Box

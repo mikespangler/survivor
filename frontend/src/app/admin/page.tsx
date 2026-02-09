@@ -34,6 +34,7 @@ import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { AuthenticatedLayout } from '@/components/navigation';
+import { ReturnToLeagueButton } from '@/components/common';
 import { ImageUpload } from '@/components/common/ImageUpload';
 import { DateTimePicker } from '@/components/common/DateTimePicker';
 import type {
@@ -599,9 +600,10 @@ export default function AdminPage() {
     return (
       <AuthenticatedLayout>
         <Container maxW="container.md" py={16}>
-          <Heading size="lg" mb={4}>
-            Access Restricted
-          </Heading>
+          <HStack justify="space-between" align="center" mb={4}>
+            <Heading size="lg">Access Restricted</Heading>
+            <ReturnToLeagueButton />
+          </HStack>
           <Text color="text.secondary">
             You must be signed in as a system administrator to view this page.
           </Text>
@@ -613,7 +615,10 @@ export default function AdminPage() {
   return (
     <AuthenticatedLayout>
       <Container maxW="container.xl" py={10}>
-        <Heading mb={8}>Admin Dashboard</Heading>
+        <HStack justify="space-between" align="center" mb={8}>
+          <Heading>Admin Dashboard</Heading>
+          <ReturnToLeagueButton />
+        </HStack>
 
         <Tabs colorScheme="orange" isLazy>
           <TabList>

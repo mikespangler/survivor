@@ -5,8 +5,10 @@ import {
   Heading,
   Text,
   VStack,
+  HStack,
 } from '@chakra-ui/react';
 import { AuthenticatedLayout } from '@/components/navigation';
+import { ReturnToLeagueButton } from '@/components/common';
 
 const sections = [
   {
@@ -43,20 +45,23 @@ export default function HowToPlayPage() {
     <AuthenticatedLayout>
       <Box maxW="container.md" px={8} py={10}>
         <VStack align="stretch" gap={7}>
-          <Box>
-            <Heading
-              fontFamily="heading"
-              fontSize="42px"
-              color="text.primary"
-              letterSpacing="-1px"
-              lineHeight="1"
-            >
-              How to Play
-            </Heading>
-            <Text color="text.secondary" fontSize="15px" mt={2}>
-              Everything you need to know to outwit, outplay, and outlast your league.
-            </Text>
-          </Box>
+          <HStack justify="space-between" align="flex-start" w="full">
+            <Box>
+              <Heading
+                fontFamily="heading"
+                fontSize="42px"
+                color="text.primary"
+                letterSpacing="-1px"
+                lineHeight="1"
+              >
+                How to Play
+              </Heading>
+              <Text color="text.secondary" fontSize="15px" mt={2}>
+                Everything you need to know to outwit, outplay, and outlast your league.
+              </Text>
+            </Box>
+            <ReturnToLeagueButton />
+          </HStack>
 
           <VStack align="stretch" gap={5}>
             {sections.map((section) => (

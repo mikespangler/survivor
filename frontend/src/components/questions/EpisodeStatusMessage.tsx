@@ -86,7 +86,7 @@ export function EpisodeStatusMessage({
   };
 
   const getCommissionerConfig = (): StatusConfig => {
-    const baseUrl = `/leagues/${leagueId}/settings/questions`;
+    const baseUrl = `/leagues/${leagueId}/settings?tab=questions`;
 
     switch (state) {
       case 'FUTURE':
@@ -96,7 +96,7 @@ export function EpisodeStatusMessage({
           status: 'info',
           showAction: true,
           actionLabel: 'Set Up Questions',
-          actionHref: `${baseUrl}?episode=${episodeNumber}`,
+          actionHref: `${baseUrl}&episode=${episodeNumber}`,
         };
       case 'QUESTIONS_NOT_READY':
         return {
@@ -105,7 +105,7 @@ export function EpisodeStatusMessage({
           status: 'warning',
           showAction: true,
           actionLabel: 'Create Questions',
-          actionHref: `${baseUrl}?episode=${episodeNumber}`,
+          actionHref: `${baseUrl}&episode=${episodeNumber}`,
         };
       case 'SUBMISSIONS_OPEN':
         return {
@@ -116,7 +116,7 @@ export function EpisodeStatusMessage({
           status: 'success',
           showAction: true,
           actionLabel: 'Manage Questions',
-          actionHref: `${baseUrl}?episode=${episodeNumber}`,
+          actionHref: `${baseUrl}&episode=${episodeNumber}`,
         };
       case 'SUBMISSIONS_CLOSED':
         return {
@@ -125,7 +125,7 @@ export function EpisodeStatusMessage({
           status: 'warning',
           showAction: true,
           actionLabel: 'Score Questions',
-          actionHref: `${baseUrl}?episode=${episodeNumber}`,
+          actionHref: `${baseUrl}&episode=${episodeNumber}`,
         };
       case 'PARTIALLY_SCORED':
         return {
@@ -134,7 +134,7 @@ export function EpisodeStatusMessage({
           status: 'warning',
           showAction: true,
           actionLabel: 'Continue Scoring',
-          actionHref: `${baseUrl}?episode=${episodeNumber}`,
+          actionHref: `${baseUrl}&episode=${episodeNumber}`,
         };
       case 'FULLY_SCORED':
         return {
@@ -143,7 +143,7 @@ export function EpisodeStatusMessage({
           status: 'success',
           showAction: true,
           actionLabel: 'View Results',
-          actionHref: `${baseUrl}?episode=${episodeNumber}`,
+          actionHref: `${baseUrl}&episode=${episodeNumber}`,
         };
       default:
         return {

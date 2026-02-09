@@ -93,6 +93,21 @@ export class LeagueQuestionController {
     return this.questionService.scoreQuestions(leagueId, seasonId, dto);
   }
 
+  @Get('trending')
+  @UseGuards(LeagueCommissionerOrAdminGuard)
+  async getTrendingQuestions(
+    @Param('leagueId') leagueId: string,
+    @Param('seasonId') seasonId: string,
+    @Query('episode') episode?: string,
+  ) {
+    const episodeNumber = episode ? parseInt(episode, 10) : 1;
+    return this.questionService.getTrendingQuestions(
+      leagueId,
+      seasonId,
+      episodeNumber,
+    );
+  }
+
   // ================== PLAYER ROUTES ==================
 
   @Get('episode/:episodeNumber')

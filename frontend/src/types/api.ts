@@ -318,6 +318,17 @@ export interface LeagueQuestion {
   answers?: PlayerAnswer[];
 }
 
+export interface TrendingQuestion {
+  text: string;
+  type: string;
+  options: string[] | null;
+  pointValue: number;
+  leagueCount: number;
+  isWager: boolean;
+  minWager: number | null;
+  maxWager: number | null;
+}
+
 export interface CreateLeagueQuestionDto {
   episodeNumber: number;
   text: string;

@@ -14,9 +14,11 @@ import {
   Button,
   Text,
   Divider,
+  HStack,
 } from '@chakra-ui/react';
 import { api } from '@/lib/api';
 import { AuthenticatedLayout } from '@/components/navigation';
+import { ReturnToLeagueButton } from '@/components/common';
 import type { CreateLeagueDto } from '@/types/api';
 
 export default function CreateLeaguePage() {
@@ -76,9 +78,12 @@ export default function CreateLeaguePage() {
       <Box as="main" minH="100vh" py={10}>
         <Container maxW="container.md">
           <VStack gap={6} align="stretch">
-            <Heading as="h1" size="xl">
-              Create a League
-            </Heading>
+            <HStack justify="space-between" align="center" w="full">
+              <Heading as="h1" size="xl">
+                Create a League
+              </Heading>
+              <ReturnToLeagueButton />
+            </HStack>
 
           {successMessage && (
             <Box

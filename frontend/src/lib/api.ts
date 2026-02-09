@@ -58,6 +58,7 @@ import type {
   CreateCommissionerMessageDto,
   UpdateCommissionerMessageDto,
   CommissionerMessagesResponse,
+  TrendingQuestion,
 } from '@/types/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -754,6 +755,18 @@ class ApiClient {
         method: 'POST',
         body: JSON.stringify(data),
       },
+    );
+  }
+
+  // ================== Trending Question endpoints ==================
+
+  async getTrendingQuestions(
+    leagueId: string,
+    seasonId: string,
+    episodeNumber: number,
+  ): Promise<TrendingQuestion[]> {
+    return this.request<TrendingQuestion[]>(
+      `/leagues/${leagueId}/seasons/${seasonId}/questions/trending?episode=${episodeNumber}`,
     );
   }
 
