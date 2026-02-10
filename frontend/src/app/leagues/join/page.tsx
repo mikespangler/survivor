@@ -67,11 +67,11 @@ export default function JoinLeaguePage() {
 
   return (
     <AuthenticatedLayout>
-      <Box as="main" minH="100vh" py={10}>
-        <Container maxW="container.md">
+      <Box as="main" minH="100vh" py={{ base: 5, md: 10 }}>
+        <Container maxW="container.md" px={{ base: 4, md: 6, lg: 8 }}>
           <VStack gap={6} align="stretch">
-            <HStack justify="space-between" align="center" w="full">
-              <Heading as="h1" size="xl">
+            <HStack justify="space-between" align="center" w="full" flexWrap="wrap" gap={3}>
+              <Heading as="h1" size={{ base: 'lg', md: 'xl' }}>
                 Join a League
               </Heading>
               <ReturnToLeagueButton />

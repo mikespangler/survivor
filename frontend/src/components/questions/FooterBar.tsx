@@ -42,12 +42,12 @@ export function FooterBar({
       borderTop="2px solid"
       borderColor="rgba(48, 53, 65, 0.5)"
       borderRadius="24px"
-      px={6}
-      py={6}
+      px={{ base: 4, md: 6 }}
+      py={{ base: 4, md: 6 }}
     >
       <VStack spacing={4} align="stretch">
         {/* Progress and save status */}
-        <HStack justify="space-between" w="full">
+        <HStack justify="space-between" w="full" flexWrap="wrap" gap={2}>
           <Text
             fontFamily="body"
             fontSize="14px"

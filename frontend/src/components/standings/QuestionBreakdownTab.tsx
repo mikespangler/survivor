@@ -148,6 +148,7 @@ export function QuestionBreakdownTab({
                 </Box>
               )}
 
+              <Box overflowX="auto">
               <Table variant="simple" size="sm">
                 <Thead>
                   <Tr>
@@ -200,6 +201,7 @@ export function QuestionBreakdownTab({
                   })}
                 </Tbody>
               </Table>
+              </Box>
             </AccordionPanel>
           </AccordionItem>
         ))}

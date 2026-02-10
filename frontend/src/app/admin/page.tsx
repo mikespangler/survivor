@@ -614,19 +614,19 @@ export default function AdminPage() {
 
   return (
     <AuthenticatedLayout>
-      <Container maxW="container.xl" py={10}>
-        <HStack justify="space-between" align="center" mb={8}>
-          <Heading>Admin Dashboard</Heading>
+      <Container maxW="container.xl" py={{ base: 5, md: 10 }} px={{ base: 4, md: 6, lg: 8 }}>
+        <Stack direction={{ base: 'column', md: 'row' }} justify="space-between" align={{ base: 'stretch', md: 'center' }} mb={8} gap={3}>
+          <Heading size={{ base: 'lg', md: 'xl' }}>Admin Dashboard</Heading>
           <ReturnToLeagueButton />
-        </HStack>
+        </Stack>
 
         <Tabs colorScheme="orange" isLazy>
-          <TabList>
-            <Tab>Seasons</Tab>
-            <Tab>Castaways</Tab>
-            <Tab>Episodes</Tab>
-            <Tab>Leagues</Tab>
-            <Tab>Users</Tab>
+          <TabList overflowX="auto" overflowY="hidden" flexWrap="nowrap" css={{ '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
+            <Tab whiteSpace="nowrap" flexShrink={0}>Seasons</Tab>
+            <Tab whiteSpace="nowrap" flexShrink={0}>Castaways</Tab>
+            <Tab whiteSpace="nowrap" flexShrink={0}>Episodes</Tab>
+            <Tab whiteSpace="nowrap" flexShrink={0}>Leagues</Tab>
+            <Tab whiteSpace="nowrap" flexShrink={0}>Users</Tab>
           </TabList>
 
           <TabPanels>

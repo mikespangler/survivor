@@ -21,7 +21,8 @@ export function HeaderBar({ weekNumber, dueIn, locksAt }: HeaderBarProps) {
       py={2}
       display="flex"
       alignItems="center"
-      gap={6}
+      gap={{ base: 3, md: 6 }}
+      flexWrap="wrap"
     >
       {/* Week badge */}
       <Box
@@ -37,19 +38,20 @@ export function HeaderBar({ weekNumber, dueIn, locksAt }: HeaderBarProps) {
           fontSize="14px"
           fontWeight="bold"
           color="brand.primary"
+          whiteSpace="nowrap"
         >
-          🔥 Week {weekNumber}
+          Week {weekNumber}
         </Text>
       </Box>
 
       {/* Lock icon */}
-      <ClockIcon boxSize="24px" color="text.secondary" />
+      <ClockIcon boxSize="24px" color="text.secondary" display={{ base: 'none', md: 'block' }} />
 
       {/* Due in */}
       <VStack align="start" spacing={0}>
         <Text
           fontFamily="body"
-          fontSize="14px"
+          fontSize={{ base: '12px', md: '14px' }}
           fontWeight="bold"
           color="brand.primary"
         >
@@ -57,22 +59,23 @@ export function HeaderBar({ weekNumber, dueIn, locksAt }: HeaderBarProps) {
         </Text>
         <Text
           fontFamily="display"
-          fontSize="16px"
+          fontSize={{ base: '14px', md: '16px' }}
           fontWeight="bold"
           color="text.primary"
+          whiteSpace="nowrap"
         >
           {dueIn}
         </Text>
       </VStack>
 
       {/* Divider */}
-      <Box h="32px" w="1px" bg="rgba(48, 53, 65, 0.5)" />
+      <Box h="32px" w="1px" bg="rgba(48, 53, 65, 0.5)" display={{ base: 'none', md: 'block' }} />
 
       {/* Locks at */}
       <VStack align="start" spacing={0}>
         <Text
           fontFamily="body"
-          fontSize="14px"
+          fontSize={{ base: '12px', md: '14px' }}
           fontWeight="bold"
           color="text.secondary"
         >
@@ -80,9 +83,10 @@ export function HeaderBar({ weekNumber, dueIn, locksAt }: HeaderBarProps) {
         </Text>
         <Text
           fontFamily="body"
-          fontSize="16px"
+          fontSize={{ base: '14px', md: '16px' }}
           fontWeight="bold"
           color="text.primary"
+          whiteSpace="nowrap"
         >
           {locksAt}
         </Text>

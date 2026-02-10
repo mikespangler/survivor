@@ -402,7 +402,7 @@ export function QuestionsManager({
 
   return (
     <VStack gap={6} align="stretch">
-      <HStack justify="space-between" align="center">
+      <Stack direction={{ base: 'column', md: 'row' }} justify="space-between" align={{ base: 'stretch', md: 'center' }} gap={3}>
         <Box>
           {leagueName && seasonName && (
             <Text fontSize="sm" color="text.secondary">
@@ -410,20 +410,20 @@ export function QuestionsManager({
             </Text>
           )}
         </Box>
-        <HStack>
-          <Button variant="outline" onClick={onTemplatesOpen}>
+        <HStack flexWrap="wrap">
+          <Button variant="outline" onClick={onTemplatesOpen} size={{ base: 'sm', md: 'md' }}>
             Add from Templates
           </Button>
           {unscoredCount > 0 && (
-            <Button colorScheme="green" onClick={handleOpenScoring}>
+            <Button colorScheme="green" onClick={handleOpenScoring} size={{ base: 'sm', md: 'md' }}>
               Score Questions ({unscoredCount})
             </Button>
           )}
         </HStack>
-      </HStack>
+      </Stack>
 
-      <HStack>
-        <FormControl maxW="200px">
+      <Stack direction={{ base: 'column', sm: 'row' }} align={{ base: 'stretch', sm: 'flex-end' }} gap={3}>
+        <FormControl maxW={{ base: 'full', sm: '200px' }}>
           <FormLabel>Episode</FormLabel>
           <Select
             value={selectedEpisode}
@@ -440,13 +440,13 @@ export function QuestionsManager({
             ))}
           </Select>
         </FormControl>
-        <Box pt={8}>
+        <HStack flexWrap="wrap" gap={2} pb={{ base: 0, sm: 1 }}>
           <Badge colorScheme="blue">{questions.length} questions</Badge>
-          <Badge colorScheme="orange" ml={2}>
+          <Badge colorScheme="orange">
             {totalAnswers} answers submitted
           </Badge>
-        </Box>
-      </HStack>
+        </HStack>
+      </Stack>
 
       {/* Trending Questions Carousel */}
       <TrendingQuestionsCarousel

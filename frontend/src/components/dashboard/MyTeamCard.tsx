@@ -36,10 +36,10 @@ export function MyTeamCard({ myTeam }: MyTeamCardProps) {
       overflow="hidden"
     >
       {/* Header */}
-      <Box px="22px" pt="18px" pb="14px">
+      <Box px={{ base: '16px', md: '22px' }} pt="18px" pb="14px">
         <Text
           fontFamily="heading"
-          fontSize="22px"
+          fontSize={{ base: '18px', md: '22px' }}
           letterSpacing="1.5px"
           color="text.primary"
         >
@@ -47,7 +47,7 @@ export function MyTeamCard({ myTeam }: MyTeamCardProps) {
         </Text>
       </Box>
 
-      <Box px="22px" pb="20px">
+      <Box px={{ base: '16px', md: '22px' }} pb="20px">
         {/* Segmented Stat Bar */}
         <Flex
           gap="2px"
@@ -57,7 +57,7 @@ export function MyTeamCard({ myTeam }: MyTeamCardProps) {
           p="3px"
         >
           <Box flex="1" textAlign="center" py={3} px={2} borderRadius="8px" bg="rgba(32, 31, 39, 1)">
-            <Text fontFamily="heading" fontSize="28px" lineHeight="1" color="#4ecb71">
+            <Text fontFamily="heading" fontSize={{ base: '22px', md: '28px' }} lineHeight="1" color="#4ecb71">
               {myTeam.stats.activeCastaways}
             </Text>
             <Text
@@ -73,7 +73,7 @@ export function MyTeamCard({ myTeam }: MyTeamCardProps) {
             </Text>
           </Box>
           <Box flex="1" textAlign="center" py={3} px={2} borderRadius="8px">
-            <Text fontFamily="heading" fontSize="28px" lineHeight="1" color="#e85454">
+            <Text fontFamily="heading" fontSize={{ base: '22px', md: '28px' }} lineHeight="1" color="#e85454">
               {myTeam.stats.eliminatedCastaways}
             </Text>
             <Text
@@ -89,7 +89,7 @@ export function MyTeamCard({ myTeam }: MyTeamCardProps) {
             </Text>
           </Box>
           <Box flex="1" textAlign="center" py={3} px={2} borderRadius="8px">
-            <Text fontFamily="heading" fontSize="28px" lineHeight="1" color="brand.primary">
+            <Text fontFamily="heading" fontSize={{ base: '22px', md: '28px' }} lineHeight="1" color="brand.primary">
               {myTeam.totalPoints}
             </Text>
             <Text

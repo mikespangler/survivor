@@ -15,12 +15,20 @@ import {
   MenuDivider,
   Avatar,
   Portal,
+  IconButton,
+  Icon,
 } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
 import { getCloudinaryUrl } from '@/lib/cloudinary';
 import { ChevronDownIcon, ProfileIcon, SettingsIcon, LogoutIcon } from '@/components/dashboard/icons';
 import Link from 'next/link';
 import type { SeasonMetadata } from '@/types/api';
+
+const HamburgerIcon = (props: Record<string, unknown>) => (
+  <Icon viewBox="0 0 24 24" {...props}>
+    <path fill="currentColor" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+  </Icon>
+);
 
 const pulseAnimation = keyframes`
   0%, 100% { opacity: 1; }
@@ -32,6 +40,7 @@ interface AuthenticatedHeaderProps {
   seasonMetadata?: SeasonMetadata | null;
   leagueId?: string | null;
   hasDrafted?: boolean | null;
+  onMobileNavOpen?: () => void;
 }
 
 function formatDeadline(airDate: string | null): string {
@@ -44,7 +53,7 @@ function formatDeadline(airDate: string | null): string {
   });
 }
 
-export function AuthenticatedHeader({ userName, seasonMetadata, leagueId, hasDrafted }: AuthenticatedHeaderProps) {
+export function AuthenticatedHeader({ userName, seasonMetadata, leagueId, hasDrafted, onMobileNavOpen }: AuthenticatedHeaderProps) {
   const router = useRouter();
   const { user } = useUser();
   const { signOut, openUserProfile } = useClerk();
@@ -63,46 +72,59 @@ export function AuthenticatedHeader({ userName, seasonMetadata, leagueId, hasDra
       left={0}
       right={0}
       h="64px"
-      zIndex={100}
+      zIndex={1500}
       bg="rgba(20, 24, 31, 0.9)"
       backdropFilter="blur(8px)"
       borderBottom="1px solid"
       borderColor="rgba(48, 53, 65, 0.5)"
     >
       <HStack justify="space-between" h="full" px={4}>
-        {/* Left: Logo */}
-        <Link href="/leagues">
-          <HStack gap={4} cursor="pointer" _hover={{ opacity: 0.9 }}>
-            <Image
-              src={getCloudinaryUrl('main-logo', { height: 96, crop: 'fit', format: 'png', trim: true })}
-              alt="Survivor Fantasy League"
-              h="32px"
-              w="auto"
-            />
-            <HStack gap={1}>
-              <Text
-                fontFamily="heading"
-                fontSize="14px"
-                fontWeight="bold"
-                color="brand.primary"
-                letterSpacing="1.5px"
-              >
-                OUTPICK
-              </Text>
-              <Text
-                fontFamily="heading"
-                fontSize="14px"
-                fontWeight="bold"
-                color="text.primary"
-                letterSpacing="1.5px"
-              >
-                OUTLAST
-              </Text>
+        {/* Left: Hamburger + Logo */}
+        <HStack gap={2}>
+          {/* Hamburger - mobile/tablet only */}
+          <IconButton
+            aria-label="Open navigation menu"
+            icon={<HamburgerIcon boxSize="24px" />}
+            variant="ghost"
+            color="text.secondary"
+            display={{ base: 'flex', lg: 'none' }}
+            onClick={onMobileNavOpen}
+            _hover={{ bg: 'rgba(240, 101, 66, 0.05)' }}
+            size="sm"
+          />
+          <Link href="/leagues">
+            <HStack gap={4} cursor="pointer" _hover={{ opacity: 0.9 }}>
+              <Image
+                src={getCloudinaryUrl('main-logo', { height: 96, crop: 'fit', format: 'png', trim: true })}
+                alt="Survivor Fantasy League"
+                h="32px"
+                w="auto"
+              />
+              <HStack gap={1} display={{ base: 'none', sm: 'flex' }}>
+                <Text
+                  fontFamily="heading"
+                  fontSize="14px"
+                  fontWeight="bold"
+                  color="brand.primary"
+                  letterSpacing="1.5px"
+                >
+                  OUTPICK
+                </Text>
+                <Text
+                  fontFamily="heading"
+                  fontSize="14px"
+                  fontWeight="bold"
+                  color="text.primary"
+                  letterSpacing="1.5px"
+                >
+                  OUTLAST
+                </Text>
+              </HStack>
             </HStack>
-          </HStack>
-        </Link>
+          </Link>
+        </HStack>
 
-        {/* Episode context - aligned with content area below (after sidebar) */}
+        {/* Episode context - hidden on mobile, aligned after sidebar on desktop */}
         {seasonMetadata?.status === 'ACTIVE' && (
           <HStack
             gap={5}
@@ -111,6 +133,7 @@ export function AuthenticatedHeader({ userName, seasonMetadata, leagueId, hasDra
             pl={8}
             h="full"
             align="center"
+            display={{ base: 'none', lg: 'flex' }}
           >
             <Text
               fontFamily="heading"

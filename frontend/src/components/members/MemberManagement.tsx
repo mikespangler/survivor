@@ -12,6 +12,7 @@ import {
   Card,
   CardBody,
   useDisclosure,
+  Stack,
 } from '@chakra-ui/react';
 import { AddIcon, EmailIcon } from '@chakra-ui/icons';
 import { useMemberManagement } from './useMemberManagement';
@@ -96,16 +97,17 @@ export function MemberManagement({
 
   return (
     <VStack gap={6} align="stretch">
-      <HStack justify="space-between">
+      <Stack direction={{ base: 'column', md: 'row' }} justify="space-between" gap={3}>
         <VStack align="start" spacing={0}>
-          <Heading size="lg">Manage Members</Heading>
+          <Heading size={{ base: 'md', md: 'lg' }}>Manage Members</Heading>
           <Text color="text.secondary">{leagueName}</Text>
         </VStack>
-        <HStack>
+        <HStack flexWrap="wrap" gap={2}>
           <Button
             leftIcon={<EmailIcon />}
             onClick={onEmailOpen}
             colorScheme="blue"
+            size={{ base: 'sm', md: 'md' }}
           >
             Send Email Invites
           </Button>
@@ -113,25 +115,28 @@ export function MemberManagement({
             leftIcon={<AddIcon />}
             onClick={onAddOpen}
             colorScheme="brand"
+            size={{ base: 'sm', md: 'md' }}
           >
             Add Member
           </Button>
           {showBackButton && onBack && (
-            <Button variant="outline" onClick={onBack}>
+            <Button variant="outline" onClick={onBack} size={{ base: 'sm', md: 'md' }}>
               Back
             </Button>
           )}
         </HStack>
-      </HStack>
+      </Stack>
 
       <Card>
-        <CardBody>
-          <MemberTable
-            members={members}
-            onToggleCommissioner={confirmToggleCommissioner}
-            onRemoveMember={confirmRemoveMember}
-            changingRoleId={changingRoleId}
-          />
+        <CardBody p={{ base: 2, md: 5 }}>
+          <Box overflowX="auto">
+            <MemberTable
+              members={members}
+              onToggleCommissioner={confirmToggleCommissioner}
+              onRemoveMember={confirmRemoveMember}
+              changingRoleId={changingRoleId}
+            />
+          </Box>
         </CardBody>
       </Card>
 

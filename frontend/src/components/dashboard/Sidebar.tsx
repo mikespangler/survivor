@@ -14,6 +14,11 @@ import {
   MenuList,
   MenuItem,
   Portal,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerBody,
+  useBreakpointValue,
 } from '@chakra-ui/react';
 import {
   DashboardIcon,
@@ -37,6 +42,8 @@ interface SidebarProps {
   currentUser?: User | null;
   currentEpisodeState?: LeagueEpisodeState | null;
   isCommissioner?: boolean;
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
 interface NavLinkProps {
@@ -47,14 +54,18 @@ interface NavLinkProps {
   isCollapsed?: boolean;
 }
 
-const NavLink = ({ href, icon, children, isActive = false, isCollapsed = false }: NavLinkProps) => {
+interface NavLinkInternalProps extends NavLinkProps {
+  onNavigate?: () => void;
+}
+
+const NavLink = ({ href, icon, children, isActive = false, isCollapsed = false, onNavigate }: NavLinkInternalProps) => {
   const router = useRouter();
 
   return (
     <Button
       variant="ghost"
       justifyContent={isCollapsed ? "center" : "flex-start"}
-      onClick={() => router.push(href)}
+      onClick={() => { router.push(href); onNavigate?.(); }}
       bg={isActive ? 'rgba(240, 101, 66, 0.1)' : 'transparent'}
       border={isActive ? '1px solid' : 'none'}
       borderColor={isActive ? 'rgba(240, 101, 66, 0.2)' : 'transparent'}
@@ -86,10 +97,11 @@ const NavLink = ({ href, icon, children, isActive = false, isCollapsed = false }
   );
 };
 
-export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, userLeagues = [], currentUser, currentEpisodeState, isCommissioner: isCommissionerProp }: SidebarProps) {
+export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, userLeagues = [], currentUser, currentEpisodeState, isCommissioner: isCommissionerProp, isMobileOpen = false, onMobileClose }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const isMobile = useBreakpointValue({ base: true, lg: false }, { fallback: 'lg' });
 
   const baseUrl = league ? `/leagues/${league.slug || league.id}` : '';
 
@@ -197,261 +209,262 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
   const handleLeagueSwitch = (switchLeague: { id: string; slug: string }) => {
     // Navigate to the new league's dashboard using slug
     router.push(`/leagues/${switchLeague.slug || switchLeague.id}/dashboard`);
+    onMobileClose?.();
   };
 
   const handleCollapse = () => {
     setIsCollapsed(!isCollapsed);
   };
 
-  return (
-    <>
-    <Box
-      w={isCollapsed ? "80px" : "256px"}
-      minW={isCollapsed ? "80px" : "256px"}
-      bg="bg.secondary"
-      borderRight="1px solid"
-      borderColor="rgba(48, 53, 65, 0.5)"
-      position="fixed"
-      top="64px"
-      left="0"
-      h="calc(100vh - 64px)"
-      display="flex"
-      flexDirection="column"
-      transition="all 0.3s ease"
-      overflow="hidden"
-      zIndex={10}
-    >
-      <VStack align="stretch" flex="1" px={1} pt={4} pb={8} gap={3}>
-        {/* League Selector - Only show if user has multiple leagues */}
-        {league && userLeagues.length > 1 && (
-          <Box
-            px={3}
-            pb={4}
-            borderBottom="2px solid"
-            borderColor="rgba(48, 53, 65, 0.5)"
-          >
-            <Menu placement="bottom-end">
-              <MenuButton
-                as={Button}
-                w="full"
-                h="48px"
-                bg="rgba(30, 36, 48, 0.85)"
-                backdropFilter="blur(8px)"
-                border="1px solid"
-                borderColor="rgba(255, 255, 255, 0.08)"
-                borderRadius="12px"
-                boxShadow="0 2px 4px rgba(0, 0, 0, 0.2)"
-                _hover={{
-                  bg: 'rgba(40, 46, 58, 0.9)',
-                  borderColor: 'rgba(240, 101, 66, 0.3)',
-                  boxShadow: '0 0 20px rgba(240, 101, 66, 0.1)'
-                }}
-                _active={{
-                  bg: 'rgba(35, 41, 53, 0.95)',
-                  transform: 'scale(0.98)'
-                }}
-                px={3}
-                transition="all 0.2s ease"
-              >
-                {isCollapsed ? (
-                  <HStack w="full" justify="center" minW={0}>
-                    <Text
-                      fontFamily="heading"
-                      fontSize="12px"
-                      fontWeight="semibold"
-                      color="text.primary"
-                      noOfLines={1}
-                      isTruncated
-                    >
-                      {league.name}
-                    </Text>
-                  </HStack>
-                ) : (
-                  <HStack w="full" justify="space-between" gap={2} minW={0}>
-                    <Text
-                      fontFamily="heading"
-                      fontSize="14px"
-                      fontWeight="medium"
-                      color="text.primary"
-                      noOfLines={2}
-                      flex="1"
-                      minW={0}
-                      lineHeight="1.3"
-                    >
-                      {league.name}
-                    </Text>
-                    <ChevronDownIcon boxSize="16px" color="text.secondary" flexShrink={0} />
-                  </HStack>
-                )}
-              </MenuButton>
-              <Portal>
-                <MenuList
-                  bg="bg.secondary"
-                  borderColor="rgba(48, 53, 65, 0.5)"
-                  minW="240px"
-                  py={2}
-                >
-                  {userLeagues.map((l) => (
-                    <MenuItem
-                      key={l.id}
-                      onClick={() => handleLeagueSwitch(l)}
-                      bg={l.id === league.id ? 'rgba(240, 101, 66, 0.1)' : 'transparent'}
-                      _hover={{ bg: 'rgba(240, 101, 66, 0.05)' }}
-                      px={4}
-                      py={3}
-                    >
-                      <HStack gap={3} w="full" minW={0}>
-                        <VStack align="start" gap={0} flex="1" minW={0}>
-                          <Text
-                            fontFamily="heading"
-                            fontSize="14px"
-                            color="text.primary"
-                            fontWeight={l.id === league.id ? 'bold' : 'medium'}
-                            noOfLines={1}
-                            isTruncated
-                          >
-                            {l.name}
-                          </Text>
-                        </VStack>
-                        {l.id === league.id && (
-                          <Box
-                            boxSize="8px"
-                            borderRadius="full"
-                            bg="brand.primary"
-                            flexShrink={0}
-                          />
-                        )}
-                      </HStack>
-                    </MenuItem>
-                  ))}
-                </MenuList>
-              </Portal>
-            </Menu>
-          </Box>
-        )}
+  // Close drawer on mobile navigation
+  const handleMobileNav = () => {
+    if (isMobile) onMobileClose?.();
+  };
 
-        {/* Navigation - Only show league nav if in league context */}
-        <VStack align="stretch" gap={1} px={3} flex="1">
-          {league && (
-            <>
-              <NavLink
-                href={`${baseUrl}/dashboard`}
-                icon={<DashboardIcon boxSize="20px" />}
-                isActive={isActive(`${baseUrl}/dashboard`)}
-                isCollapsed={isCollapsed}
-              >
-                Dashboard
-              </NavLink>
-              <NavLink
-                href={`${baseUrl}/standings`}
-                icon={<StandingsIcon boxSize="20px" />}
-                isActive={isActive(`${baseUrl}/standings`)}
-                isCollapsed={isCollapsed}
-              >
-                Standings
-              </NavLink>
-              <NavLink
-                href={
-                  isCommissioner && currentEpisodeState?.needsScoring
-                    ? `${baseUrl}/settings?tab=questions`
-                    : `${baseUrl}/questions`
-                }
-                icon={<WeeklyQuestionsIcon boxSize="20px" />}
-                isActive={isActive(`${baseUrl}/questions`)}
-                isCollapsed={isCollapsed}
-              >
-                <HStack justify="space-between" flex="1" gap={2} minW={0}>
-                  <Text fontSize="14px" fontFamily="body" isTruncated>Questions</Text>
-                  {questionsBadge && (
-                    <Badge
-                      fontSize="9px"
-                      px={1.5}
-                      py={0.5}
-                      borderRadius="full"
-                      bg={questionsBadge.bg}
-                      color={questionsBadge.color}
-                      fontWeight="bold"
-                      flexShrink={0}
-                    >
-                      {questionsBadge.label}
-                    </Badge>
-                  )}
-                </HStack>
-              </NavLink>
-              <NavLink
-                href={`${baseUrl}/draft`}
-                icon={<DraftIcon boxSize="20px" />}
-                isActive={isActive(`${baseUrl}/draft`)}
-                isCollapsed={isCollapsed}
-              >
-                Draft
-              </NavLink>
-              {isCommissioner && (
-                <NavLink
-                  href={`${baseUrl}/settings`}
-                  icon={<SettingsIcon boxSize="20px" />}
-                  isActive={isActive(`${baseUrl}/settings`)}
-                  isCollapsed={isCollapsed}
-                >
-                  League Settings
-                </NavLink>
-              )}
-            </>
-          )}
-        </VStack>
+  const showCollapsed = isCollapsed && !isMobile;
 
-        {/* Bottom Section */}
-        <VStack
-          align="stretch"
-          gap={1}
+  const sidebarContent = (
+    <VStack align="stretch" flex="1" px={1} pt={4} pb={8} gap={3}>
+      {/* League Selector - Only show if user has multiple leagues */}
+      {league && userLeagues.length > 1 && (
+        <Box
           px={3}
-          pt={3.5}
-          borderTop="2px solid"
+          pb={4}
+          borderBottom="2px solid"
           borderColor="rgba(48, 53, 65, 0.5)"
         >
-          {/* Create League Button */}
-          <NavLink
-            href="/leagues/create"
-            icon={<Box fontSize="20px">🏝️</Box>}
-            isActive={pathname === '/leagues/create'}
-            isCollapsed={isCollapsed}
-          >
-            Create League
-          </NavLink>
-
-          {/* Join League Button */}
-          <NavLink
-            href="/leagues/join"
-            icon={<Box fontSize="20px">🤝</Box>}
-            isActive={pathname === '/leagues/join'}
-            isCollapsed={isCollapsed}
-          >
-            Join League
-          </NavLink>
-
-          {/* How to Play */}
-          <NavLink
-            href="/how-to-play"
-            icon={<FireIcon boxSize="20px" />}
-            isActive={pathname === '/how-to-play'}
-            isCollapsed={isCollapsed}
-          >
-            How to Play
-          </NavLink>
-
-          {/* Super Admin Link - Only show for admin users */}
-          {isAdmin && (
-            <NavLink
-              href="/admin"
-              icon={<AdminIcon boxSize="20px" />}
-              isActive={isActive('/admin')}
-              isCollapsed={isCollapsed}
+          <Menu placement="bottom-end">
+            <MenuButton
+              as={Button}
+              w="full"
+              h="48px"
+              bg="rgba(30, 36, 48, 0.85)"
+              backdropFilter="blur(8px)"
+              border="1px solid"
+              borderColor="rgba(255, 255, 255, 0.08)"
+              borderRadius="12px"
+              boxShadow="0 2px 4px rgba(0, 0, 0, 0.2)"
+              _hover={{
+                bg: 'rgba(40, 46, 58, 0.9)',
+                borderColor: 'rgba(240, 101, 66, 0.3)',
+                boxShadow: '0 0 20px rgba(240, 101, 66, 0.1)'
+              }}
+              _active={{
+                bg: 'rgba(35, 41, 53, 0.95)',
+                transform: 'scale(0.98)'
+              }}
+              px={3}
+              transition="all 0.2s ease"
             >
-              Super Admin
-            </NavLink>
-          )}
+              {showCollapsed ? (
+                <HStack w="full" justify="center" minW={0}>
+                  <Text
+                    fontFamily="heading"
+                    fontSize="12px"
+                    fontWeight="semibold"
+                    color="text.primary"
+                    noOfLines={1}
+                    isTruncated
+                  >
+                    {league.name}
+                  </Text>
+                </HStack>
+              ) : (
+                <HStack w="full" justify="space-between" gap={2} minW={0}>
+                  <Text
+                    fontFamily="heading"
+                    fontSize="14px"
+                    fontWeight="medium"
+                    color="text.primary"
+                    noOfLines={2}
+                    flex="1"
+                    minW={0}
+                    lineHeight="1.3"
+                  >
+                    {league.name}
+                  </Text>
+                  <ChevronDownIcon boxSize="16px" color="text.secondary" flexShrink={0} />
+                </HStack>
+              )}
+            </MenuButton>
+            <Portal>
+              <MenuList
+                bg="bg.secondary"
+                borderColor="rgba(48, 53, 65, 0.5)"
+                minW="240px"
+                py={2}
+              >
+                {userLeagues.map((l) => (
+                  <MenuItem
+                    key={l.id}
+                    onClick={() => handleLeagueSwitch(l)}
+                    bg={l.id === league.id ? 'rgba(240, 101, 66, 0.1)' : 'transparent'}
+                    _hover={{ bg: 'rgba(240, 101, 66, 0.05)' }}
+                    px={4}
+                    py={3}
+                  >
+                    <HStack gap={3} w="full" minW={0}>
+                      <VStack align="start" gap={0} flex="1" minW={0}>
+                        <Text
+                          fontFamily="heading"
+                          fontSize="14px"
+                          color="text.primary"
+                          fontWeight={l.id === league.id ? 'bold' : 'medium'}
+                          noOfLines={1}
+                          isTruncated
+                        >
+                          {l.name}
+                        </Text>
+                      </VStack>
+                      {l.id === league.id && (
+                        <Box
+                          boxSize="8px"
+                          borderRadius="full"
+                          bg="brand.primary"
+                          flexShrink={0}
+                        />
+                      )}
+                    </HStack>
+                  </MenuItem>
+                ))}
+              </MenuList>
+            </Portal>
+          </Menu>
+        </Box>
+      )}
 
-          {/* Collapse */}
+      {/* Navigation - Only show league nav if in league context */}
+      <VStack align="stretch" gap={1} px={3} flex="1">
+        {league && (
+          <>
+            <NavLink
+              href={`${baseUrl}/dashboard`}
+              icon={<DashboardIcon boxSize="20px" />}
+              isActive={isActive(`${baseUrl}/dashboard`)}
+              isCollapsed={showCollapsed}
+              onNavigate={handleMobileNav}
+            >
+              Dashboard
+            </NavLink>
+            <NavLink
+              href={`${baseUrl}/standings`}
+              icon={<StandingsIcon boxSize="20px" />}
+              isActive={isActive(`${baseUrl}/standings`)}
+              isCollapsed={showCollapsed}
+              onNavigate={handleMobileNav}
+            >
+              Standings
+            </NavLink>
+            <NavLink
+              href={
+                isCommissioner && currentEpisodeState?.needsScoring
+                  ? `${baseUrl}/settings?tab=questions`
+                  : `${baseUrl}/questions`
+              }
+              icon={<WeeklyQuestionsIcon boxSize="20px" />}
+              isActive={isActive(`${baseUrl}/questions`)}
+              isCollapsed={showCollapsed}
+              onNavigate={handleMobileNav}
+            >
+              <HStack justify="space-between" flex="1" gap={2} minW={0}>
+                <Text fontSize="14px" fontFamily="body" isTruncated>Questions</Text>
+                {questionsBadge && (
+                  <Badge
+                    fontSize="9px"
+                    px={1.5}
+                    py={0.5}
+                    borderRadius="full"
+                    bg={questionsBadge.bg}
+                    color={questionsBadge.color}
+                    fontWeight="bold"
+                    flexShrink={0}
+                  >
+                    {questionsBadge.label}
+                  </Badge>
+                )}
+              </HStack>
+            </NavLink>
+            <NavLink
+              href={`${baseUrl}/draft`}
+              icon={<DraftIcon boxSize="20px" />}
+              isActive={isActive(`${baseUrl}/draft`)}
+              isCollapsed={showCollapsed}
+              onNavigate={handleMobileNav}
+            >
+              Draft
+            </NavLink>
+            {isCommissioner && (
+              <NavLink
+                href={`${baseUrl}/settings`}
+                icon={<SettingsIcon boxSize="20px" />}
+                isActive={isActive(`${baseUrl}/settings`)}
+                isCollapsed={showCollapsed}
+                onNavigate={handleMobileNav}
+              >
+                League Settings
+              </NavLink>
+            )}
+          </>
+        )}
+      </VStack>
+
+      {/* Bottom Section */}
+      <VStack
+        align="stretch"
+        gap={1}
+        px={3}
+        pt={3.5}
+        borderTop="2px solid"
+        borderColor="rgba(48, 53, 65, 0.5)"
+      >
+        {/* Create League Button */}
+        <NavLink
+          href="/leagues/create"
+          icon={<Box fontSize="20px">🏝️</Box>}
+          isActive={pathname === '/leagues/create'}
+          isCollapsed={showCollapsed}
+          onNavigate={handleMobileNav}
+        >
+          Create League
+        </NavLink>
+
+        {/* Join League Button */}
+        <NavLink
+          href="/leagues/join"
+          icon={<Box fontSize="20px">🤝</Box>}
+          isActive={pathname === '/leagues/join'}
+          isCollapsed={showCollapsed}
+          onNavigate={handleMobileNav}
+        >
+          Join League
+        </NavLink>
+
+        {/* How to Play */}
+        <NavLink
+          href="/how-to-play"
+          icon={<FireIcon boxSize="20px" />}
+          isActive={pathname === '/how-to-play'}
+          isCollapsed={showCollapsed}
+          onNavigate={handleMobileNav}
+        >
+          How to Play
+        </NavLink>
+
+        {/* Super Admin Link - Only show for admin users */}
+        {isAdmin && (
+          <NavLink
+            href="/admin"
+            icon={<AdminIcon boxSize="20px" />}
+            isActive={isActive('/admin')}
+            isCollapsed={showCollapsed}
+            onNavigate={handleMobileNav}
+          >
+            Super Admin
+          </NavLink>
+        )}
+
+        {/* Collapse - only on desktop */}
+        {!isMobile && (
           <Button
             variant="ghost"
             justifyContent={isCollapsed ? "center" : "flex-start"}
@@ -482,16 +495,58 @@ export function Sidebar({ league, seasonMetadata, isAdmin, currentLeagueId, user
               )}
             </HStack>
           </Button>
-        </VStack>
+        )}
       </VStack>
-    </Box>
-    {/* Spacer to push main content */}
-    <Box
-      w={isCollapsed ? "80px" : "256px"}
-      minW={isCollapsed ? "80px" : "256px"}
-      flexShrink={0}
-      transition="all 0.3s ease"
-    />
+    </VStack>
+  );
+
+  // Mobile: render as a Drawer
+  if (isMobile) {
+    return (
+      <Drawer
+        isOpen={isMobileOpen}
+        placement="left"
+        onClose={onMobileClose || (() => {})}
+        size="xs"
+      >
+        <DrawerOverlay />
+        <DrawerContent bg="bg.secondary" pt="64px">
+          <DrawerBody p={0}>
+            {sidebarContent}
+          </DrawerBody>
+        </DrawerContent>
+      </Drawer>
+    );
+  }
+
+  // Desktop: fixed sidebar + spacer
+  return (
+    <>
+      <Box
+        w={isCollapsed ? "80px" : "256px"}
+        minW={isCollapsed ? "80px" : "256px"}
+        bg="bg.secondary"
+        borderRight="1px solid"
+        borderColor="rgba(48, 53, 65, 0.5)"
+        position="fixed"
+        top="64px"
+        left="0"
+        h="calc(100vh - 64px)"
+        display="flex"
+        flexDirection="column"
+        transition="all 0.3s ease"
+        overflow="hidden"
+        zIndex={10}
+      >
+        {sidebarContent}
+      </Box>
+      {/* Spacer to push main content */}
+      <Box
+        w={isCollapsed ? "80px" : "256px"}
+        minW={isCollapsed ? "80px" : "256px"}
+        flexShrink={0}
+        transition="all 0.3s ease"
+      />
     </>
   );
 }

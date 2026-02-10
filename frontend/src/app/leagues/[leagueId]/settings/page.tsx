@@ -215,10 +215,10 @@ export default function LeagueSettingsPage() {
 
   return (
     <AuthenticatedLayout>
-      <Box as="main" minH="100vh" bg="transparent" py={10}>
-        <Container maxW="container.xl">
+      <Box as="main" minH="100vh" bg="transparent" py={{ base: 5, md: 10 }}>
+        <Container maxW="container.xl" px={{ base: 4, md: 6, lg: 8 }}>
           <VStack gap={6} align="stretch">
-            <Heading as="h1" size="xl">
+            <Heading as="h1" size={{ base: 'lg', md: 'xl' }}>
               League Settings
             </Heading>
 
@@ -247,12 +247,12 @@ export default function LeagueSettingsPage() {
             )}
 
             <Tabs index={tabIndex} onChange={setTabIndex} variant="enclosed">
-              <TabList>
-                <Tab>Questions</Tab>
-                {isCommissioner && <Tab>Announcements</Tab>}
-                {isCommissioner && <Tab>Members</Tab>}
-                <Tab>Points</Tab>
-                <Tab>Draft</Tab>
+              <TabList overflowX="auto" overflowY="hidden" flexWrap="nowrap" css={{ '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
+                <Tab whiteSpace="nowrap" flexShrink={0}>Questions</Tab>
+                {isCommissioner && <Tab whiteSpace="nowrap" flexShrink={0}>Announcements</Tab>}
+                {isCommissioner && <Tab whiteSpace="nowrap" flexShrink={0}>Members</Tab>}
+                <Tab whiteSpace="nowrap" flexShrink={0}>Points</Tab>
+                <Tab whiteSpace="nowrap" flexShrink={0}>Draft</Tab>
               </TabList>
 
               <TabPanels>

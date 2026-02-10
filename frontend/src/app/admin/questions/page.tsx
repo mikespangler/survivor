@@ -282,8 +282,8 @@ export default function AdminQuestionsPage() {
   }
 
   return (
-    <Container maxW="container.xl" py={10}>
-      <Heading mb={8}>Question Templates</Heading>
+    <Container maxW="container.xl" py={{ base: 5, md: 10 }} px={{ base: 4, md: 6, lg: 8 }}>
+      <Heading mb={8} size={{ base: 'lg', md: 'xl' }}>Question Templates</Heading>
 
       <Stack spacing={8}>
         <Box as="form" onSubmit={handleSubmit}>

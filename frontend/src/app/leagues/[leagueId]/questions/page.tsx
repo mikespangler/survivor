@@ -350,7 +350,7 @@ export default function PlayerQuestionsPage() {
               <Box>
                 <Text
                   fontFamily="display"
-                  fontSize="48px"
+                  fontSize={{ base: '28px', md: '36px', lg: '48px' }}
                   fontWeight="bold"
                   color="text.primary"
                   letterSpacing="-1.2px"
@@ -385,14 +385,14 @@ export default function PlayerQuestionsPage() {
     return (
       <VStack spacing={4} align="stretch">
         {/* Section header */}
-        <HStack justify="space-between" align="center" h="48px">
+        <HStack justify="space-between" align="center" minH="48px" flexWrap="wrap" gap={2}>
           <Text
             fontFamily="display"
-            fontSize="32px"
+            fontSize={{ base: '22px', md: '28px', lg: '32px' }}
             fontWeight="bold"
             color="text.primary"
             letterSpacing="-0.8px"
-            lineHeight="48px"
+            lineHeight={{ base: '32px', md: '48px' }}
           >
             {title}
           </Text>
@@ -442,18 +442,18 @@ export default function PlayerQuestionsPage() {
   return (
     <AuthenticatedLayout>
       <Box as="main" minH="100vh" bg="transparent">
-        <Container maxW="container.lg" py={8} px={8}>
-          <VStack spacing={11} align="stretch">
+        <Container maxW="container.lg" py={{ base: 5, md: 8 }} px={{ base: 4, md: 6, lg: 8 }}>
+          <VStack spacing={{ base: 6, md: 11 }} align="stretch">
             {/* Header */}
             <HStack justify="space-between" align="flex-start" flexWrap="wrap" gap={4}>
-              <VStack align="start" spacing={2} maxW="550px">
+              <VStack align="start" spacing={2} maxW={{ base: 'full', md: '550px' }}>
                 <Text
                   fontFamily="display"
-                  fontSize="48px"
+                  fontSize={{ base: '28px', md: '36px', lg: '48px' }}
                   fontWeight="bold"
                   color="text.primary"
                   letterSpacing="-1.2px"
-                  lineHeight="48px"
+                  lineHeight={{ base: '36px', md: '48px' }}
                 >
                   Weekly Questions
                 </Text>

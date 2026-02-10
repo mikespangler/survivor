@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { Box, Flex, Spinner } from '@chakra-ui/react';
+import { Box, Flex, Spinner, useDisclosure } from '@chakra-ui/react';
 import { Sidebar } from '@/components/dashboard';
 import { AuthenticatedHeader } from './AuthenticatedHeader';
 import { api } from '@/lib/api';
@@ -17,6 +17,7 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
   const { isSignedIn, isLoaded } = useUser();
   const router = useRouter();
   const pathname = usePathname();
+  const { isOpen: isMobileNavOpen, onOpen: onMobileNavOpen, onClose: onMobileNavClose } = useDisclosure();
 
   const [mounted, setMounted] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -149,7 +150,13 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
 
   return (
     <Box minH="100vh" bg="bg.primary">
-      <AuthenticatedHeader userName={currentUser?.name} seasonMetadata={seasonMetadata} leagueId={league?.slug || league?.id} hasDrafted={hasDrafted} />
+      <AuthenticatedHeader
+        userName={currentUser?.name}
+        seasonMetadata={seasonMetadata}
+        leagueId={league?.slug || league?.id}
+        hasDrafted={hasDrafted}
+        onMobileNavOpen={onMobileNavOpen}
+      />
       <Flex pt="64px">
         <Sidebar
           league={league}
@@ -160,6 +167,8 @@ export function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
           currentUser={currentUser}
           currentEpisodeState={currentEpisodeState}
           isCommissioner={isCommissioner}
+          isMobileOpen={isMobileNavOpen}
+          onMobileClose={onMobileNavClose}
         />
         <Box flex="1" overflowY="auto" minH="calc(100vh - 64px)">
           {children}

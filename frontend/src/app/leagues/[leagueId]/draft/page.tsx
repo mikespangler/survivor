@@ -268,7 +268,7 @@ export default function DraftPage() {
 
   return (
     <AuthenticatedLayout>
-      <Container maxW="1400px" py={8}>
+      <Container maxW="1400px" py={{ base: 5, md: 8 }} px={{ base: 4, md: 6, lg: 8 }}>
         <VStack spacing={8} align="stretch">
           {/* Header */}
           <Box>

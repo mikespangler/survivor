@@ -15,6 +15,7 @@ import {
   Grid,
   Flex,
   Badge,
+  Stack,
 } from '@chakra-ui/react';
 import { api } from '@/lib/api';
 import type { League } from '@/types/api';
@@ -119,25 +120,25 @@ export default function LeaguesPage() {
             <VStack gap={4}>
               <Heading
                 fontFamily="heading"
-                fontSize="48px"
+                fontSize={{ base: '32px', md: '40px', lg: '48px' }}
                 color="text.primary"
                 letterSpacing="-1.2px"
               >
                 Welcome, {user?.firstName || 'Player'}!
               </Heading>
-              <Text color="text.secondary" fontSize="18px" maxW="600px">
+              <Text color="text.secondary" fontSize={{ base: '16px', md: '18px' }} maxW="600px">
                 You haven&apos;t joined any leagues yet. Create your own league or join an existing one to start playing.
               </Text>
             </VStack>
 
-            <HStack gap={6}>
+            <Stack direction={{ base: 'column', sm: 'row' }} gap={{ base: 3, sm: 6 }} w={{ base: 'full', sm: 'auto' }}>
               <Button
                 bg="brand.primary"
                 color="text.button"
                 fontFamily="heading"
-                fontSize="18px"
-                h="56px"
-                px={10}
+                fontSize={{ base: '16px', md: '18px' }}
+                h={{ base: '48px', md: '56px' }}
+                px={{ base: 6, md: 10 }}
                 borderRadius="20px"
                 boxShadow="0px 6px 0px 0px #C34322"
                 _hover={{ bg: '#E85A3A' }}
@@ -150,9 +151,9 @@ export default function LeaguesPage() {
                 bg="transparent"
                 color="text.primary"
                 fontFamily="heading"
-                fontSize="18px"
-                h="56px"
-                px={10}
+                fontSize={{ base: '16px', md: '18px' }}
+                h={{ base: '48px', md: '56px' }}
+                px={{ base: 6, md: 10 }}
                 borderRadius="20px"
                 border="2px solid"
                 borderColor="rgba(48, 53, 65, 0.5)"
@@ -161,7 +162,7 @@ export default function LeaguesPage() {
               >
                 Join League
               </Button>
-            </HStack>
+            </Stack>
           </VStack>
         </Container>
       </Box>
@@ -193,7 +194,7 @@ export default function LeaguesPage() {
 
             <Heading
               fontFamily="heading"
-              fontSize="40px"
+              fontSize={{ base: '28px', md: '40px' }}
               color="text.primary"
               letterSpacing="-1px"
             >

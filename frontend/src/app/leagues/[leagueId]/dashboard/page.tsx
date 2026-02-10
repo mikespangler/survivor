@@ -12,7 +12,7 @@ import {
   HStack,
   Spinner,
   Grid,
-  Flex,
+  Stack,
 } from '@chakra-ui/react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
@@ -232,8 +232,8 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
   return (
     <AuthenticatedLayout>
       <Box maxW="1200px">
-        <Box px={8} py={8}>
-          <VStack align="stretch" gap={7}>
+        <Box px={{ base: 4, md: 6, lg: 8 }} py={{ base: 5, md: 6, lg: 8 }}>
+          <VStack align="stretch" gap={{ base: 5, md: 7 }}>
             {/* Show commissioner messages if any */}
             {commissionerMessages.length > 0 && (
               <VStack align="stretch" gap={4}>
@@ -252,22 +252,23 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
             )}
 
             {/* Hero Row: Greeting + Rank/Points hero cards */}
-            <Flex
+            <Stack
+              direction={{ base: 'column', lg: 'row' }}
               justify="space-between"
-              align="flex-end"
-              gap={8}
+              align={{ base: 'stretch', lg: 'flex-end' }}
+              gap={{ base: 5, lg: 8 }}
             >
               <Box>
                 <Heading
                   fontFamily="heading"
-                  fontSize="56px"
+                  fontSize={{ base: '32px', md: '40px', lg: '56px' }}
                   color="text.primary"
                   letterSpacing="-1.5px"
                   lineHeight="1"
                 >
                   Come on in, {user?.firstName || 'Player'}
                 </Heading>
-                <Text color="text.secondary" fontSize="15px" fontWeight="400" mt="6px">
+                <Text color="text.secondary" fontSize={{ base: '14px', md: '15px' }} fontWeight="400" mt="6px">
                   {seasonMetadata?.status === 'UPCOMING'
                     ? "Get ready! The season is starting soon."
                     : "Here's your league status and what needs your attention."}
@@ -280,13 +281,13 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
                   {/* Rank Card */}
                   <Box
                     textAlign="center"
-                    px={7}
-                    py={5}
+                    px={{ base: 4, md: 7 }}
+                    py={{ base: 4, md: 5 }}
                     borderRadius="14px"
                     position="relative"
                     overflow="hidden"
-                    w="190px"
-                    h="140px"
+                    w={{ base: '150px', md: '190px' }}
+                    h={{ base: '110px', md: '140px' }}
                     display="flex"
                     flexDirection="column"
                     justifyContent="center"
@@ -314,13 +315,13 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
                     </Text>
                     <Text
                       fontFamily="heading"
-                      fontSize="48px"
+                      fontSize={{ base: '36px', md: '48px' }}
                       lineHeight="1"
                       letterSpacing="1px"
                       color="#f4c842"
                     >
                       #{myTeam.rank}
-                      <Text as="span" fontSize="24px" color="text.secondary">
+                      <Text as="span" fontSize={{ base: '18px', md: '24px' }} color="text.secondary">
                         /{myTeam.totalTeams}
                       </Text>
                     </Text>
@@ -330,7 +331,7 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
                         gap="3px"
                         mt="4px"
                         fontFamily="heading"
-                        fontSize="13px"
+                        fontSize={{ base: '11px', md: '13px' }}
                         fontWeight="600"
                         color="#4ecb71"
                       >
@@ -342,13 +343,13 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
                   {/* Points Card */}
                   <Box
                     textAlign="center"
-                    px={7}
-                    py={5}
+                    px={{ base: 4, md: 7 }}
+                    py={{ base: 4, md: 5 }}
                     borderRadius="14px"
                     position="relative"
                     overflow="hidden"
-                    w="190px"
-                    h="140px"
+                    w={{ base: '150px', md: '190px' }}
+                    h={{ base: '110px', md: '140px' }}
                     display="flex"
                     flexDirection="column"
                     justifyContent="center"
@@ -376,7 +377,7 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
                     </Text>
                     <Text
                       fontFamily="heading"
-                      fontSize="48px"
+                      fontSize={{ base: '36px', md: '48px' }}
                       lineHeight="1"
                       letterSpacing="1px"
                       color="brand.primary"
@@ -389,7 +390,7 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
                         gap="3px"
                         mt="4px"
                         fontFamily="heading"
-                        fontSize="13px"
+                        fontSize={{ base: '11px', md: '13px' }}
                         fontWeight="600"
                         color="#4ecb71"
                       >
@@ -399,7 +400,7 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
                   </Box>
                 </HStack>
               )}
-            </Flex>
+            </Stack>
 
             {/* Episode Result Strip */}
             {isActive && lastEpisodeResults && (
@@ -409,7 +410,7 @@ export default function LeagueDashboardPage({ params }: LeagueDashboardPageProps
             )}
 
             {/* Two Column Grid: Standings + (Team + Picks CTA) */}
-            <Grid templateColumns="1fr 1fr" gap={5}>
+            <Grid templateColumns={{ base: '1fr', lg: '1fr 1fr' }} gap={5}>
               {detailedStandings && (
                 <LeagueStandingsCard
                   standings={detailedStandings}

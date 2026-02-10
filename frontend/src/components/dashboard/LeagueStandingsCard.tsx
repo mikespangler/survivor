@@ -48,10 +48,10 @@ export function LeagueStandingsCard({
       overflow="hidden"
     >
       {/* Header */}
-      <Flex justify="space-between" align="center" px="22px" pt="18px" pb="14px">
+      <Flex justify="space-between" align="center" px={{ base: '16px', md: '22px' }} pt="18px" pb="14px">
         <Text
           fontFamily="heading"
-          fontSize="22px"
+          fontSize={{ base: '18px', md: '22px' }}
           letterSpacing="1.5px"
           color="text.primary"
         >
@@ -73,7 +73,7 @@ export function LeagueStandingsCard({
       </Flex>
 
       {/* Standings rows */}
-      <Box px="22px" pb={episodeHistory.length > 0 ? 0 : '20px'}>
+      <Box px={{ base: '16px', md: '22px' }} pb={episodeHistory.length > 0 ? 0 : '20px'}>
         <VStack gap={0} align="stretch">
           {top5.map((team) => {
             const isYou = team.isCurrentUser;
@@ -195,7 +195,7 @@ export function LeagueStandingsCard({
         <Box
           mt={4}
           pt={4}
-          px="22px"
+          px={{ base: '16px', md: '22px' }}
           pb="20px"
           borderTop="1px solid rgba(255,255,255,0.05)"
         >

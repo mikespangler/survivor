@@ -78,7 +78,7 @@ export default function StandingsPage() {
   if (isLoading) {
     return (
       <AuthenticatedLayout>
-        <Container maxW="container.xl" py={10} px={8}>
+        <Container maxW="container.xl" py={10} px={{ base: 4, md: 6, lg: 8 }}>
           <VStack gap={8}>
             <Spinner size="xl" color="orange.500" />
             <Text>Loading standings...</Text>
@@ -91,7 +91,7 @@ export default function StandingsPage() {
   if (error || !standingsData || !activeSeason) {
     return (
       <AuthenticatedLayout>
-        <Container maxW="container.xl" py={10} px={8}>
+        <Container maxW="container.xl" py={10} px={{ base: 4, md: 6, lg: 8 }}>
           <Alert status="error" borderRadius="24px">
             <AlertIcon />
             {error || 'No standings data available'}
@@ -103,19 +103,19 @@ export default function StandingsPage() {
 
   return (
     <AuthenticatedLayout>
-      <Container maxW="container.xl" py={10} px={8}>
-        <VStack align="stretch" gap={8}>
-          <Heading size="2xl" fontWeight="bold">
+      <Container maxW="container.xl" py={{ base: 6, md: 10 }} px={{ base: 4, md: 6, lg: 8 }}>
+        <VStack align="stretch" gap={{ base: 5, md: 8 }}>
+          <Heading size={{ base: 'xl', md: '2xl' }} fontWeight="bold">
             League Standings
           </Heading>
 
           <Tabs colorScheme="orange" variant="enclosed" isLazy>
-            <TabList>
-              <Tab fontWeight="medium">Overall Standings</Tab>
-              <Tab fontWeight="medium">Episode Summary</Tab>
-              <Tab fontWeight="medium">Question Breakdown</Tab>
-              <Tab fontWeight="medium">Castaway Retention</Tab>
-              <Tab fontWeight="medium">Placement History</Tab>
+            <TabList overflowX="auto" overflowY="hidden" flexWrap="nowrap" css={{ '&::-webkit-scrollbar': { display: 'none' }, scrollbarWidth: 'none' }}>
+              <Tab fontWeight="medium" whiteSpace="nowrap" flexShrink={0}>Overall Standings</Tab>
+              <Tab fontWeight="medium" whiteSpace="nowrap" flexShrink={0}>Episode Summary</Tab>
+              <Tab fontWeight="medium" whiteSpace="nowrap" flexShrink={0}>Question Breakdown</Tab>
+              <Tab fontWeight="medium" whiteSpace="nowrap" flexShrink={0}>Castaway Retention</Tab>
+              <Tab fontWeight="medium" whiteSpace="nowrap" flexShrink={0}>Placement History</Tab>
             </TabList>
 
             <TabPanels>

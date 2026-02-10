@@ -137,10 +137,10 @@ export default function ProfilePage() {
   }
 
   return (
-    <Box as="main" minH="100vh" py={10} bg="bg.primary">
-      <Container maxW="container.md">
-        <VStack gap={8} align="stretch">
-          <Heading color="text.primary">Profile Settings</Heading>
+    <Box as="main" minH="100vh" py={{ base: 5, md: 10 }} bg="bg.primary">
+      <Container maxW="container.md" px={{ base: 4, md: 6, lg: 8 }}>
+        <VStack gap={{ base: 5, md: 8 }} align="stretch">
+          <Heading color="text.primary" size={{ base: 'lg', md: 'xl' }}>Profile Settings</Heading>
 
           {/* Account Settings Section */}
           <Card>
@@ -623,12 +623,12 @@ function TeamEditor({
         </Text>
 
         {/* Team Logo */}
-        <HStack>
+        <HStack flexWrap="wrap" gap={3}>
           <Avatar
             size="xl"
             name={team.name}
             src={team.logoImageUrl || undefined}
-            borderRadius="12px" // Slightly rounded square
+            borderRadius="12px"
           />
           <VStack align="start" spacing={2}>
             <Button

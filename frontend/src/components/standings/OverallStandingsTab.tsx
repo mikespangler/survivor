@@ -72,6 +72,7 @@ export function OverallStandingsTab({ teams, currentEpisode }: OverallStandingsT
       borderColor="border.default"
       bg="bg.secondary"
     >
+      <Box overflowX="auto">
       <Table variant="simple" size="sm">
         <Thead bg="bg.primary">
           <Tr>
@@ -131,6 +132,7 @@ export function OverallStandingsTab({ teams, currentEpisode }: OverallStandingsT
           })}
         </Tbody>
       </Table>
+      </Box>
     </Box>
   );
 }

@@ -195,12 +195,12 @@ export default function QuestionsResultsPage() {
 
   return (
     <AuthenticatedLayout>
-      <Box as="main" minH="100vh" py={10}>
-        <Container maxW="container.lg">
+      <Box as="main" minH="100vh" py={{ base: 5, md: 10 }}>
+        <Container maxW="container.lg" px={{ base: 4, md: 6, lg: 8 }}>
           <VStack gap={6} align="stretch">
-            <HStack justify="space-between" align="flex-start">
+            <HStack justify="space-between" align="flex-start" flexWrap="wrap" gap={3}>
               <Box>
-                <Heading as="h1" size="xl" color="text.primary">
+                <Heading as="h1" size={{ base: 'lg', md: 'xl' }} color="text.primary">
                   Question Results
                 </Heading>
                 {league && activeSeason && (
@@ -294,6 +294,7 @@ export default function QuestionsResultsPage() {
                           <Heading size="md">Episode {selectedEpisode} Standings</Heading>
                         </CardHeader>
                         <CardBody pt={0}>
+                          <Box overflowX="auto">
                           <Table>
                             <Thead>
                               <Tr>
@@ -328,6 +329,7 @@ export default function QuestionsResultsPage() {
                               ))}
                             </Tbody>
                           </Table>
+                          </Box>
                         </CardBody>
                       </Card>
                     )}
@@ -404,6 +406,7 @@ export default function QuestionsResultsPage() {
                               )}
 
                               {question.answers.length > 0 ? (
+                                <Box overflowX="auto">
                                 <Table size="sm">
                                   <Thead>
                                     <Tr>
@@ -450,6 +453,7 @@ export default function QuestionsResultsPage() {
                                     })}
                                   </Tbody>
                                 </Table>
+                                </Box>
                               ) : (
                                 <Text color="text.secondary" fontStyle="italic">
                                   No answers submitted yet.

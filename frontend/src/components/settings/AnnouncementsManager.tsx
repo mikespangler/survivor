@@ -21,6 +21,7 @@ import {
   MenuItem,
   Badge,
   Divider,
+  Stack,
 } from '@chakra-ui/react';
 import { api } from '@/lib/api';
 import { RichTextEditor } from '../common/RichTextEditor';
@@ -232,7 +233,7 @@ export function AnnouncementsManager({ leagueId }: AnnouncementsManagerProps) {
 
   return (
     <VStack align="stretch" gap={6}>
-      <HStack justify="space-between">
+      <Stack direction={{ base: 'column', md: 'row' }} justify="space-between" gap={3}>
         <VStack align="flex-start" gap={1}>
           <Heading size="md">Announcements</Heading>
           <Text color="text.secondary" fontSize="sm">
@@ -243,11 +244,12 @@ export function AnnouncementsManager({ leagueId }: AnnouncementsManagerProps) {
           <Button
             variant="primary"
             onClick={() => setShowForm(true)}
+            flexShrink={0}
           >
             New Announcement
           </Button>
         )}
-      </HStack>
+      </Stack>
 
       {/* New Message Form */}
       {showForm && (

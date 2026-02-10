@@ -15,6 +15,7 @@ import {
   Flex,
   Divider,
   Button,
+  SimpleGrid,
 } from '@chakra-ui/react';
 import { api } from '@/lib/api';
 import { AuthenticatedLayout } from '@/components/navigation';
@@ -208,8 +209,8 @@ export default function TeamPage({ params }: TeamPageProps) {
 
   return (
     <AuthenticatedLayout>
-      <Box p={8} maxW="1400px">
-        <VStack align="stretch" gap={8}>
+      <Box p={{ base: 4, md: 6, lg: 8 }} maxW="1400px">
+        <VStack align="stretch" gap={{ base: 5, md: 8 }}>
           {/* Back button */}
           <Box>
             <Button
@@ -229,14 +230,14 @@ export default function TeamPage({ params }: TeamPageProps) {
             bg="linear-gradient(146.157deg, rgb(33, 38, 48) 2.5008%, rgb(25, 29, 36) 97.499%)"
             border="2px solid"
             borderColor="rgba(43, 48, 59, 0.5)"
-            borderRadius="24px"
-            p={8}
+            borderRadius={{ base: '16px', md: '24px' }}
+            p={{ base: 5, md: 8 }}
           >
             <VStack gap={6}>
               {/* Team Name */}
               <Text
                 fontFamily="heading"
-                fontSize="36px"
+                fontSize={{ base: '24px', md: '36px' }}
                 color="text.primary"
                 textAlign="center"
               >
@@ -244,19 +245,19 @@ export default function TeamPage({ params }: TeamPageProps) {
               </Text>
 
               {/* Stats Row */}
-              <HStack gap={12} justify="center">
+              <SimpleGrid columns={{ base: 2, md: 4 }} gap={{ base: 4, md: 8 }} w="full" justifyItems="center">
                 {team.rank > 0 && (
                   <VStack gap={0}>
                     <Text
                       fontFamily="display"
-                      fontSize="48px"
+                      fontSize={{ base: '32px', md: '48px' }}
                       fontWeight="bold"
                       color="brand.primary"
-                      lineHeight="56px"
+                      lineHeight={{ base: '40px', md: '56px' }}
                     >
                       #{team.rank}
                     </Text>
-                    <Text fontSize="14px" fontWeight="medium" color="text.secondary">
+                    <Text fontSize={{ base: '12px', md: '14px' }} fontWeight="medium" color="text.secondary">
                       RANK
                     </Text>
                   </VStack>
@@ -264,46 +265,46 @@ export default function TeamPage({ params }: TeamPageProps) {
                 <VStack gap={0}>
                   <Text
                     fontFamily="display"
-                    fontSize="48px"
+                    fontSize={{ base: '32px', md: '48px' }}
                     fontWeight="bold"
                     color="brand.primary"
-                    lineHeight="56px"
+                    lineHeight={{ base: '40px', md: '56px' }}
                   >
                     {team.stats.activeCastaways}
                   </Text>
-                  <Text fontSize="14px" fontWeight="medium" color="text.secondary">
+                  <Text fontSize={{ base: '12px', md: '14px' }} fontWeight="medium" color="text.secondary">
                     ACTIVE
                   </Text>
                 </VStack>
                 <VStack gap={0}>
                   <Text
                     fontFamily="display"
-                    fontSize="48px"
+                    fontSize={{ base: '32px', md: '48px' }}
                     fontWeight="bold"
                     color="text.secondary"
-                    lineHeight="56px"
+                    lineHeight={{ base: '40px', md: '56px' }}
                   >
                     {team.stats.eliminatedCastaways}
                   </Text>
-                  <Text fontSize="14px" fontWeight="medium" color="text.secondary">
+                  <Text fontSize={{ base: '12px', md: '14px' }} fontWeight="medium" color="text.secondary">
                     ELIMINATED
                   </Text>
                 </VStack>
                 <VStack gap={0}>
                   <Text
                     fontFamily="display"
-                    fontSize="48px"
+                    fontSize={{ base: '32px', md: '48px' }}
                     fontWeight="bold"
                     color="brand.primary"
-                    lineHeight="56px"
+                    lineHeight={{ base: '40px', md: '56px' }}
                   >
                     {team.totalPoints}
                   </Text>
-                  <Text fontSize="14px" fontWeight="medium" color="text.secondary">
+                  <Text fontSize={{ base: '12px', md: '14px' }} fontWeight="medium" color="text.secondary">
                     TOTAL POINTS
                   </Text>
                 </VStack>
-              </HStack>
+              </SimpleGrid>
             </VStack>
           </Box>
 

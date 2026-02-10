@@ -73,6 +73,7 @@ export function CastawayRetentionTab({
         borderColor="border.default"
         bg="bg.secondary"
       >
+        <Box overflowX="auto">
         <Table variant="simple" size="sm">
           <Thead bg="bg.primary">
             <Tr>
@@ -127,6 +128,7 @@ export function CastawayRetentionTab({
             })}
           </Tbody>
         </Table>
+        </Box>
       </Box>
     </VStack>
   );

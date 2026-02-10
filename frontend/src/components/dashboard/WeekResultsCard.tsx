@@ -209,12 +209,12 @@ export function WeekResultsCard({ episodeResults }: WeekResultsCardProps) {
       bg="rgba(26, 25, 32, 1)"
       border="1px solid rgba(255,255,255,0.08)"
       borderRadius="12px"
-      px={6}
+      px={{ base: 4, md: 6 }}
       py="18px"
     >
       <VStack align="stretch" gap={1}>
         {/* Top row: Icon + Text */}
-        <HStack gap={4}>
+        <HStack gap={{ base: 3, md: 4 }}>
           <Flex
             w="42px"
             h="42px"
@@ -258,7 +258,7 @@ export function WeekResultsCard({ episodeResults }: WeekResultsCardProps) {
         </HStack>
 
         {/* Bottom row: Pick chips */}
-        <HStack gap={2} flexWrap="wrap" pl="58px">
+        <HStack gap={2} flexWrap="wrap" pl={{ base: 0, md: '58px' }} pt={{ base: 2, md: 0 }}>
           {questions.map((q) => (
             <Box
               key={q.text}
