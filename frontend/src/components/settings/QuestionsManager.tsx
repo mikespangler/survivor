@@ -28,7 +28,6 @@ import {
   Wrap,
   WrapItem,
   VStack,
-  Checkbox,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -43,7 +42,6 @@ import {
 import { api } from '@/lib/api';
 import type {
   LeagueQuestion,
-  QuestionTemplate,
   CreateLeagueQuestionDto,
   QuestionType,
   TrendingQuestion,
@@ -102,8 +100,6 @@ export function QuestionsManager({
   const toast = useToast();
 
   const [questions, setQuestions] = useState<LeagueQuestion[]>([]);
-  const [templates, setTemplates] = useState<QuestionTemplate[]>([]);
-  const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
   const [form, setForm] = useState<QuestionFormState>({
     ...initialQuestionForm,
     episodeNumber: activeEpisode,
@@ -114,11 +110,6 @@ export function QuestionsManager({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScoring, setIsScoring] = useState(false);
 
-  const {
-    isOpen: isTemplatesOpen,
-    onOpen: onTemplatesOpen,
-    onClose: onTemplatesClose,
-  } = useDisclosure();
   const {
     isOpen: isScoringOpen,
     onOpen: onScoringOpen,
@@ -157,10 +148,6 @@ export function QuestionsManager({
         activeEpisode
       );
       setQuestions(questionsData);
-
-      // Load templates
-      const templatesData = await api.getAvailableTemplates(leagueId, seasonId);
-      setTemplates(templatesData);
     } catch (err) {
       console.error('Failed to load data', err);
       toast({
@@ -283,33 +270,6 @@ export function QuestionsManager({
     }
   };
 
-  const handleAddFromTemplates = async () => {
-    if (selectedTemplates.length === 0) return;
-
-    setIsSubmitting(true);
-    try {
-      await api.createQuestionsFromTemplates(leagueId, seasonId, {
-        episodeNumber: selectedEpisode,
-        templateIds: selectedTemplates,
-      });
-      toast({
-        title: `${selectedTemplates.length} question(s) added`,
-        status: 'success',
-      });
-      setSelectedTemplates([]);
-      onTemplatesClose();
-      await loadQuestionsForEpisode(selectedEpisode);
-    } catch (err) {
-      toast({
-        title: 'Failed to add questions',
-        description: err instanceof Error ? err.message : 'Unknown error',
-        status: 'error',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleOpenScoring = () => {
     const unscoredQuestions = questions.filter((q) => !q.isScored);
     if (unscoredQuestions.length === 0) {
@@ -359,14 +319,6 @@ export function QuestionsManager({
     }
   };
 
-  const toggleTemplateSelection = (templateId: string) => {
-    setSelectedTemplates((prev) =>
-      prev.includes(templateId)
-        ? prev.filter((id) => id !== templateId)
-        : [...prev, templateId]
-    );
-  };
-
   const handleAddTrendingQuestion = useCallback(
     (question: TrendingQuestion) => {
       setForm({
@@ -411,9 +363,6 @@ export function QuestionsManager({
           )}
         </Box>
         <HStack flexWrap="wrap">
-          <Button variant="outline" onClick={onTemplatesOpen} size={{ base: 'sm', md: 'md' }}>
-            Add from Templates
-          </Button>
           {unscoredCount > 0 && (
             <Button colorScheme="green" onClick={handleOpenScoring} size={{ base: 'sm', md: 'md' }}>
               Score Questions ({unscoredCount})
@@ -721,84 +670,6 @@ export function QuestionsManager({
           </Tbody>
         </Table>
       </Box>
-
-      {/* Templates Modal */}
-      <Modal isOpen={isTemplatesOpen} onClose={onTemplatesClose} size="xl">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Add Questions from Templates</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <Text mb={4}>
-              Select templates to add as questions for Episode {selectedEpisode}
-            </Text>
-            <Stack spacing={2} maxH="400px" overflowY="auto">
-              {templates.map((template) => (
-                <Box
-                  key={template.id}
-                  p={3}
-                  borderWidth="1px"
-                  borderRadius="md"
-                  cursor="pointer"
-                  bg={
-                    selectedTemplates.includes(template.id)
-                      ? 'orange.900'
-                      : 'transparent'
-                  }
-                  borderColor={
-                    selectedTemplates.includes(template.id)
-                      ? 'orange.300'
-                      : 'gray.200'
-                  }
-                  onClick={() => toggleTemplateSelection(template.id)}
-                >
-                  <HStack justify="space-between">
-                    <Checkbox
-                      isChecked={selectedTemplates.includes(template.id)}
-                      onChange={() => toggleTemplateSelection(template.id)}
-                    >
-                      <Text fontWeight="medium">{template.text}</Text>
-                    </Checkbox>
-                    <HStack>
-                      <Badge
-                        colorScheme={
-                          template.type === 'MULTIPLE_CHOICE' ? 'blue' : 'purple'
-                        }
-                      >
-                        {template.type === 'MULTIPLE_CHOICE' ? 'MC' : 'Fill'}
-                      </Badge>
-                      <Badge>{template.pointValue} pt</Badge>
-                    </HStack>
-                  </HStack>
-                  {template.category && (
-                    <Text fontSize="sm" color="text.secondary" ml={6}>
-                      {template.category}
-                    </Text>
-                  )}
-                </Box>
-              ))}
-              {templates.length === 0 && (
-                <Text color="text.secondary">
-                  No templates available. Create some in the admin panel.
-                </Text>
-              )}
-            </Stack>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="outline" mr={3} onClick={onTemplatesClose}>
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleAddFromTemplates}
-              isLoading={isSubmitting}
-              isDisabled={selectedTemplates.length === 0}
-            >
-              Add {selectedTemplates.length} Question(s)
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
 
       {/* Scoring Modal */}
       <Modal isOpen={isScoringOpen} onClose={onScoringClose} size="xl">

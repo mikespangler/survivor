@@ -32,6 +32,7 @@ export class LeagueService {
   async getLeagues(userId: string) {
     const leagues = await this.prisma.league.findMany({
       where: {
+        isSystem: { not: true },
         OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
       },
       include: {

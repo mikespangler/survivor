@@ -1,6 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
-import { QuestionTemplateController } from './question-template.controller';
 import { LeagueQuestionController } from './league-question.controller';
+import { SystemQuestionController } from './system-question.controller';
 import { QuestionService } from './question.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
@@ -16,7 +16,7 @@ import { NotificationModule } from '../notification/notification.module';
     EpisodeModule,
     NotificationModule,
   ],
-  controllers: [QuestionTemplateController, LeagueQuestionController],
+  controllers: [LeagueQuestionController, SystemQuestionController],
   providers: [QuestionService],
   exports: [QuestionService],
 })

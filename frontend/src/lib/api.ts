@@ -26,13 +26,9 @@ import type {
   SeasonMetadata,
   LeagueStandings,
   MyTeamResponse,
-  QuestionTemplate,
-  CreateQuestionTemplateDto,
-  UpdateQuestionTemplateDto,
   LeagueQuestion,
   CreateLeagueQuestionDto,
   UpdateLeagueQuestionDto,
-  CreateFromTemplatesDto,
   PlayerAnswer,
   SubmitAnswerDto,
   SetCorrectAnswersDto,
@@ -628,38 +624,46 @@ class ApiClient {
     );
   }
 
-  // ================== Question Template endpoints (System Admin) ==================
+  // ================== System Question endpoints (Admin) ==================
 
-  async getQuestionTemplates(category?: string): Promise<QuestionTemplate[]> {
-    const query = category ? `?category=${encodeURIComponent(category)}` : '';
-    return this.request<QuestionTemplate[]>(`/question-templates${query}`);
+  async getSystemQuestions(
+    seasonId: string,
+    episodeNumber?: number,
+  ): Promise<LeagueQuestion[]> {
+    const params = new URLSearchParams({ seasonId });
+    if (episodeNumber !== undefined) {
+      params.set('episode', String(episodeNumber));
+    }
+    return this.request<LeagueQuestion[]>(
+      `/system-questions?${params.toString()}`,
+    );
   }
 
-  async getQuestionTemplate(id: string): Promise<QuestionTemplate> {
-    return this.request<QuestionTemplate>(`/question-templates/${id}`);
+  async createSystemQuestion(
+    seasonId: string,
+    data: CreateLeagueQuestionDto,
+  ): Promise<LeagueQuestion> {
+    return this.request<LeagueQuestion>(
+      `/system-questions?seasonId=${seasonId}`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      },
+    );
   }
 
-  async createQuestionTemplate(
-    data: CreateQuestionTemplateDto,
-  ): Promise<QuestionTemplate> {
-    return this.request<QuestionTemplate>('/question-templates', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async updateQuestionTemplate(
+  async updateSystemQuestion(
     id: string,
-    data: UpdateQuestionTemplateDto,
-  ): Promise<QuestionTemplate> {
-    return this.request<QuestionTemplate>(`/question-templates/${id}`, {
+    data: UpdateLeagueQuestionDto,
+  ): Promise<LeagueQuestion> {
+    return this.request<LeagueQuestion>(`/system-questions/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
   }
 
-  async deleteQuestionTemplate(id: string): Promise<{ success: boolean }> {
-    return this.request<{ success: boolean }>(`/question-templates/${id}`, {
+  async deleteSystemQuestion(id: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/system-questions/${id}`, {
       method: 'DELETE',
     });
   }
@@ -677,17 +681,6 @@ class ApiClient {
     );
   }
 
-  async getAvailableTemplates(
-    leagueId: string,
-    seasonId: string,
-    category?: string,
-  ): Promise<QuestionTemplate[]> {
-    const query = category ? `?category=${encodeURIComponent(category)}` : '';
-    return this.request<QuestionTemplate[]>(
-      `/leagues/${leagueId}/seasons/${seasonId}/questions/templates${query}`,
-    );
-  }
-
   async createLeagueQuestion(
     leagueId: string,
     seasonId: string,
@@ -695,20 +688,6 @@ class ApiClient {
   ): Promise<LeagueQuestion> {
     return this.request<LeagueQuestion>(
       `/leagues/${leagueId}/seasons/${seasonId}/questions`,
-      {
-        method: 'POST',
-        body: JSON.stringify(data),
-      },
-    );
-  }
-
-  async createQuestionsFromTemplates(
-    leagueId: string,
-    seasonId: string,
-    data: CreateFromTemplatesDto,
-  ): Promise<LeagueQuestion[]> {
-    return this.request<LeagueQuestion[]>(
-      `/leagues/${leagueId}/seasons/${seasonId}/questions/from-templates`,
       {
         method: 'POST',
         body: JSON.stringify(data),

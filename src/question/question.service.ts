@@ -13,11 +13,8 @@ import { LeagueService } from '../league/league.service';
 import { EpisodeStateService } from '../episode/episode-state.service';
 import { NotificationService } from '../notification/notification.service';
 import {
-  CreateQuestionTemplateDto,
-  UpdateQuestionTemplateDto,
   CreateLeagueQuestionDto,
   UpdateLeagueQuestionDto,
-  CreateFromTemplatesDto,
   SubmitAnswerDto,
   SetCorrectAnswersDto,
 } from './dto';
@@ -34,108 +31,156 @@ export class QuestionService {
     private readonly notificationService: NotificationService,
   ) {}
 
-  // ================== TEMPLATE METHODS (System Admin) ==================
+  // ================== SYSTEM LEAGUE METHODS (Admin) ==================
 
-  async getTemplates(category?: string) {
-    return this.prisma.questionTemplate.findMany({
-      where: category ? { category } : undefined,
-      include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: [{ category: 'asc' }, { createdAt: 'desc' }],
-    });
-  }
-
-  async getTemplate(id: string) {
-    const template = await this.prisma.questionTemplate.findUnique({
-      where: { id },
-      include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
+  /**
+   * Find or create the system league and its LeagueSeason for the given season.
+   * The system league is a permanent, hidden league used to store admin-curated
+   * questions that appear in trending results for all other leagues.
+   */
+  async getSystemLeagueSeason(seasonId: string) {
+    // Find the system league
+    let systemLeague = await this.prisma.league.findFirst({
+      where: { isSystem: true },
     });
 
-    if (!template) {
-      throw new NotFoundException(`Question template with ID ${id} not found`);
+    if (!systemLeague) {
+      // Find any admin user to be the owner
+      const adminUser = await this.prisma.user.findFirst({
+        where: { systemRole: 'admin' },
+      });
+
+      if (!adminUser) {
+        throw new BadRequestException(
+          'No admin user exists to own the system league',
+        );
+      }
+
+      systemLeague = await this.prisma.league.create({
+        data: {
+          name: 'System',
+          slug: 'system',
+          isSystem: true,
+          ownerId: adminUser.id,
+        },
+      });
     }
 
-    return template;
+    // Find or create a LeagueSeason for this season
+    let leagueSeason = await this.prisma.leagueSeason.findUnique({
+      where: {
+        leagueId_seasonId: {
+          leagueId: systemLeague.id,
+          seasonId,
+        },
+      },
+    });
+
+    if (!leagueSeason) {
+      leagueSeason = await this.prisma.leagueSeason.create({
+        data: {
+          leagueId: systemLeague.id,
+          seasonId,
+        },
+      });
+    }
+
+    return leagueSeason;
   }
 
-  async createTemplate(userId: string, dto: CreateQuestionTemplateDto) {
-    return this.prisma.questionTemplate.create({
+  async getSystemQuestions(seasonId: string, episodeNumber?: number) {
+    const leagueSeason = await this.getSystemLeagueSeason(seasonId);
+
+    return this.prisma.leagueQuestion.findMany({
+      where: {
+        leagueSeasonId: leagueSeason.id,
+        ...(episodeNumber !== undefined && { episodeNumber }),
+      },
+      orderBy: [{ episodeNumber: 'asc' }, { sortOrder: 'asc' }],
+    });
+  }
+
+  async createSystemQuestion(
+    seasonId: string,
+    dto: CreateLeagueQuestionDto,
+  ) {
+    const leagueSeason = await this.getSystemLeagueSeason(seasonId);
+
+    // Get current max sortOrder for this episode
+    const maxSortOrder = await this.prisma.leagueQuestion.aggregate({
+      where: {
+        leagueSeasonId: leagueSeason.id,
+        episodeNumber: dto.episodeNumber,
+      },
+      _max: {
+        sortOrder: true,
+      },
+    });
+
+    const sortOrder = dto.sortOrder ?? (maxSortOrder._max.sortOrder ?? -1) + 1;
+
+    return this.prisma.leagueQuestion.create({
       data: {
+        leagueSeasonId: leagueSeason.id,
+        episodeNumber: dto.episodeNumber,
         text: dto.text,
         type: dto.type,
         options: dto.options || null,
         pointValue: dto.pointValue ?? 1,
-        category: dto.category,
-        createdById: userId,
-      },
-      include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
+        sortOrder,
+        questionScope: dto.questionScope ?? 'episode',
+        isWager: dto.isWager ?? false,
+        minWager: dto.minWager ?? null,
+        maxWager: dto.maxWager ?? null,
       },
     });
   }
 
-  async updateTemplate(id: string, dto: UpdateQuestionTemplateDto) {
-    const template = await this.prisma.questionTemplate.findUnique({
-      where: { id },
+  async updateSystemQuestion(questionId: string, dto: UpdateLeagueQuestionDto) {
+    const question = await this.prisma.leagueQuestion.findUnique({
+      where: { id: questionId },
     });
 
-    if (!template) {
-      throw new NotFoundException(`Question template with ID ${id} not found`);
+    if (!question) {
+      throw new NotFoundException(
+        `System question with ID ${questionId} not found`,
+      );
     }
 
-    return this.prisma.questionTemplate.update({
-      where: { id },
+    return this.prisma.leagueQuestion.update({
+      where: { id: questionId },
       data: {
+        ...(dto.episodeNumber !== undefined && {
+          episodeNumber: dto.episodeNumber,
+        }),
         ...(dto.text !== undefined && { text: dto.text }),
         ...(dto.type !== undefined && { type: dto.type }),
         ...(dto.options !== undefined && { options: dto.options }),
         ...(dto.pointValue !== undefined && { pointValue: dto.pointValue }),
-        ...(dto.category !== undefined && { category: dto.category }),
-      },
-      include: {
-        createdBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
+        ...(dto.sortOrder !== undefined && { sortOrder: dto.sortOrder }),
+        ...(dto.questionScope !== undefined && {
+          questionScope: dto.questionScope,
+        }),
+        ...(dto.isWager !== undefined && { isWager: dto.isWager }),
+        ...(dto.minWager !== undefined && { minWager: dto.minWager }),
+        ...(dto.maxWager !== undefined && { maxWager: dto.maxWager }),
       },
     });
   }
 
-  async deleteTemplate(id: string) {
-    const template = await this.prisma.questionTemplate.findUnique({
-      where: { id },
+  async deleteSystemQuestion(questionId: string) {
+    const question = await this.prisma.leagueQuestion.findUnique({
+      where: { id: questionId },
     });
 
-    if (!template) {
-      throw new NotFoundException(`Question template with ID ${id} not found`);
+    if (!question) {
+      throw new NotFoundException(
+        `System question with ID ${questionId} not found`,
+      );
     }
 
-    await this.prisma.questionTemplate.delete({
-      where: { id },
+    await this.prisma.leagueQuestion.delete({
+      where: { id: questionId },
     });
 
     return { success: true };
@@ -183,7 +228,6 @@ export class QuestionService {
         ...(episodeNumber !== undefined && { episodeNumber }),
       },
       include: {
-        template: true,
         answers: {
           include: {
             team: {
@@ -208,7 +252,6 @@ export class QuestionService {
     const question = await this.prisma.leagueQuestion.findUnique({
       where: { id: questionId },
       include: {
-        template: true,
         answers: {
           include: {
             team: {
@@ -260,7 +303,6 @@ export class QuestionService {
       data: {
         leagueSeasonId: leagueSeason.id,
         episodeNumber: dto.episodeNumber,
-        templateId: dto.templateId,
         text: dto.text,
         type: dto.type,
         options: dto.options || null,
@@ -271,65 +313,7 @@ export class QuestionService {
         minWager: dto.minWager ?? null,
         maxWager: dto.maxWager ?? null,
       },
-      include: {
-        template: true,
-      },
     });
-  }
-
-  async createFromTemplates(
-    leagueId: string,
-    seasonId: string,
-    dto: CreateFromTemplatesDto,
-  ) {
-    const leagueSeason = await this.getLeagueSeason(leagueId, seasonId);
-
-    // Get templates
-    const templates = await this.prisma.questionTemplate.findMany({
-      where: {
-        id: { in: dto.templateIds },
-      },
-    });
-
-    if (templates.length !== dto.templateIds.length) {
-      throw new BadRequestException('One or more template IDs are invalid');
-    }
-
-    // Get current max sortOrder for this episode
-    const maxSortOrder = await this.prisma.leagueQuestion.aggregate({
-      where: {
-        leagueSeasonId: leagueSeason.id,
-        episodeNumber: dto.episodeNumber,
-      },
-      _max: {
-        sortOrder: true,
-      },
-    });
-
-    let sortOrder = (maxSortOrder._max.sortOrder ?? -1) + 1;
-
-    // Create questions from templates
-    const questions = await this.prisma.$transaction(
-      templates.map((template) =>
-        this.prisma.leagueQuestion.create({
-          data: {
-            leagueSeasonId: leagueSeason.id,
-            episodeNumber: dto.episodeNumber,
-            templateId: template.id,
-            text: template.text,
-            type: template.type,
-            options: template.options,
-            pointValue: template.pointValue,
-            sortOrder: sortOrder++,
-          },
-          include: {
-            template: true,
-          },
-        }),
-      ),
-    );
-
-    return questions;
   }
 
   async updateLeagueQuestion(questionId: string, dto: UpdateLeagueQuestionDto) {
@@ -365,9 +349,6 @@ export class QuestionService {
         ...(dto.isWager !== undefined && { isWager: dto.isWager }),
         ...(dto.minWager !== undefined && { minWager: dto.minWager }),
         ...(dto.maxWager !== undefined && { maxWager: dto.maxWager }),
-      },
-      include: {
-        template: true,
       },
     });
   }

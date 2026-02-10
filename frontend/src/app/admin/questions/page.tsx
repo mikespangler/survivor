@@ -21,7 +21,6 @@ import {
   Tr,
   useToast,
   Badge,
-  IconButton,
   Textarea,
   HStack,
   Tag,
@@ -33,21 +32,13 @@ import {
 import { useUser } from '@clerk/nextjs';
 import { api } from '@/lib/api';
 import type {
-  QuestionTemplate,
-  CreateQuestionTemplateDto,
+  LeagueQuestion,
+  Season,
   QuestionType,
+  CreateLeagueQuestionDto,
 } from '@/types/api';
 
 const QUESTION_TYPES: QuestionType[] = ['MULTIPLE_CHOICE', 'FILL_IN_THE_BLANK'];
-
-const CATEGORIES = [
-  'Elimination',
-  'Challenge',
-  'Social',
-  'Strategy',
-  'Tribal Council',
-  'General',
-];
 
 type FormState = {
   id: string;
@@ -55,8 +46,8 @@ type FormState = {
   type: QuestionType;
   options: string[];
   pointValue: number;
-  category: string;
   newOption: string;
+  episodeNumber: number;
 };
 
 const initialForm: FormState = {
@@ -65,8 +56,8 @@ const initialForm: FormState = {
   type: 'MULTIPLE_CHOICE',
   options: [],
   pointValue: 1,
-  category: '',
   newOption: '',
+  episodeNumber: 1,
 };
 
 export default function AdminQuestionsPage() {
@@ -75,23 +66,27 @@ export default function AdminQuestionsPage() {
 
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [templates, setTemplates] = useState<QuestionTemplate[]>([]);
+  const [seasons, setSeasons] = useState<Season[]>([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState('');
+  const [selectedEpisode, setSelectedEpisode] = useState(1);
+  const [questions, setQuestions] = useState<LeagueQuestion[]>([]);
   const [form, setForm] = useState<FormState>(initialForm);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [filterCategory, setFilterCategory] = useState('');
 
-  const loadTemplates = useCallback(async () => {
+  const loadQuestions = useCallback(async () => {
+    if (!selectedSeasonId) return;
     setIsLoading(true);
     try {
-      const data = await api.getQuestionTemplates(
-        filterCategory || undefined,
+      const data = await api.getSystemQuestions(
+        selectedSeasonId,
+        selectedEpisode,
       );
-      setTemplates(data);
+      setQuestions(data);
     } catch (error) {
-      console.error('Failed to load templates', error);
+      console.error('Failed to load questions', error);
       toast({
-        title: 'Failed to load templates',
+        title: 'Failed to load questions',
         description:
           error instanceof Error ? error.message : 'Unexpected error',
         status: 'error',
@@ -99,7 +94,7 @@ export default function AdminQuestionsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [filterCategory, toast]);
+  }, [selectedSeasonId, selectedEpisode, toast]);
 
   useEffect(() => {
     let isActive = true;
@@ -119,7 +114,20 @@ export default function AdminQuestionsPage() {
         setIsAdmin(userIsAdmin);
 
         if (userIsAdmin) {
-          await loadTemplates();
+          const allSeasons = await api.getSeasons();
+          if (!isActive) return;
+          setSeasons(allSeasons);
+
+          // Default to the active season
+          const activeSeason = allSeasons.find(
+            (s) => s.status === 'ACTIVE',
+          );
+          if (activeSeason) {
+            setSelectedSeasonId(activeSeason.id);
+            setSelectedEpisode(activeSeason.activeEpisode || 1);
+          } else if (allSeasons.length > 0) {
+            setSelectedSeasonId(allSeasons[0].id);
+          }
         }
       } catch (error) {
         console.error('Failed to verify admin access', error);
@@ -142,13 +150,13 @@ export default function AdminQuestionsPage() {
     return () => {
       isActive = false;
     };
-  }, [isSignedIn, loadTemplates, toast]);
+  }, [isSignedIn, toast]);
 
   useEffect(() => {
-    if (isAdmin) {
-      void loadTemplates();
+    if (isAdmin && selectedSeasonId) {
+      void loadQuestions();
     }
-  }, [isAdmin, filterCategory, loadTemplates]);
+  }, [isAdmin, selectedSeasonId, loadQuestions]);
 
   const handleAddOption = () => {
     if (!form.newOption.trim()) return;
@@ -192,29 +200,34 @@ export default function AdminQuestionsPage() {
       return;
     }
 
-    const payload: CreateQuestionTemplateDto = {
+    if (!selectedSeasonId) {
+      toast({ title: 'Please select a season', status: 'warning' });
+      return;
+    }
+
+    const payload: CreateLeagueQuestionDto = {
+      episodeNumber: form.episodeNumber,
       text: form.text.trim(),
       type: form.type,
       options: form.type === 'MULTIPLE_CHOICE' ? form.options : undefined,
       pointValue: form.pointValue,
-      category: form.category || undefined,
     };
 
     setIsSubmitting(true);
     try {
       if (form.id) {
-        await api.updateQuestionTemplate(form.id, payload);
-        toast({ title: 'Template updated', status: 'success' });
+        await api.updateSystemQuestion(form.id, payload);
+        toast({ title: 'Question updated', status: 'success' });
       } else {
-        await api.createQuestionTemplate(payload);
-        toast({ title: 'Template created', status: 'success' });
+        await api.createSystemQuestion(selectedSeasonId, payload);
+        toast({ title: 'Question created', status: 'success' });
       }
-      setForm(initialForm);
-      await loadTemplates();
+      setForm({ ...initialForm, episodeNumber: selectedEpisode });
+      await loadQuestions();
     } catch (error) {
-      console.error('Failed to save template', error);
+      console.error('Failed to save question', error);
       toast({
-        title: 'Failed to save template',
+        title: 'Failed to save question',
         description:
           error instanceof Error ? error.message : 'Unexpected error',
         status: 'error',
@@ -224,35 +237,35 @@ export default function AdminQuestionsPage() {
     }
   };
 
-  const handleEdit = (template: QuestionTemplate) => {
+  const handleEdit = (question: LeagueQuestion) => {
     setForm({
-      id: template.id,
-      text: template.text,
-      type: template.type,
-      options: (template.options as string[]) || [],
-      pointValue: template.pointValue,
-      category: template.category || '',
+      id: question.id,
+      text: question.text,
+      type: question.type as QuestionType,
+      options: (question.options as string[]) || [],
+      pointValue: question.pointValue,
       newOption: '',
+      episodeNumber: question.episodeNumber,
     });
   };
 
-  const handleDelete = async (template: QuestionTemplate) => {
+  const handleDelete = async (question: LeagueQuestion) => {
     if (
       !window.confirm(
-        `Delete question template? This cannot be undone.`,
+        'Delete this suggested question? This cannot be undone.',
       )
     ) {
       return;
     }
 
     try {
-      await api.deleteQuestionTemplate(template.id);
-      toast({ title: 'Template deleted', status: 'success' });
-      await loadTemplates();
+      await api.deleteSystemQuestion(question.id);
+      toast({ title: 'Question deleted', status: 'success' });
+      await loadQuestions();
     } catch (error) {
-      console.error('Failed to delete template', error);
+      console.error('Failed to delete question', error);
       toast({
-        title: 'Failed to delete template',
+        title: 'Failed to delete question',
         description:
           error instanceof Error ? error.message : 'Unexpected error',
         status: 'error',
@@ -283,9 +296,58 @@ export default function AdminQuestionsPage() {
 
   return (
     <Container maxW="container.xl" py={{ base: 5, md: 10 }} px={{ base: 4, md: 6, lg: 8 }}>
-      <Heading mb={8} size={{ base: 'lg', md: 'xl' }}>Question Templates</Heading>
+      <Heading mb={8} size={{ base: 'lg', md: 'xl' }}>Suggested Questions</Heading>
+
+      <Text color="text.secondary" mb={6}>
+        Questions created here will appear in the Trending Questions carousel
+        for all leagues in the selected season and episode.
+      </Text>
 
       <Stack spacing={8}>
+        {/* Season and Episode Selectors */}
+        <HStack spacing={4} flexWrap="wrap">
+          <FormControl maxW="250px">
+            <FormLabel>Season</FormLabel>
+            <Select
+              value={selectedSeasonId}
+              onChange={(e) => {
+                setSelectedSeasonId(e.target.value);
+                setSelectedEpisode(1);
+              }}
+            >
+              {seasons.map((season) => (
+                <option key={season.id} value={season.id}>
+                  {season.name}
+                  {season.status === 'ACTIVE' ? ' (Active)' : ''}
+                </option>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl maxW="200px">
+            <FormLabel>Episode</FormLabel>
+            <Select
+              value={selectedEpisode}
+              onChange={(e) => {
+                const ep = parseInt(e.target.value, 10);
+                setSelectedEpisode(ep);
+                setForm((prev) => ({ ...prev, episodeNumber: ep }));
+              }}
+            >
+              {Array.from({ length: 14 }, (_, i) => i + 1).map((num) => (
+                <option key={num} value={num}>
+                  Episode {num}
+                </option>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Box pt={8}>
+            <Badge colorScheme="blue">{questions.length} questions</Badge>
+          </Box>
+        </HStack>
+
+        {/* Question Form */}
         <Box as="form" onSubmit={handleSubmit}>
           <Stack
             spacing={4}
@@ -295,7 +357,7 @@ export default function AdminQuestionsPage() {
             bg="bg.secondary"
           >
             <Heading size="sm">
-              {form.id ? 'Edit Template' : 'Create Template'}
+              {form.id ? 'Edit Question' : 'Create Question'}
             </Heading>
 
             <FormControl isRequired>
@@ -310,8 +372,8 @@ export default function AdminQuestionsPage() {
               />
             </FormControl>
 
-            <HStack spacing={4} align="flex-start">
-              <FormControl isRequired flex={1}>
+            <HStack spacing={4} align="flex-start" flexWrap="wrap">
+              <FormControl isRequired flex={1} minW="200px">
                 <FormLabel>Type</FormLabel>
                 <Select
                   value={form.type}
@@ -330,24 +392,7 @@ export default function AdminQuestionsPage() {
                 </Select>
               </FormControl>
 
-              <FormControl flex={1}>
-                <FormLabel>Category</FormLabel>
-                <Select
-                  value={form.category}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, category: e.target.value }))
-                  }
-                  placeholder="Select category"
-                >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </Select>
-              </FormControl>
-
-              <FormControl flex={1}>
+              <FormControl flex={1} minW="150px">
                 <FormLabel>Point Value</FormLabel>
                 <Input
                   type="number"
@@ -357,6 +402,22 @@ export default function AdminQuestionsPage() {
                     setForm((prev) => ({
                       ...prev,
                       pointValue: parseInt(e.target.value, 10) || 1,
+                    }))
+                  }
+                />
+              </FormControl>
+
+              <FormControl flex={1} minW="150px">
+                <FormLabel>Episode</FormLabel>
+                <Input
+                  type="number"
+                  min={1}
+                  max={14}
+                  value={form.episodeNumber}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      episodeNumber: parseInt(e.target.value, 10) || 1,
                     }))
                   }
                 />
@@ -408,10 +469,10 @@ export default function AdminQuestionsPage() {
                 variant="primary"
                 isLoading={isSubmitting}
               >
-                {form.id ? 'Update Template' : 'Create Template'}
+                {form.id ? 'Update Question' : 'Create Question'}
               </Button>
               {form.id && (
-                <Button variant="outline" onClick={() => setForm(initialForm)}>
+                <Button variant="outline" onClick={() => setForm({ ...initialForm, episodeNumber: selectedEpisode })}>
                   Cancel
                 </Button>
               )}
@@ -419,24 +480,11 @@ export default function AdminQuestionsPage() {
           </Stack>
         </Box>
 
+        {/* Questions Table */}
         <Box>
-          <HStack mb={4} justify="space-between">
-            <Heading size="md">All Templates</Heading>
-            <FormControl maxW="200px">
-              <Select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                placeholder="All Categories"
-                size="sm"
-              >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </Select>
-            </FormControl>
-          </HStack>
+          <Heading size="md" mb={4}>
+            Episode {selectedEpisode} Questions
+          </Heading>
 
           <Box borderWidth="1px" borderRadius="lg" overflowX="auto" bg="bg.secondary">
             {isLoading ? (
@@ -449,34 +497,34 @@ export default function AdminQuestionsPage() {
                   <Tr>
                     <Th>Question</Th>
                     <Th>Type</Th>
-                    <Th>Category</Th>
                     <Th>Points</Th>
+                    <Th>Episode</Th>
                     <Th>Options</Th>
                     <Th>Actions</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {templates.map((template) => (
-                    <Tr key={template.id}>
+                  {questions.map((question) => (
+                    <Tr key={question.id}>
                       <Td maxW="300px">
-                        <Text noOfLines={2}>{template.text}</Text>
+                        <Text noOfLines={2}>{question.text}</Text>
                       </Td>
                       <Td>
                         <Badge
                           colorScheme={
-                            template.type === 'MULTIPLE_CHOICE'
+                            question.type === 'MULTIPLE_CHOICE'
                               ? 'blue'
                               : 'purple'
                           }
                         >
-                          {template.type.replace(/_/g, ' ')}
+                          {question.type.replace(/_/g, ' ')}
                         </Badge>
                       </Td>
-                      <Td>{template.category || '-'}</Td>
-                      <Td>{template.pointValue}</Td>
+                      <Td>{question.pointValue}</Td>
+                      <Td>{question.episodeNumber}</Td>
                       <Td>
-                        {template.options
-                          ? (template.options as string[]).length
+                        {question.options
+                          ? (question.options as string[]).length
                           : '-'}
                       </Td>
                       <Td>
@@ -484,7 +532,7 @@ export default function AdminQuestionsPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleEdit(template)}
+                            onClick={() => handleEdit(question)}
                           >
                             Edit
                           </Button>
@@ -492,7 +540,7 @@ export default function AdminQuestionsPage() {
                             size="sm"
                             colorScheme="red"
                             variant="outline"
-                            onClick={() => handleDelete(template)}
+                            onClick={() => handleDelete(question)}
                           >
                             Delete
                           </Button>
@@ -500,10 +548,10 @@ export default function AdminQuestionsPage() {
                       </Td>
                     </Tr>
                   ))}
-                  {templates.length === 0 && (
+                  {questions.length === 0 && (
                     <Tr>
                       <Td colSpan={6} textAlign="center" py={6}>
-                        No question templates yet. Create one above.
+                        No suggested questions for this episode yet. Create one above.
                       </Td>
                     </Tr>
                   )}

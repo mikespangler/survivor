@@ -893,7 +893,6 @@ async function main() {
   await prisma.episode.deleteMany();
   await prisma.castaway.deleteMany();
   await prisma.season.deleteMany();
-  await prisma.questionTemplate.deleteMany();
   await prisma.user.deleteMany();
 
   // Create Mike Spangler user

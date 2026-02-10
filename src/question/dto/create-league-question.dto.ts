@@ -31,10 +31,6 @@ export class CreateLeagueQuestionDto {
   pointValue?: number;
 
   @IsOptional()
-  @IsString()
-  templateId?: string;
-
-  @IsOptional()
   @IsInt()
   @Min(0)
   sortOrder?: number;

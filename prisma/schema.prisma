@@ -20,7 +20,6 @@ model User {
   teams                   Team[]
   memberLeagues           League[]                 @relation("LeagueMembers")
   commissionerLeagues     League[]                 @relation("LeagueCommissioners")
-  questionTemplates       QuestionTemplate[]
   createdInviteTokens     InviteToken[]
   lastViewedLeague        League?                  @relation("LastViewedLeague", fields: [lastViewedLeagueId], references: [id], onDelete: SetNull)
   notificationPreferences NotificationPreferences?
@@ -37,6 +36,7 @@ model League {
   slug                 String                @unique
   name                 String
   description          String?
+  isSystem             Boolean               @default(false)
   ownerId              String
   createdAt            DateTime              @default(now())
   owner                User                  @relation(fields: [ownerId], references: [id])
@@ -147,31 +147,12 @@ model DraftConfig {
   @@index([leagueSeasonId])
 }
 
-// System-wide question templates (managed by system admins)
-model QuestionTemplate {
-  id              String           @id @default(cuid())
-  text            String
-  type            String           // 'MULTIPLE_CHOICE' | 'FILL_IN_THE_BLANK'
-  options         Json?            // For MC: ["Option A", "Option B", ...]
-  pointValue      Int              @default(1)
-  category        String?          // e.g., "Elimination", "Challenge", "Social"
-  createdById     String
-  createdBy       User             @relation(fields: [createdById], references: [id])
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  leagueQuestions LeagueQuestion[]
-
-  @@index([category])
-}
-
 // League-specific questions for an episode
 model LeagueQuestion {
   id             String            @id @default(cuid())
   leagueSeasonId String
   leagueSeason   LeagueSeason      @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
   episodeNumber  Int
-  templateId     String?
-  template       QuestionTemplate? @relation(fields: [templateId], references: [id])
   text           String
   type           String
   options        Json?

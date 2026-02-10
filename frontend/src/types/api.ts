@@ -258,50 +258,15 @@ export interface UpdateDraftConfigDto {
   status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED';
 }
 
-// Question Template types
+// Question types
 export type QuestionType = 'MULTIPLE_CHOICE' | 'FILL_IN_THE_BLANK';
 export type QuestionScope = 'episode' | 'season';
-
-export interface QuestionTemplate {
-  id: string;
-  text: string;
-  type: QuestionType;
-  options?: string[];
-  pointValue: number;
-  category?: string;
-  createdById: string;
-  createdBy?: {
-    id: string;
-    name: string | null;
-    email: string | null;
-  };
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateQuestionTemplateDto {
-  text: string;
-  type: QuestionType;
-  options?: string[];
-  pointValue?: number;
-  category?: string;
-}
-
-export interface UpdateQuestionTemplateDto {
-  text?: string;
-  type?: QuestionType;
-  options?: string[];
-  pointValue?: number;
-  category?: string;
-}
 
 // League Question types
 export interface LeagueQuestion {
   id: string;
   leagueSeasonId: string;
   episodeNumber: number;
-  templateId?: string;
-  template?: QuestionTemplate;
   text: string;
   type: QuestionType;
   options?: string[];
@@ -335,7 +300,6 @@ export interface CreateLeagueQuestionDto {
   type: QuestionType;
   options?: string[];
   pointValue?: number;
-  templateId?: string;
   sortOrder?: number;
   questionScope?: QuestionScope;
   isWager?: boolean;
@@ -354,11 +318,6 @@ export interface UpdateLeagueQuestionDto {
   isWager?: boolean;
   minWager?: number;
   maxWager?: number;
-}
-
-export interface CreateFromTemplatesDto {
-  episodeNumber: number;
-  templateIds: string[];
 }
 
 // Player Answer types

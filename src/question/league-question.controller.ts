@@ -13,7 +13,6 @@ import { QuestionService } from './question.service';
 import {
   CreateLeagueQuestionDto,
   UpdateLeagueQuestionDto,
-  CreateFromTemplatesDto,
   SubmitAnswerDto,
   SetCorrectAnswersDto,
 } from './dto';
@@ -42,12 +41,6 @@ export class LeagueQuestionController {
     );
   }
 
-  @Get('templates')
-  @UseGuards(LeagueCommissionerOrAdminGuard)
-  async getAvailableTemplates(@Query('category') category?: string) {
-    return this.questionService.getTemplates(category);
-  }
-
   @Post()
   @UseGuards(LeagueCommissionerOrAdminGuard)
   async createQuestion(
@@ -56,16 +49,6 @@ export class LeagueQuestionController {
     @Body() dto: CreateLeagueQuestionDto,
   ) {
     return this.questionService.createLeagueQuestion(leagueId, seasonId, dto);
-  }
-
-  @Post('from-templates')
-  @UseGuards(LeagueCommissionerOrAdminGuard)
-  async createFromTemplates(
-    @Param('leagueId') leagueId: string,
-    @Param('seasonId') seasonId: string,
-    @Body() dto: CreateFromTemplatesDto,
-  ) {
-    return this.questionService.createFromTemplates(leagueId, seasonId, dto);
   }
 
   @Patch(':questionId')
