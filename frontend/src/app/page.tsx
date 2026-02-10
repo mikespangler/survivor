@@ -2,17 +2,12 @@
 
 import {
   Box,
-  Container,
+  Flex,
   Heading,
   Text,
   VStack,
-  HStack,
   Button,
   Spinner,
-  Card,
-  CardBody,
-  Badge,
-  SimpleGrid,
 } from '@chakra-ui/react';
 import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
@@ -101,72 +96,295 @@ const Dashboard = () => {
 
   // Only show onboarding if user has no leagues
   if (leagues.length === 0) {
+    const firstName = user?.firstName || 'superfan';
+
     return (
       <AuthenticatedLayout>
         <Box as="main" minH="100vh" bg="bg.primary" position="relative" overflow="hidden">
-          {/* Ambient Glow Effects */}
-          <Box className="glow-orange" top="-100px" left="-50px" />
-          <Box className="glow-purple" top="200px" right="-100px" />
+          {/* Background atmosphere glow */}
+          <Box
+            position="absolute"
+            top="-120px"
+            left="50%"
+            transform="translateX(-50%)"
+            w="600px"
+            h="600px"
+            bg="radial-gradient(circle, rgba(240,101,66,0.07) 0%, rgba(240,101,66,0.02) 40%, transparent 70%)"
+            pointerEvents="none"
+          />
 
-          <Container maxW="container.xl" py={20} position="relative" zIndex={1}>
-            <VStack gap={8} align="center" textAlign="center">
+          <Flex
+            direction="column"
+            align="center"
+            justify="center"
+            minH="calc(100vh - 64px)"
+            px={{ base: 5, md: 9 }}
+            py={{ base: 10, md: 16 }}
+            position="relative"
+            zIndex={1}
+          >
+            {/* Heading */}
+            <Heading
+              as="h1"
+              className="anim d1"
+              fontFamily="heading"
+              fontSize={{ base: '40px', md: '56px' }}
+              letterSpacing="3px"
+              textAlign="center"
+              lineHeight="1.05"
+            >
+              COME ON IN, {firstName.toUpperCase()}
+              <br />
+              <Box as="span" color="brand.primary">
+                THE GAME AWAITS
+              </Box>
+            </Heading>
 
+            {/* Subtitle */}
+            <Text
+              className="anim d2"
+              color="text.secondary"
+              fontSize={{ base: '15px', md: '16px' }}
+              textAlign="center"
+              mt={3}
+              maxW="420px"
+              lineHeight="1.5"
+            >
+              Create a league and invite your friends, or join one that&apos;s already been set up. Either way&nbsp;&mdash; it&apos;s time to play.
+            </Text>
 
-              <Heading as="h1" size="4xl" maxW="800px">
-                Get Started, {user?.firstName || 'Champion'}!
-              </Heading>
+            {/* Action Cards */}
+            <Flex
+              className="anim d3"
+              direction={{ base: 'column', md: 'row' }}
+              gap={{ base: 4, md: '18px' }}
+              mt={9}
+              w="full"
+              maxW="580px"
+              align={{ base: 'stretch', md: 'center' }}
+            >
+              {/* Create a League - Primary Card */}
+              <Box
+                flex={1}
+                borderRadius="14px"
+                p={{ base: 6, md: 7 }}
+                textAlign="center"
+                position="relative"
+                overflow="hidden"
+                bg="linear-gradient(145deg, rgba(240,101,66,0.15) 0%, rgba(240,101,66,0.05) 100%)"
+                border="1px solid"
+                borderColor="rgba(240,101,66,0.25)"
+                transition="all 0.2s ease"
+                _hover={{
+                  borderColor: 'rgba(240,101,66,0.45)',
+                  transform: 'translateY(-3px)',
+                  boxShadow: '0 8px 32px rgba(240,101,66,0.15)',
+                }}
+              >
+                {/* Corner glow */}
+                <Box
+                  position="absolute"
+                  top="-40px"
+                  right="-40px"
+                  w="100px"
+                  h="100px"
+                  bg="radial-gradient(circle, rgba(240,101,66,0.12) 0%, transparent 70%)"
+                  pointerEvents="none"
+                />
+                <Flex
+                  w="48px"
+                  h="48px"
+                  borderRadius="12px"
+                  bg="rgba(240,101,66,0.15)"
+                  align="center"
+                  justify="center"
+                  mx="auto"
+                  mb={4}
+                  fontSize="22px"
+                >
+                  🏕️
+                </Flex>
+                <Heading
+                  fontFamily="heading"
+                  fontSize="24px"
+                  letterSpacing="1.5px"
+                  mb="6px"
+                  color="text.primary"
+                >
+                  CREATE A LEAGUE
+                </Heading>
+                <Text fontSize="13px" color="text.secondary" lineHeight="1.5" mb={5}>
+                  Start your own fantasy league and send invite codes to your friends.
+                </Text>
+                <Link href="/leagues/create" style={{ width: '100%' }}>
+                  <Button variant="primary" w="full" size="md">
+                    Create League &rarr;
+                  </Button>
+                </Link>
+              </Box>
 
-              <Text variant="bodyXl" color="text.secondary" maxW="600px">
-                Create your first league or join an existing one to start competing.
+              {/* OR Divider */}
+              <Flex align="center" justify="center" flexShrink={0} alignSelf="center">
+                <Text
+                  fontFamily="body"
+                  fontSize="12px"
+                  fontWeight={600}
+                  letterSpacing="2px"
+                  color="text.secondary"
+                >
+                  OR
+                </Text>
+              </Flex>
+
+              {/* Join a League - Secondary Card */}
+              <Box
+                flex={1}
+                borderRadius="14px"
+                p={{ base: 6, md: 7 }}
+                textAlign="center"
+                position="relative"
+                overflow="hidden"
+                bg="bg.secondary"
+                border="1px solid"
+                borderColor="whiteAlpha.100"
+                transition="all 0.2s ease"
+                _hover={{
+                  borderColor: 'whiteAlpha.200',
+                  transform: 'translateY(-3px)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+                }}
+              >
+                <Flex
+                  w="48px"
+                  h="48px"
+                  borderRadius="12px"
+                  bg="whiteAlpha.100"
+                  align="center"
+                  justify="center"
+                  mx="auto"
+                  mb={4}
+                  fontSize="22px"
+                >
+                  🤝
+                </Flex>
+                <Heading
+                  fontFamily="heading"
+                  fontSize="24px"
+                  letterSpacing="1.5px"
+                  mb="6px"
+                  color="text.primary"
+                >
+                  JOIN A LEAGUE
+                </Heading>
+                <Text fontSize="13px" color="text.secondary" lineHeight="1.5" mb={5}>
+                  Got an invite code? Enter it here to join your friends&apos; league.
+                </Text>
+                <Link href="/leagues/join" style={{ width: '100%' }}>
+                  <Button variant="secondary" w="full" size="md">
+                    Join League
+                  </Button>
+                </Link>
+              </Box>
+            </Flex>
+
+            {/* How It Works Section */}
+            <Box className="anim d4" mt={12} w="full" maxW="640px">
+              <Text
+                textAlign="center"
+                fontFamily="heading"
+                fontSize="13px"
+                letterSpacing="3px"
+                textTransform="uppercase"
+                color="text.secondary"
+                mb="18px"
+              >
+                How It Works
               </Text>
+              <Flex
+                bg="bg.secondary"
+                border="1px solid"
+                borderColor="whiteAlpha.100"
+                borderRadius="12px"
+                overflow="hidden"
+                direction={{ base: 'column', md: 'row' }}
+              >
+                {/* Step 01 */}
+                <Box
+                  flex={1}
+                  p={{ base: '16px', md: '20px 16px' }}
+                  textAlign="center"
+                  position="relative"
+                  borderBottom={{ base: '1px solid', md: 'none' }}
+                  borderRight={{ base: 'none', md: '1px solid' }}
+                  borderColor="whiteAlpha.50"
+                >
+                  <Text fontFamily="heading" fontSize="24px" color="brand.primary" lineHeight="1" mb="6px">
+                    01
+                  </Text>
+                  <Text fontFamily="body" fontSize="14px" fontWeight={700} color="text.primary" letterSpacing="0.5px" mb={1}>
+                    Draft 5 Castaways
+                  </Text>
+                  <Text fontSize="12px" color="text.secondary" lineHeight="1.45">
+                    Lock in your tribe after the premiere. No changes after Ep.&nbsp;2.
+                  </Text>
+                </Box>
 
-              <SimpleGrid columns={{ base: 1, md: 2 }} gap={6} mt={8} w="full" maxW="800px">
-                {/* Create League Card */}
-                <Card variant="feature">
-                  <CardBody>
-                    <VStack gap={4} align="stretch">
-                      <Box bg="rgba(240, 101, 66, 0.1)" borderRadius="lg" p={4} w="fit-content">
-                        <Text fontSize="2xl">🏝️</Text>
-                      </Box>
-                      <Heading size="lg" color="text.primary">
-                        Create a League
-                      </Heading>
-                      <Text color="text.secondary" fontSize="sm">
-                        Start your own fantasy league and invite friends to compete.
-                      </Text>
-                      <Link href="/leagues/create" style={{ width: '100%' }}>
-                        <Button variant="primary" w="full" size="md">
-                          Create League
-                        </Button>
-                      </Link>
-                    </VStack>
-                  </CardBody>
-                </Card>
+                {/* Step 02 */}
+                <Box
+                  flex={1}
+                  p={{ base: '16px', md: '20px 16px' }}
+                  textAlign="center"
+                  position="relative"
+                  borderBottom={{ base: '1px solid', md: 'none' }}
+                  borderRight={{ base: 'none', md: '1px solid' }}
+                  borderColor="whiteAlpha.50"
+                >
+                  <Text fontFamily="heading" fontSize="24px" color="brand.primary" lineHeight="1" mb="6px">
+                    02
+                  </Text>
+                  <Text fontFamily="body" fontSize="14px" fontWeight={700} color="text.primary" letterSpacing="0.5px" mb={1}>
+                    Pick Every Week
+                  </Text>
+                  <Text fontSize="12px" color="text.secondary" lineHeight="1.45">
+                    Answer 3 bonus questions before each episode airs.
+                  </Text>
+                </Box>
 
-                {/* Join League Card */}
-                <Card variant="feature">
-                  <CardBody>
-                    <VStack gap={4} align="stretch">
-                      <Box bg="rgba(107, 126, 203, 0.1)" borderRadius="lg" p={4} w="fit-content">
-                        <Text fontSize="2xl">🤝</Text>
-                      </Box>
-                      <Heading size="lg" color="text.primary">
-                        Join a League
-                      </Heading>
-                      <Text color="text.secondary" fontSize="sm">
-                        Enter a league code to join your friends.
-                      </Text>
-                      <Link href="/leagues/join" style={{ width: '100%' }}>
-                        <Button variant="secondary" w="full" size="md">
-                          Join League
-                        </Button>
-                      </Link>
-                    </VStack>
-                  </CardBody>
-                </Card>
-              </SimpleGrid>
-            </VStack>
-          </Container>
+                {/* Step 03 */}
+                <Box
+                  flex={1}
+                  p={{ base: '16px', md: '20px 16px' }}
+                  textAlign="center"
+                >
+                  <Text fontFamily="heading" fontSize="24px" color="brand.primary" lineHeight="1" mb="6px">
+                    03
+                  </Text>
+                  <Text fontFamily="body" fontSize="14px" fontWeight={700} color="text.primary" letterSpacing="0.5px" mb={1}>
+                    Outlast Everyone
+                  </Text>
+                  <Text fontSize="12px" color="text.secondary" lineHeight="1.45">
+                    Earn points all season. Top the standings. Claim bragging rights.
+                  </Text>
+                </Box>
+              </Flex>
+              <Link href="/how-to-play">
+                <Text
+                  display="block"
+                  textAlign="center"
+                  mt="14px"
+                  fontFamily="heading"
+                  fontSize="14px"
+                  letterSpacing="2px"
+                  textTransform="uppercase"
+                  color="brand.primary"
+                  cursor="pointer"
+                  _hover={{ color: 'brand.yellow' }}
+                >
+                  Full Rules &amp; Scoring &rarr;
+                </Text>
+              </Link>
+            </Box>
+          </Flex>
         </Box>
       </AuthenticatedLayout>
     );
