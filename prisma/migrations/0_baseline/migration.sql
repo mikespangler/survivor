@@ -1,5 +1,11 @@
--- CreateTable
-CREATE TABLE "User" (
+-- Idempotent baseline migration
+-- Safe to run on both fresh databases and existing production databases
+
+-- ============================================================================
+-- TABLES (CREATE TABLE IF NOT EXISTS)
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS "User" (
     "id" TEXT NOT NULL,
     "clerkId" TEXT NOT NULL,
     "email" TEXT,
@@ -8,12 +14,10 @@ CREATE TABLE "User" (
     "lastViewedLeagueId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "League" (
+CREATE TABLE IF NOT EXISTS "League" (
     "id" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -21,21 +25,17 @@ CREATE TABLE "League" (
     "isSystem" BOOLEAN NOT NULL DEFAULT false,
     "ownerId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
     CONSTRAINT "League_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "LeagueSeason" (
+CREATE TABLE IF NOT EXISTS "LeagueSeason" (
     "id" TEXT NOT NULL,
     "leagueId" TEXT NOT NULL,
     "seasonId" TEXT NOT NULL,
-
     CONSTRAINT "LeagueSeason_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "Team" (
+CREATE TABLE IF NOT EXISTS "Team" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "logoImageUrl" TEXT,
@@ -43,68 +43,56 @@ CREATE TABLE "Team" (
     "ownerId" TEXT NOT NULL,
     "totalPoints" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
     CONSTRAINT "Team_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "Season" (
+CREATE TABLE IF NOT EXISTS "Season" (
     "id" TEXT NOT NULL,
     "number" INTEGER NOT NULL,
     "name" TEXT NOT NULL,
     "status" TEXT NOT NULL,
     "startDate" TIMESTAMP(3),
     "activeEpisode" INTEGER NOT NULL DEFAULT 1,
-
     CONSTRAINT "Season_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "Castaway" (
+CREATE TABLE IF NOT EXISTS "Castaway" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "seasonId" TEXT NOT NULL,
     "status" TEXT NOT NULL,
     "imageUrl" TEXT,
-
     CONSTRAINT "Castaway_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "TeamCastaway" (
+CREATE TABLE IF NOT EXISTS "TeamCastaway" (
     "id" TEXT NOT NULL,
     "teamId" TEXT NOT NULL,
     "castawayId" TEXT NOT NULL,
     "startEpisode" INTEGER NOT NULL,
     "endEpisode" INTEGER,
-
     CONSTRAINT "TeamCastaway_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "Episode" (
+CREATE TABLE IF NOT EXISTS "Episode" (
     "id" TEXT NOT NULL,
     "seasonId" TEXT NOT NULL,
     "number" INTEGER NOT NULL,
     "airDate" TIMESTAMP(3),
     "title" TEXT,
-
     CONSTRAINT "Episode_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "LeagueSeasonSettings" (
+CREATE TABLE IF NOT EXISTS "LeagueSeasonSettings" (
     "id" TEXT NOT NULL,
     "leagueSeasonId" TEXT NOT NULL,
     "settings" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "LeagueSeasonSettings_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "DraftConfig" (
+CREATE TABLE IF NOT EXISTS "DraftConfig" (
     "id" TEXT NOT NULL,
     "leagueSeasonId" TEXT NOT NULL,
     "roundNumber" INTEGER NOT NULL DEFAULT 1,
@@ -113,12 +101,10 @@ CREATE TABLE "DraftConfig" (
     "status" TEXT NOT NULL DEFAULT 'PENDING',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "DraftConfig_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "LeagueQuestion" (
+CREATE TABLE IF NOT EXISTS "LeagueQuestion" (
     "id" TEXT NOT NULL,
     "leagueSeasonId" TEXT NOT NULL,
     "episodeNumber" INTEGER NOT NULL,
@@ -135,12 +121,10 @@ CREATE TABLE "LeagueQuestion" (
     "maxWager" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "LeagueQuestion_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "PlayerAnswer" (
+CREATE TABLE IF NOT EXISTS "PlayerAnswer" (
     "id" TEXT NOT NULL,
     "leagueQuestionId" TEXT NOT NULL,
     "teamId" TEXT NOT NULL,
@@ -149,12 +133,10 @@ CREATE TABLE "PlayerAnswer" (
     "pointsEarned" INTEGER,
     "submittedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "PlayerAnswer_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "InviteToken" (
+CREATE TABLE IF NOT EXISTS "InviteToken" (
     "id" TEXT NOT NULL,
     "leagueId" TEXT NOT NULL,
     "token" TEXT NOT NULL,
@@ -164,24 +146,20 @@ CREATE TABLE "InviteToken" (
     "usedById" TEXT,
     "invitedEmail" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
     CONSTRAINT "InviteToken_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "RetentionConfig" (
+CREATE TABLE IF NOT EXISTS "RetentionConfig" (
     "id" TEXT NOT NULL,
     "leagueSeasonId" TEXT NOT NULL,
     "episodeNumber" INTEGER NOT NULL,
     "pointsPerCastaway" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "RetentionConfig_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "TeamEpisodePoints" (
+CREATE TABLE IF NOT EXISTS "TeamEpisodePoints" (
     "id" TEXT NOT NULL,
     "teamId" TEXT NOT NULL,
     "episodeNumber" INTEGER NOT NULL,
@@ -191,12 +169,10 @@ CREATE TABLE "TeamEpisodePoints" (
     "runningTotal" INTEGER NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "TeamEpisodePoints_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "NotificationPreferences" (
+CREATE TABLE IF NOT EXISTS "NotificationPreferences" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "weeklyQuestionsReminder" BOOLEAN NOT NULL DEFAULT true,
@@ -209,24 +185,20 @@ CREATE TABLE "NotificationPreferences" (
     "reminderHoursBefore" INTEGER NOT NULL DEFAULT 24,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "NotificationPreferences_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "SentNotification" (
+CREATE TABLE IF NOT EXISTS "SentNotification" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "notificationType" TEXT NOT NULL,
     "leagueId" TEXT,
     "episodeNumber" INTEGER,
     "sentAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
     CONSTRAINT "SentNotification_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "CommissionerMessage" (
+CREATE TABLE IF NOT EXISTS "CommissionerMessage" (
     "id" TEXT NOT NULL,
     "leagueId" TEXT NOT NULL,
     "authorId" TEXT NOT NULL,
@@ -238,216 +210,289 @@ CREATE TABLE "CommissionerMessage" (
     "emailSentAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-
     CONSTRAINT "CommissionerMessage_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "CommissionerMessageDismissal" (
+CREATE TABLE IF NOT EXISTS "CommissionerMessageDismissal" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "messageId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
     CONSTRAINT "CommissionerMessageDismissal_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "_LeagueMembers" (
+CREATE TABLE IF NOT EXISTS "_LeagueMembers" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
-
     CONSTRAINT "_LeagueMembers_AB_pkey" PRIMARY KEY ("A","B")
 );
 
--- CreateTable
-CREATE TABLE "_LeagueCommissioners" (
+CREATE TABLE IF NOT EXISTS "_LeagueCommissioners" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
-
     CONSTRAINT "_LeagueCommissioners_AB_pkey" PRIMARY KEY ("A","B")
 );
 
--- CreateIndex
-CREATE UNIQUE INDEX "User_clerkId_key" ON "User"("clerkId");
+-- ============================================================================
+-- ADD COLUMNS IF NOT EXISTS (handles existing tables missing newer columns)
+-- ============================================================================
 
--- CreateIndex
-CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+-- League columns that may be missing on production
+ALTER TABLE "League" ADD COLUMN IF NOT EXISTS "slug" TEXT;
+ALTER TABLE "League" ADD COLUMN IF NOT EXISTS "isSystem" BOOLEAN NOT NULL DEFAULT false;
 
--- CreateIndex
-CREATE INDEX "User_clerkId_idx" ON "User"("clerkId");
+-- Backfill slug for any existing rows that have NULL slug (use id as fallback)
+UPDATE "League" SET "slug" = "id" WHERE "slug" IS NULL;
 
--- CreateIndex
-CREATE INDEX "User_lastViewedLeagueId_idx" ON "User"("lastViewedLeagueId");
+-- Now make slug NOT NULL (idempotent: will no-op if already NOT NULL)
+ALTER TABLE "League" ALTER COLUMN "slug" SET NOT NULL;
 
--- CreateIndex
-CREATE UNIQUE INDEX "League_slug_key" ON "League"("slug");
+-- ============================================================================
+-- INDEXES (CREATE INDEX IF NOT EXISTS / CREATE UNIQUE INDEX IF NOT EXISTS)
+-- ============================================================================
 
--- CreateIndex
-CREATE UNIQUE INDEX "LeagueSeason_leagueId_seasonId_key" ON "LeagueSeason"("leagueId", "seasonId");
+-- User indexes
+CREATE UNIQUE INDEX IF NOT EXISTS "User_clerkId_key" ON "User"("clerkId");
+CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User"("email");
+CREATE INDEX IF NOT EXISTS "User_clerkId_idx" ON "User"("clerkId");
+CREATE INDEX IF NOT EXISTS "User_lastViewedLeagueId_idx" ON "User"("lastViewedLeagueId");
 
--- CreateIndex
-CREATE UNIQUE INDEX "Season_number_key" ON "Season"("number");
+-- League indexes
+CREATE UNIQUE INDEX IF NOT EXISTS "League_slug_key" ON "League"("slug");
 
--- CreateIndex
-CREATE UNIQUE INDEX "TeamCastaway_teamId_castawayId_startEpisode_key" ON "TeamCastaway"("teamId", "castawayId", "startEpisode");
+-- LeagueSeason indexes
+CREATE UNIQUE INDEX IF NOT EXISTS "LeagueSeason_leagueId_seasonId_key" ON "LeagueSeason"("leagueId", "seasonId");
 
--- CreateIndex
-CREATE UNIQUE INDEX "Episode_seasonId_number_key" ON "Episode"("seasonId", "number");
+-- Season indexes
+CREATE UNIQUE INDEX IF NOT EXISTS "Season_number_key" ON "Season"("number");
 
--- CreateIndex
-CREATE UNIQUE INDEX "LeagueSeasonSettings_leagueSeasonId_key" ON "LeagueSeasonSettings"("leagueSeasonId");
+-- TeamCastaway indexes
+CREATE UNIQUE INDEX IF NOT EXISTS "TeamCastaway_teamId_castawayId_startEpisode_key" ON "TeamCastaway"("teamId", "castawayId", "startEpisode");
 
--- CreateIndex
-CREATE INDEX "DraftConfig_leagueSeasonId_idx" ON "DraftConfig"("leagueSeasonId");
+-- Episode indexes
+CREATE UNIQUE INDEX IF NOT EXISTS "Episode_seasonId_number_key" ON "Episode"("seasonId", "number");
 
--- CreateIndex
-CREATE UNIQUE INDEX "DraftConfig_leagueSeasonId_roundNumber_key" ON "DraftConfig"("leagueSeasonId", "roundNumber");
+-- LeagueSeasonSettings indexes
+CREATE UNIQUE INDEX IF NOT EXISTS "LeagueSeasonSettings_leagueSeasonId_key" ON "LeagueSeasonSettings"("leagueSeasonId");
 
--- CreateIndex
-CREATE INDEX "LeagueQuestion_leagueSeasonId_episodeNumber_idx" ON "LeagueQuestion"("leagueSeasonId", "episodeNumber");
+-- DraftConfig indexes
+CREATE INDEX IF NOT EXISTS "DraftConfig_leagueSeasonId_idx" ON "DraftConfig"("leagueSeasonId");
+CREATE UNIQUE INDEX IF NOT EXISTS "DraftConfig_leagueSeasonId_roundNumber_key" ON "DraftConfig"("leagueSeasonId", "roundNumber");
 
--- CreateIndex
-CREATE INDEX "PlayerAnswer_teamId_idx" ON "PlayerAnswer"("teamId");
+-- LeagueQuestion indexes
+CREATE INDEX IF NOT EXISTS "LeagueQuestion_leagueSeasonId_episodeNumber_idx" ON "LeagueQuestion"("leagueSeasonId", "episodeNumber");
 
--- CreateIndex
-CREATE UNIQUE INDEX "PlayerAnswer_leagueQuestionId_teamId_key" ON "PlayerAnswer"("leagueQuestionId", "teamId");
+-- PlayerAnswer indexes
+CREATE INDEX IF NOT EXISTS "PlayerAnswer_teamId_idx" ON "PlayerAnswer"("teamId");
+CREATE UNIQUE INDEX IF NOT EXISTS "PlayerAnswer_leagueQuestionId_teamId_key" ON "PlayerAnswer"("leagueQuestionId", "teamId");
 
--- CreateIndex
-CREATE UNIQUE INDEX "InviteToken_token_key" ON "InviteToken"("token");
+-- InviteToken indexes
+CREATE UNIQUE INDEX IF NOT EXISTS "InviteToken_token_key" ON "InviteToken"("token");
+CREATE INDEX IF NOT EXISTS "InviteToken_token_idx" ON "InviteToken"("token");
+CREATE INDEX IF NOT EXISTS "InviteToken_leagueId_idx" ON "InviteToken"("leagueId");
+CREATE INDEX IF NOT EXISTS "InviteToken_invitedEmail_idx" ON "InviteToken"("invitedEmail");
 
--- CreateIndex
-CREATE INDEX "InviteToken_token_idx" ON "InviteToken"("token");
+-- RetentionConfig indexes
+CREATE INDEX IF NOT EXISTS "RetentionConfig_leagueSeasonId_idx" ON "RetentionConfig"("leagueSeasonId");
+CREATE UNIQUE INDEX IF NOT EXISTS "RetentionConfig_leagueSeasonId_episodeNumber_key" ON "RetentionConfig"("leagueSeasonId", "episodeNumber");
 
--- CreateIndex
-CREATE INDEX "InviteToken_leagueId_idx" ON "InviteToken"("leagueId");
+-- TeamEpisodePoints indexes
+CREATE INDEX IF NOT EXISTS "TeamEpisodePoints_teamId_idx" ON "TeamEpisodePoints"("teamId");
+CREATE INDEX IF NOT EXISTS "TeamEpisodePoints_episodeNumber_idx" ON "TeamEpisodePoints"("episodeNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "TeamEpisodePoints_teamId_episodeNumber_key" ON "TeamEpisodePoints"("teamId", "episodeNumber");
 
--- CreateIndex
-CREATE INDEX "InviteToken_invitedEmail_idx" ON "InviteToken"("invitedEmail");
+-- NotificationPreferences indexes
+CREATE UNIQUE INDEX IF NOT EXISTS "NotificationPreferences_userId_key" ON "NotificationPreferences"("userId");
 
--- CreateIndex
-CREATE INDEX "RetentionConfig_leagueSeasonId_idx" ON "RetentionConfig"("leagueSeasonId");
+-- SentNotification indexes
+CREATE INDEX IF NOT EXISTS "SentNotification_userId_idx" ON "SentNotification"("userId");
+CREATE UNIQUE INDEX IF NOT EXISTS "SentNotification_userId_notificationType_leagueId_episodeNu_key" ON "SentNotification"("userId", "notificationType", "leagueId", "episodeNumber");
 
--- CreateIndex
-CREATE UNIQUE INDEX "RetentionConfig_leagueSeasonId_episodeNumber_key" ON "RetentionConfig"("leagueSeasonId", "episodeNumber");
+-- CommissionerMessage indexes
+CREATE INDEX IF NOT EXISTS "CommissionerMessage_leagueId_createdAt_idx" ON "CommissionerMessage"("leagueId", "createdAt");
 
--- CreateIndex
-CREATE INDEX "TeamEpisodePoints_teamId_idx" ON "TeamEpisodePoints"("teamId");
+-- CommissionerMessageDismissal indexes
+CREATE INDEX IF NOT EXISTS "CommissionerMessageDismissal_userId_idx" ON "CommissionerMessageDismissal"("userId");
+CREATE UNIQUE INDEX IF NOT EXISTS "CommissionerMessageDismissal_userId_messageId_key" ON "CommissionerMessageDismissal"("userId", "messageId");
 
--- CreateIndex
-CREATE INDEX "TeamEpisodePoints_episodeNumber_idx" ON "TeamEpisodePoints"("episodeNumber");
+-- Join table indexes
+CREATE INDEX IF NOT EXISTS "_LeagueMembers_B_index" ON "_LeagueMembers"("B");
+CREATE INDEX IF NOT EXISTS "_LeagueCommissioners_B_index" ON "_LeagueCommissioners"("B");
 
--- CreateIndex
-CREATE UNIQUE INDEX "TeamEpisodePoints_teamId_episodeNumber_key" ON "TeamEpisodePoints"("teamId", "episodeNumber");
+-- ============================================================================
+-- FOREIGN KEYS (wrapped in DO blocks to handle already-existing constraints)
+-- ============================================================================
 
--- CreateIndex
-CREATE UNIQUE INDEX "NotificationPreferences_userId_key" ON "NotificationPreferences"("userId");
+DO $$ BEGIN
+    ALTER TABLE "User" ADD CONSTRAINT "User_lastViewedLeagueId_fkey"
+        FOREIGN KEY ("lastViewedLeagueId") REFERENCES "League"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- CreateIndex
-CREATE INDEX "SentNotification_userId_idx" ON "SentNotification"("userId");
+DO $$ BEGIN
+    ALTER TABLE "League" ADD CONSTRAINT "League_ownerId_fkey"
+        FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- CreateIndex
-CREATE UNIQUE INDEX "SentNotification_userId_notificationType_leagueId_episodeNu_key" ON "SentNotification"("userId", "notificationType", "leagueId", "episodeNumber");
+DO $$ BEGIN
+    ALTER TABLE "LeagueSeason" ADD CONSTRAINT "LeagueSeason_leagueId_fkey"
+        FOREIGN KEY ("leagueId") REFERENCES "League"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- CreateIndex
-CREATE INDEX "CommissionerMessage_leagueId_createdAt_idx" ON "CommissionerMessage"("leagueId", "createdAt");
+DO $$ BEGIN
+    ALTER TABLE "LeagueSeason" ADD CONSTRAINT "LeagueSeason_seasonId_fkey"
+        FOREIGN KEY ("seasonId") REFERENCES "Season"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- CreateIndex
-CREATE INDEX "CommissionerMessageDismissal_userId_idx" ON "CommissionerMessageDismissal"("userId");
+DO $$ BEGIN
+    ALTER TABLE "Team" ADD CONSTRAINT "Team_leagueSeasonId_fkey"
+        FOREIGN KEY ("leagueSeasonId") REFERENCES "LeagueSeason"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- CreateIndex
-CREATE UNIQUE INDEX "CommissionerMessageDismissal_userId_messageId_key" ON "CommissionerMessageDismissal"("userId", "messageId");
+DO $$ BEGIN
+    ALTER TABLE "Team" ADD CONSTRAINT "Team_ownerId_fkey"
+        FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- CreateIndex
-CREATE INDEX "_LeagueMembers_B_index" ON "_LeagueMembers"("B");
+DO $$ BEGIN
+    ALTER TABLE "Castaway" ADD CONSTRAINT "Castaway_seasonId_fkey"
+        FOREIGN KEY ("seasonId") REFERENCES "Season"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- CreateIndex
-CREATE INDEX "_LeagueCommissioners_B_index" ON "_LeagueCommissioners"("B");
+DO $$ BEGIN
+    ALTER TABLE "TeamCastaway" ADD CONSTRAINT "TeamCastaway_castawayId_fkey"
+        FOREIGN KEY ("castawayId") REFERENCES "Castaway"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "User" ADD CONSTRAINT "User_lastViewedLeagueId_fkey" FOREIGN KEY ("lastViewedLeagueId") REFERENCES "League"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "TeamCastaway" ADD CONSTRAINT "TeamCastaway_teamId_fkey"
+        FOREIGN KEY ("teamId") REFERENCES "Team"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "League" ADD CONSTRAINT "League_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "Episode" ADD CONSTRAINT "Episode_seasonId_fkey"
+        FOREIGN KEY ("seasonId") REFERENCES "Season"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "LeagueSeason" ADD CONSTRAINT "LeagueSeason_leagueId_fkey" FOREIGN KEY ("leagueId") REFERENCES "League"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "LeagueSeasonSettings" ADD CONSTRAINT "LeagueSeasonSettings_leagueSeasonId_fkey"
+        FOREIGN KEY ("leagueSeasonId") REFERENCES "LeagueSeason"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "LeagueSeason" ADD CONSTRAINT "LeagueSeason_seasonId_fkey" FOREIGN KEY ("seasonId") REFERENCES "Season"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "DraftConfig" ADD CONSTRAINT "DraftConfig_leagueSeasonId_fkey"
+        FOREIGN KEY ("leagueSeasonId") REFERENCES "LeagueSeason"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Team" ADD CONSTRAINT "Team_leagueSeasonId_fkey" FOREIGN KEY ("leagueSeasonId") REFERENCES "LeagueSeason"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "LeagueQuestion" ADD CONSTRAINT "LeagueQuestion_leagueSeasonId_fkey"
+        FOREIGN KEY ("leagueSeasonId") REFERENCES "LeagueSeason"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Team" ADD CONSTRAINT "Team_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "PlayerAnswer" ADD CONSTRAINT "PlayerAnswer_leagueQuestionId_fkey"
+        FOREIGN KEY ("leagueQuestionId") REFERENCES "LeagueQuestion"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Castaway" ADD CONSTRAINT "Castaway_seasonId_fkey" FOREIGN KEY ("seasonId") REFERENCES "Season"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "PlayerAnswer" ADD CONSTRAINT "PlayerAnswer_teamId_fkey"
+        FOREIGN KEY ("teamId") REFERENCES "Team"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "TeamCastaway" ADD CONSTRAINT "TeamCastaway_castawayId_fkey" FOREIGN KEY ("castawayId") REFERENCES "Castaway"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "InviteToken" ADD CONSTRAINT "InviteToken_leagueId_fkey"
+        FOREIGN KEY ("leagueId") REFERENCES "League"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "TeamCastaway" ADD CONSTRAINT "TeamCastaway_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "Team"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "InviteToken" ADD CONSTRAINT "InviteToken_createdById_fkey"
+        FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Episode" ADD CONSTRAINT "Episode_seasonId_fkey" FOREIGN KEY ("seasonId") REFERENCES "Season"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "RetentionConfig" ADD CONSTRAINT "RetentionConfig_leagueSeasonId_fkey"
+        FOREIGN KEY ("leagueSeasonId") REFERENCES "LeagueSeason"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "LeagueSeasonSettings" ADD CONSTRAINT "LeagueSeasonSettings_leagueSeasonId_fkey" FOREIGN KEY ("leagueSeasonId") REFERENCES "LeagueSeason"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "TeamEpisodePoints" ADD CONSTRAINT "TeamEpisodePoints_teamId_fkey"
+        FOREIGN KEY ("teamId") REFERENCES "Team"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "DraftConfig" ADD CONSTRAINT "DraftConfig_leagueSeasonId_fkey" FOREIGN KEY ("leagueSeasonId") REFERENCES "LeagueSeason"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "NotificationPreferences" ADD CONSTRAINT "NotificationPreferences_userId_fkey"
+        FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "LeagueQuestion" ADD CONSTRAINT "LeagueQuestion_leagueSeasonId_fkey" FOREIGN KEY ("leagueSeasonId") REFERENCES "LeagueSeason"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "SentNotification" ADD CONSTRAINT "SentNotification_userId_fkey"
+        FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PlayerAnswer" ADD CONSTRAINT "PlayerAnswer_leagueQuestionId_fkey" FOREIGN KEY ("leagueQuestionId") REFERENCES "LeagueQuestion"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "CommissionerMessage" ADD CONSTRAINT "CommissionerMessage_leagueId_fkey"
+        FOREIGN KEY ("leagueId") REFERENCES "League"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PlayerAnswer" ADD CONSTRAINT "PlayerAnswer_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "Team"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "CommissionerMessage" ADD CONSTRAINT "CommissionerMessage_authorId_fkey"
+        FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "InviteToken" ADD CONSTRAINT "InviteToken_leagueId_fkey" FOREIGN KEY ("leagueId") REFERENCES "League"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "CommissionerMessageDismissal" ADD CONSTRAINT "CommissionerMessageDismissal_userId_fkey"
+        FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "InviteToken" ADD CONSTRAINT "InviteToken_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "CommissionerMessageDismissal" ADD CONSTRAINT "CommissionerMessageDismissal_messageId_fkey"
+        FOREIGN KEY ("messageId") REFERENCES "CommissionerMessage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "RetentionConfig" ADD CONSTRAINT "RetentionConfig_leagueSeasonId_fkey" FOREIGN KEY ("leagueSeasonId") REFERENCES "LeagueSeason"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "_LeagueMembers" ADD CONSTRAINT "_LeagueMembers_A_fkey"
+        FOREIGN KEY ("A") REFERENCES "League"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "TeamEpisodePoints" ADD CONSTRAINT "TeamEpisodePoints_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "Team"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "_LeagueMembers" ADD CONSTRAINT "_LeagueMembers_B_fkey"
+        FOREIGN KEY ("B") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "NotificationPreferences" ADD CONSTRAINT "NotificationPreferences_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    ALTER TABLE "_LeagueCommissioners" ADD CONSTRAINT "_LeagueCommissioners_A_fkey"
+        FOREIGN KEY ("A") REFERENCES "League"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "SentNotification" ADD CONSTRAINT "SentNotification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "CommissionerMessage" ADD CONSTRAINT "CommissionerMessage_leagueId_fkey" FOREIGN KEY ("leagueId") REFERENCES "League"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "CommissionerMessage" ADD CONSTRAINT "CommissionerMessage_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "CommissionerMessageDismissal" ADD CONSTRAINT "CommissionerMessageDismissal_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "CommissionerMessageDismissal" ADD CONSTRAINT "CommissionerMessageDismissal_messageId_fkey" FOREIGN KEY ("messageId") REFERENCES "CommissionerMessage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_LeagueMembers" ADD CONSTRAINT "_LeagueMembers_A_fkey" FOREIGN KEY ("A") REFERENCES "League"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_LeagueMembers" ADD CONSTRAINT "_LeagueMembers_B_fkey" FOREIGN KEY ("B") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_LeagueCommissioners" ADD CONSTRAINT "_LeagueCommissioners_A_fkey" FOREIGN KEY ("A") REFERENCES "League"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_LeagueCommissioners" ADD CONSTRAINT "_LeagueCommissioners_B_fkey" FOREIGN KEY ("B") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
+DO $$ BEGIN
+    ALTER TABLE "_LeagueCommissioners" ADD CONSTRAINT "_LeagueCommissioners_B_fkey"
+        FOREIGN KEY ("B") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
