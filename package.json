@@ -24,7 +24,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:e2e": "DATABASE_URL=postgresql://postgres:postgres@localhost:5434/survivor_test jest --config ./test/jest-e2e.json --runInBand --forceExit",
     "db:reset": "npx prisma migrate reset --force",
     "db:seed": "ts-node prisma/seed-midseason.ts",
     "db:seed-50": "ts-node prisma/seed-season-50.ts",
