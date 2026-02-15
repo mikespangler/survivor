@@ -11,7 +11,7 @@ import {
 } from '@chakra-ui/react';
 import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { api } from '@/lib/api';
@@ -32,9 +32,24 @@ const Footer = dynamic(() => import('@/components/landing/Footer'), { ssr: false
 const Dashboard = () => {
   const { user } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [leagues, setLeagues] = useState<League[]>([]);
   const [loadingLeagues, setLoadingLeagues] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
+
+  // Fire Google Ads conversion event for new sign-ups
+  useEffect(() => {
+    if (searchParams.get('signup') === '1') {
+      if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+        window.gtag('event', 'conversion', {
+          send_to: 'AW-17954695105/317dCLz09_gbEMHPu_FC',
+          value: 1.0,
+          currency: 'USD',
+        });
+      }
+      window.history.replaceState({}, '', '/');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     handleAutoRedirect();
