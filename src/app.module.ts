@@ -16,6 +16,9 @@ import { QuestionModule } from './question/question.module';
 import { EpisodeModule } from './episode/episode.module';
 import { AdminModule } from './admin/admin.module';
 import { NotificationModule } from './notification/notification.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { ActivityTrackingInterceptor } from './analytics/activity-tracking.interceptor';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -34,6 +37,7 @@ import { NotificationModule } from './notification/notification.module';
     EpisodeModule,
     AdminModule,
     NotificationModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -41,6 +45,10 @@ import { NotificationModule } from './notification/notification.module';
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ActivityTrackingInterceptor,
     },
   ],
 })

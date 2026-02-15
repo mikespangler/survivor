@@ -55,6 +55,13 @@ import type {
   UpdateCommissionerMessageDto,
   CommissionerMessagesResponse,
   TrendingQuestion,
+  AnalyticsOverview,
+  GrowthDataPoint,
+  EngagementDataPoint,
+  RetentionData,
+  LeagueHealthData,
+  InviteFunnelDataPoint,
+  GhostUser,
 } from '@/types/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
@@ -1088,6 +1095,75 @@ class ApiClient {
         method: 'DELETE',
       },
     );
+  }
+
+  // ================== Analytics endpoints ==================
+
+  async getAnalyticsOverview(): Promise<AnalyticsOverview> {
+    return this.request<AnalyticsOverview>('/admin/analytics/overview');
+  }
+
+  async getAnalyticsGrowth(
+    from?: string,
+    to?: string,
+    granularity?: string,
+  ): Promise<GrowthDataPoint[]> {
+    const params = new URLSearchParams();
+    if (from) params.append('from', from);
+    if (to) params.append('to', to);
+    if (granularity) params.append('granularity', granularity);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request<GrowthDataPoint[]>(`/admin/analytics/growth${query}`);
+  }
+
+  async getAnalyticsEngagement(): Promise<EngagementDataPoint[]> {
+    return this.request<EngagementDataPoint[]>('/admin/analytics/engagement');
+  }
+
+  async getAnalyticsRetention(
+    from?: string,
+    to?: string,
+    granularity?: string,
+  ): Promise<RetentionData> {
+    const params = new URLSearchParams();
+    if (from) params.append('from', from);
+    if (to) params.append('to', to);
+    if (granularity) params.append('granularity', granularity);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request<RetentionData>(`/admin/analytics/retention${query}`);
+  }
+
+  async getAnalyticsLeagues(): Promise<LeagueHealthData[]> {
+    return this.request<LeagueHealthData[]>('/admin/analytics/leagues');
+  }
+
+  async getAnalyticsInvites(
+    from?: string,
+    to?: string,
+    granularity?: string,
+  ): Promise<InviteFunnelDataPoint[]> {
+    const params = new URLSearchParams();
+    if (from) params.append('from', from);
+    if (to) params.append('to', to);
+    if (granularity) params.append('granularity', granularity);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    return this.request<InviteFunnelDataPoint[]>(
+      `/admin/analytics/invites${query}`,
+    );
+  }
+
+  async getAnalyticsGhostUsers(): Promise<GhostUser[]> {
+    return this.request<GhostUser[]>('/admin/analytics/ghost-users');
+  }
+
+  async trackPageView(
+    page: string,
+    metadata?: Record<string, any>,
+  ): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>('/analytics/track', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'PAGE_VIEW', page, metadata }),
+    });
   }
 }
 

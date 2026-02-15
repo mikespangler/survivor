@@ -671,3 +671,74 @@ export interface CommissionerMessagesResponse {
   total: number;
 }
 
+// Analytics types
+export interface AnalyticsOverview {
+  totalUsers: number;
+  totalLeagues: number;
+  totalTeams: number;
+  newSignupsToday: number;
+  newSignupsWeek: number;
+  newSignupsMonth: number;
+  activeUsersToday: number;
+  activeUsersWeek: number;
+  activeUsersMonth: number;
+  inviteConversionRate: number;
+}
+
+export interface GrowthDataPoint {
+  period: string;
+  newUsers: number;
+  cumulativeUsers: number;
+  newLeagues: number;
+  cumulativeLeagues: number;
+}
+
+export interface EngagementDataPoint {
+  episodeNumber: number;
+  totalTeams: number;
+  teamsWithAnswers: number;
+  totalAnswers: number;
+  totalQuestions: number;
+  submissionRate: number;
+  participationRate: number;
+}
+
+export interface RetentionData {
+  dailyActiveUsers: Array<{
+    period: string;
+    count: number;
+  }>;
+  episodeRetention: Array<{
+    episodeNumber: number;
+    activeUsers: number;
+    returningUsers: number;
+    returnRate: number;
+  }>;
+}
+
+export interface LeagueHealthData {
+  id: string;
+  name: string;
+  slug: string;
+  memberCount: number;
+  teamCount: number;
+  totalAnswers: number;
+  participationRate: number;
+  createdAt: string;
+}
+
+export interface InviteFunnelDataPoint {
+  period: string;
+  sent: number;
+  emailInvites: number;
+  linkInvites: number;
+  accepted: number;
+}
+
+export interface GhostUser {
+  id: string;
+  name: string | null;
+  email: string | null;
+  createdAt: string;
+}
+

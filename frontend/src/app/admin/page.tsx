@@ -616,7 +616,17 @@ export default function AdminPage() {
     <AuthenticatedLayout>
       <Container maxW="container.xl" py={{ base: 5, md: 10 }} px={{ base: 4, md: 6, lg: 8 }}>
         <Stack direction={{ base: 'column', md: 'row' }} justify="space-between" align={{ base: 'stretch', md: 'center' }} mb={8} gap={3}>
-          <Heading size={{ base: 'lg', md: 'xl' }}>Admin Dashboard</Heading>
+          <HStack spacing={4}>
+            <Heading size={{ base: 'lg', md: 'xl' }}>Admin Dashboard</Heading>
+            <Button
+              size="sm"
+              colorScheme="orange"
+              variant="outline"
+              onClick={() => router.push('/admin/analytics')}
+            >
+              Analytics
+            </Button>
+          </HStack>
           <ReturnToLeagueButton />
         </Stack>
 

@@ -21,6 +21,7 @@ model User {
   memberLeagues           League[]                 @relation("LeagueMembers")
   commissionerLeagues     League[]                 @relation("LeagueCommissioners")
   createdInviteTokens     InviteToken[]
+  activityLogs            ActivityLog[]
   lastViewedLeague        League?                  @relation("LastViewedLeague", fields: [lastViewedLeagueId], references: [id], onDelete: SetNull)
   notificationPreferences NotificationPreferences?
   sentNotifications       SentNotification[]
@@ -310,4 +311,17 @@ model CommissionerMessageDismissal {
 
   @@unique([userId, messageId])
   @@index([userId])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@index([createdAt])
 }
